@@ -17,6 +17,7 @@ This module implements the POST /v1/expand-idea endpoint that validates
 requests, calls the expand_idea service, and returns structured responses.
 """
 
+import json
 from collections.abc import Callable
 from typing import Any
 
@@ -142,8 +143,6 @@ async def expand_idea_endpoint(
     if request.extra_context is not None:
         if isinstance(request.extra_context, dict):
             # Serialize dict to readable string format
-            import json
-
             extra_context_str = json.dumps(request.extra_context, indent=2)
         else:
             extra_context_str = request.extra_context
