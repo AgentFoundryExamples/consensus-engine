@@ -17,17 +17,13 @@ This module configures Alembic to use the project's Base metadata and
 database connection settings. It supports both offline and online migration modes.
 """
 
-import os
-import sys
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# Add the project root to the path so we can import consensus_engine
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # Import the Base metadata and settings
+# Assumes the package is installed (via pip install -e .)
 from consensus_engine.config import get_settings
 from consensus_engine.db import Base
 

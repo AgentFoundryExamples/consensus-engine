@@ -21,12 +21,14 @@ This module provides SQLAlchemy engine and session management with support for:
 """
 
 import logging
+import threading
 from collections.abc import Generator
 from typing import Any
 
 from google.cloud.sql.connector import Connector
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from sqlalchemy.pool import NullPool
 
@@ -39,6 +41,7 @@ Base = declarative_base()
 
 # Global connector instance for Cloud SQL
 _connector: Connector | None = None
+_connector_lock = threading.Lock()
 
 
 def get_connector() -> Connector:
@@ -50,10 +53,13 @@ def get_connector() -> Connector:
     Note:
         The connector is created once and reused for all connections.
         It should be closed when the application shuts down.
+        Thread-safe implementation using double-checked locking.
     """
     global _connector
     if _connector is None:
-        _connector = Connector()
+        with _connector_lock:
+            if _connector is None:
+                _connector = Connector()
     return _connector
 
 
@@ -61,12 +67,14 @@ def close_connector() -> None:
     """Close the global Cloud SQL Connector instance.
 
     This should be called during application shutdown to clean up resources.
+    Thread-safe implementation.
     """
     global _connector
-    if _connector is not None:
-        _connector.close()
-        _connector = None
-        logger.info("Cloud SQL Connector closed")
+    with _connector_lock:
+        if _connector is not None:
+            _connector.close()
+            _connector = None
+            logger.info("Cloud SQL Connector closed")
 
 
 def get_cloud_sql_connection(
@@ -198,13 +206,6 @@ def create_engine_from_settings(settings: Settings) -> Engine:
         # OSError: Network/connection issues
         logger.error(f"Failed to create database engine: {e}", exc_info=True)
         raise
-    except Exception as e:
-        # Catch any unexpected errors from SQLAlchemy
-        logger.error(
-            f"Unexpected error creating database engine: {e}",
-            exc_info=True,
-        )
-        raise RuntimeError(f"Failed to create database engine: {e}") from e
 
 
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:
@@ -252,6 +253,12 @@ def check_database_health(engine: Engine) -> bool:
 
     Returns:
         True if database is healthy, False otherwise
+
+    Note:
+        Logs specific error types for better debugging:
+        - OperationalError: Connection/network issues
+        - DBAPIError: Database API errors
+        - Other exceptions: Unexpected errors
     """
     try:
         with engine.connect() as conn:
@@ -259,8 +266,14 @@ def check_database_health(engine: Engine) -> bool:
             result.fetchone()
         logger.info("Database health check passed")
         return True
+    except OperationalError as e:
+        logger.error(f"Database health check failed - connection issue: {e}", exc_info=True)
+        return False
+    except DBAPIError as e:
+        logger.error(f"Database health check failed - DBAPI error: {e}", exc_info=True)
+        return False
     except Exception as e:
-        logger.error(f"Database health check failed: {e}", exc_info=True)
+        logger.error(f"Database health check failed - unexpected error: {e}", exc_info=True)
         return False
 
 

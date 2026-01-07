@@ -19,6 +19,7 @@ It handles environment variable loading, validation, and provides sensible defau
 
 from enum import Enum
 from functools import lru_cache
+from urllib.parse import quote_plus
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -274,9 +275,10 @@ class Settings(BaseSettings):
         """Get the database URL for SQLAlchemy.
 
         This property is used for non-Cloud SQL connections (local development).
+        URL-encodes credentials to handle special characters safely.
 
         Returns:
-            PostgreSQL database URL
+            PostgreSQL database URL with encoded credentials
 
         Raises:
             ValueError: If required database configuration is missing
@@ -284,17 +286,18 @@ class Settings(BaseSettings):
         if not self.db_name:
             raise ValueError("DB_NAME is required for database connections")
 
+        # URL-encode user and password to handle special characters
+        user = quote_plus(self.db_user)
+
         # Build the connection URL
         if self.db_password:
+            password = quote_plus(self.db_password)
             return (
-                f"postgresql+psycopg://{self.db_user}:{self.db_password}"
+                f"postgresql+psycopg://{user}:{password}"
                 f"@{self.db_host}:{self.db_port}/{self.db_name}"
             )
         else:
-            return (
-                f"postgresql+psycopg://{self.db_user}"
-                f"@{self.db_host}:{self.db_port}/{self.db_name}"
-            )
+            return f"postgresql+psycopg://{user}" f"@{self.db_host}:{self.db_port}/{self.db_name}"
 
     def get_safe_dict(self) -> dict:
         """Get a dictionary representation with sensitive data masked.

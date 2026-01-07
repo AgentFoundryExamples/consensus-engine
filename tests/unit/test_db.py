@@ -20,7 +20,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from consensus_engine.config import Settings, get_settings
+from consensus_engine.config import get_settings
 from consensus_engine.db import (
     Base,
     check_database_health,
@@ -151,6 +151,24 @@ class TestDatabaseConfiguration:
 
         assert safe_dict["db_password"] == "***MASKED***"
         assert safe_dict["openai_api_key"].startswith("***")
+
+    def test_database_url_encodes_special_characters(self, clean_env, monkeypatch):
+        """Test that database URL properly encodes special characters in credentials."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("DB_NAME", "test_db")
+        monkeypatch.setenv("DB_USER", "user@domain.com")
+        monkeypatch.setenv("DB_PASSWORD", "p@ss:w/rd!")
+        monkeypatch.setenv("DB_HOST", "localhost")
+
+        settings = get_settings()
+        url = settings.database_url
+
+        # Verify special characters are URL encoded
+        assert "user%40domain.com" in url  # @ encoded
+        assert "p%40ss%3Aw%2Frd%21" in url  # @:/ encoded
+        assert "postgresql+psycopg://" in url
+        assert "localhost:5432" in url
+        assert "test_db" in url
 
 
 class TestEngineCreation:
@@ -300,7 +318,7 @@ class TestSessionManagement:
 
         # Simulate exception during session use
         try:
-            for session in get_session(mock_factory):
+            for _session in get_session(mock_factory):
                 raise ValueError("Test exception")
         except ValueError:
             pass
