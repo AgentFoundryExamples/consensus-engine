@@ -126,7 +126,9 @@ def get_cloud_sql_connection(
         logger.info("Successfully connected to Cloud SQL instance")
         return conn
 
-    except Exception as e:
+    except (OSError, ValueError) as e:
+        # OSError covers network and connection issues
+        # ValueError covers configuration issues (e.g., missing password)
         logger.error(
             f"Failed to connect to Cloud SQL instance "
             f"{settings.db_instance_connection_name}: {e}",
@@ -191,9 +193,18 @@ def create_engine_from_settings(settings: Settings) -> Engine:
         logger.info("Database engine created successfully")
         return engine
 
-    except Exception as e:
+    except (ValueError, OSError) as e:
+        # ValueError: Invalid configuration (e.g., missing DB_NAME)
+        # OSError: Network/connection issues
         logger.error(f"Failed to create database engine: {e}", exc_info=True)
         raise
+    except Exception as e:
+        # Catch any unexpected errors from SQLAlchemy
+        logger.error(
+            f"Unexpected error creating database engine: {e}",
+            exc_info=True,
+        )
+        raise RuntimeError(f"Failed to create database engine: {e}") from e
 
 
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:

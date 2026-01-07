@@ -303,8 +303,13 @@ class TestAlembicMigrations:
                 # Table should still exist after downgrade of empty migration
                 assert result.fetchone()[0] is True
 
+        except (OperationalError, OSError) as e:
+            # OperationalError: Database connection/query issues
+            # OSError: File system or network issues
+            pytest.skip(f"Migration test requires database connection: {e}")
         except Exception as e:
-            pytest.skip(f"Migration test requires proper Alembic setup: {e}")
+            # Re-raise unexpected errors to surface them properly
+            pytest.fail(f"Unexpected error in migration test: {e}")
 
 
 class TestDatabaseModels:
