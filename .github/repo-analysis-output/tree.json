@@ -175,6 +175,10 @@
                 {
                   "type": "file",
                   "name": "expand.py"
+                },
+                {
+                  "type": "file",
+                  "name": "review.py"
                 }
               ]
             },
@@ -208,6 +212,10 @@
             },
             {
               "type": "file",
+              "name": "test_acceptance_criteria.py"
+            },
+            {
+              "type": "file",
               "name": "test_app.py"
             },
             {
@@ -217,6 +225,10 @@
             {
               "type": "file",
               "name": "test_expand_service.py"
+            },
+            {
+              "type": "file",
+              "name": "test_review_service.py"
             }
           ]
         },
@@ -255,6 +267,10 @@
             {
               "type": "file",
               "name": "test_review_schemas.py"
+            },
+            {
+              "type": "file",
+              "name": "test_review_service.py"
             },
             {
               "type": "file",

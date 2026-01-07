@@ -8,8 +8,8 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 34
-- **Intra-repo dependencies**: 55
+- **Total files**: 38
+- **Intra-repo dependencies**: 79
 - **External stdlib dependencies**: 21
 - **External third-party dependencies**: 23
 
@@ -69,26 +69,26 @@ Total: 23 unique packages
 
 ## Most Depended Upon Files (Intra-Repo)
 
-- `src/consensus_engine/schemas/proposal.py` (10 dependents)
-- `src/consensus_engine/exceptions.py` (8 dependents)
-- `src/consensus_engine/config/settings.py` (7 dependents)
+- `src/consensus_engine/schemas/proposal.py` (14 dependents)
+- `src/consensus_engine/exceptions.py` (11 dependents)
+- `src/consensus_engine/config/settings.py` (11 dependents)
+- `src/consensus_engine/schemas/review.py` (8 dependents)
 - `src/consensus_engine/config/__init__.py` (6 dependents)
-- `src/consensus_engine/config/logging.py` (5 dependents)
+- `src/consensus_engine/config/logging.py` (6 dependents)
+- `src/consensus_engine/services/review.py` (5 dependents)
 - `src/consensus_engine/services/expand.py` (4 dependents)
 - `src/consensus_engine/schemas/requests.py` (4 dependents)
-- `src/consensus_engine/schemas/review.py` (3 dependents)
-- `src/consensus_engine/app.py` (3 dependents)
-- `src/consensus_engine/clients/openai_client.py` (2 dependents)
+- `src/consensus_engine/clients/openai_client.py` (4 dependents)
 
 ## Files with Most Dependencies (Intra-Repo)
 
+- `tests/integration/test_acceptance_criteria.py` (6 dependencies)
+- `src/consensus_engine/api/dependencies.py` (5 dependencies)
 - `src/consensus_engine/api/routes/expand.py` (5 dependencies)
 - `src/consensus_engine/app.py` (5 dependencies)
+- `src/consensus_engine/services/review.py` (5 dependencies)
+- `tests/integration/test_review_service.py` (5 dependencies)
+- `tests/unit/test_review_service.py` (5 dependencies)
 - `src/consensus_engine/services/expand.py` (4 dependencies)
 - `tests/integration/test_expand_endpoint.py` (4 dependencies)
 - `tests/unit/test_expand_service.py` (4 dependencies)
-- `src/consensus_engine/api/dependencies.py` (3 dependencies)
-- `src/consensus_engine/api/routes/health.py` (3 dependencies)
-- `src/consensus_engine/clients/openai_client.py` (3 dependencies)
-- `tests/conftest.py` (3 dependencies)
-- `tests/integration/test_expand_service.py` (3 dependencies)
