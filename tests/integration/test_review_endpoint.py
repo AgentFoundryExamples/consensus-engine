@@ -57,7 +57,10 @@ class TestReviewIdeaEndpoint:
     @patch("consensus_engine.services.review.OpenAIClientWrapper")
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_review_idea_success(
-        self, mock_expand_client_class: MagicMock, mock_review_client_class: MagicMock, client: TestClient
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_review_client_class: MagicMock,
+        client: TestClient,
     ) -> None:
         """Test successful idea review orchestration (happy path)."""
         # Setup expand mock
@@ -148,7 +151,7 @@ class TestReviewIdeaEndpoint:
         # Check metadata
         assert "run_id" in data
         assert "elapsed_time" in data
-        assert isinstance(data["elapsed_time"], (int, float))
+        assert isinstance(data["elapsed_time"], int | float)
         assert data["elapsed_time"] > 0
 
         # Verify X-Request-ID header
@@ -157,7 +160,10 @@ class TestReviewIdeaEndpoint:
     @patch("consensus_engine.services.review.OpenAIClientWrapper")
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_review_idea_with_blocking_issues(
-        self, mock_expand_client_class: MagicMock, mock_review_client_class: MagicMock, client: TestClient
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_review_client_class: MagicMock,
+        client: TestClient,
     ) -> None:
         """Test review-idea with blocking issues results in reject decision."""
         # Setup expand mock
@@ -225,7 +231,10 @@ class TestReviewIdeaEndpoint:
     @patch("consensus_engine.services.review.OpenAIClientWrapper")
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_review_idea_with_low_confidence(
-        self, mock_expand_client_class: MagicMock, mock_review_client_class: MagicMock, client: TestClient
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_review_client_class: MagicMock,
+        client: TestClient,
     ) -> None:
         """Test review-idea with low confidence results in revise decision."""
         # Setup expand mock
@@ -324,9 +333,12 @@ class TestReviewIdeaEndpoint:
     @patch("consensus_engine.services.review.OpenAIClientWrapper")
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_review_idea_review_failure_with_partial_results(
-        self, mock_expand_client_class: MagicMock, mock_review_client_class: MagicMock, client: TestClient
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_review_client_class: MagicMock,
+        client: TestClient,
     ) -> None:
-        """Test review-idea when review fails after successful expansion (includes partial results)."""
+        """Test review-idea when review fails after successful expansion."""
         # Setup expand mock to succeed
         mock_proposal = ExpandedProposal(
             problem_statement="Clear problem statement",
@@ -419,7 +431,10 @@ class TestReviewIdeaEndpoint:
     @patch("consensus_engine.services.review.OpenAIClientWrapper")
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_review_idea_with_extra_context_dict(
-        self, mock_expand_client_class: MagicMock, mock_review_client_class: MagicMock, client: TestClient
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_review_client_class: MagicMock,
+        client: TestClient,
     ) -> None:
         """Test review-idea with extra context as dictionary."""
         # Setup mocks
@@ -429,10 +444,18 @@ class TestReviewIdeaEndpoint:
             assumptions=["Assumption 1"],
             scope_non_goals=["Out of scope"],
         )
-        mock_expand_metadata = {"request_id": "expand-123", "model": "gpt-5.1", "temperature": 0.7, "elapsed_time": 2.0}
+        mock_expand_metadata = {
+            "request_id": "expand-123",
+            "model": "gpt-5.1",
+            "temperature": 0.7,
+            "elapsed_time": 2.0,
+        }
 
         mock_expand_client = MagicMock()
-        mock_expand_client.create_structured_response.return_value = (mock_proposal, mock_expand_metadata)
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            mock_expand_metadata,
+        )
         mock_expand_client_class.return_value = mock_expand_client
 
         mock_review = PersonaReview(
@@ -445,10 +468,18 @@ class TestReviewIdeaEndpoint:
             estimated_effort="2 weeks",
             dependency_risks=[],
         )
-        mock_review_metadata = {"request_id": "review-456", "model": "gpt-5.1", "temperature": 0.2, "elapsed_time": 1.5}
+        mock_review_metadata = {
+            "request_id": "review-456",
+            "model": "gpt-5.1",
+            "temperature": 0.2,
+            "elapsed_time": 1.5,
+        }
 
         mock_review_client = MagicMock()
-        mock_review_client.create_structured_response.return_value = (mock_review, mock_review_metadata)
+        mock_review_client.create_structured_response.return_value = (
+            mock_review,
+            mock_review_metadata,
+        )
         mock_review_client_class.return_value = mock_review_client
 
         # Make request with extra_context as dict
@@ -520,7 +551,10 @@ class TestReviewIdeaEndpoint:
     @patch("consensus_engine.services.review.OpenAIClientWrapper")
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_review_idea_client_cannot_control_model_settings(
-        self, mock_expand_client_class: MagicMock, mock_review_client_class: MagicMock, client: TestClient
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_review_client_class: MagicMock,
+        client: TestClient,
     ) -> None:
         """Test that client cannot control model or temperature settings."""
         # Setup mocks
@@ -530,10 +564,18 @@ class TestReviewIdeaEndpoint:
             assumptions=["Assumption"],
             scope_non_goals=["Out of scope"],
         )
-        mock_expand_metadata = {"request_id": "expand-123", "model": "gpt-5.1", "temperature": 0.7, "elapsed_time": 2.0}
+        mock_expand_metadata = {
+            "request_id": "expand-123",
+            "model": "gpt-5.1",
+            "temperature": 0.7,
+            "elapsed_time": 2.0,
+        }
 
         mock_expand_client = MagicMock()
-        mock_expand_client.create_structured_response.return_value = (mock_proposal, mock_expand_metadata)
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            mock_expand_metadata,
+        )
         mock_expand_client_class.return_value = mock_expand_client
 
         mock_review = PersonaReview(
@@ -546,10 +588,18 @@ class TestReviewIdeaEndpoint:
             estimated_effort="2 weeks",
             dependency_risks=[],
         )
-        mock_review_metadata = {"request_id": "review-456", "model": "gpt-5.1", "temperature": 0.2, "elapsed_time": 1.5}
+        mock_review_metadata = {
+            "request_id": "review-456",
+            "model": "gpt-5.1",
+            "temperature": 0.2,
+            "elapsed_time": 1.5,
+        }
 
         mock_review_client = MagicMock()
-        mock_review_client.create_structured_response.return_value = (mock_review, mock_review_metadata)
+        mock_review_client.create_structured_response.return_value = (
+            mock_review,
+            mock_review_metadata,
+        )
         mock_review_client_class.return_value = mock_review_client
 
         # Try to pass model and temperature in request (should be ignored)

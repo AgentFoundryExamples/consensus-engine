@@ -293,7 +293,7 @@ async def review_idea_endpoint(
             content=error_response.model_dump(),
         )
 
-    except Exception as e:
+    except Exception:
         elapsed_time = time.time() - start_time
         logger.error(
             "Step 1 failed: Unexpected error",
@@ -393,7 +393,7 @@ async def review_idea_endpoint(
             content=error_response.model_dump(),
         )
 
-    except Exception as e:
+    except Exception:
         elapsed_time = time.time() - start_time
         logger.error(
             "Step 2 failed: Unexpected error",
@@ -449,7 +449,7 @@ async def review_idea_endpoint(
             },
         )
 
-    except Exception as e:
+    except Exception:
         elapsed_time = time.time() - start_time
         logger.error(
             "Step 3 failed: Unexpected error during aggregation",
