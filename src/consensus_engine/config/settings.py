@@ -117,6 +117,31 @@ class Settings(BaseSettings):
         description="Default persona instructions for reviews",
         min_length=1,
     )
+    persona_template_version: str = Field(
+        default="1.0.0",
+        description="Version identifier for persona templates used",
+        min_length=1,
+    )
+
+    # Retry Configuration
+    max_retries_per_persona: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum retry attempts per persona review (1-10, default: 3)",
+    )
+    retry_initial_backoff_seconds: float = Field(
+        default=1.0,
+        ge=0.1,
+        le=60.0,
+        description="Initial backoff delay in seconds for retries (0.1-60.0, default: 1.0)",
+    )
+    retry_backoff_multiplier: float = Field(
+        default=2.0,
+        ge=1.0,
+        le=10.0,
+        description="Exponential backoff multiplier for retries (1.0-10.0, default: 2.0)",
+    )
 
     # Application Configuration
     env: Environment = Field(

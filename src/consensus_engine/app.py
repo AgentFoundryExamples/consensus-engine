@@ -14,7 +14,7 @@
 """Main FastAPI application factory.
 
 This module creates and configures the FastAPI application with
-dependency injection, middleware, and routes.
+dependency injection, middleware, database connections, and routes.
 """
 
 import time
@@ -30,6 +30,8 @@ from pydantic import ValidationError
 from consensus_engine.api.routes import expand, full_review, health, review
 from consensus_engine.config import get_settings
 from consensus_engine.config.logging import get_logger, setup_logging
+from consensus_engine.db import create_engine_from_settings, create_session_factory
+from consensus_engine.db.dependencies import cleanup, set_engine, set_session_factory
 from consensus_engine.exceptions import (
     ConsensusEngineError,
     LLMAuthenticationError,
@@ -59,10 +61,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Debug mode: {settings.debug}")
     logger.debug(f"Configuration: {settings.get_safe_dict()}")
 
+    # Initialize database engine and session factory
+    try:
+        logger.info("Initializing database connection")
+        engine = create_engine_from_settings(settings)
+        session_factory = create_session_factory(engine)
+        set_engine(engine)
+        set_session_factory(session_factory)
+        logger.info("Database connection initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database connection: {e}", exc_info=True)
+        # Don't fail startup if database is unavailable - endpoints will handle it
+        logger.warning("Application starting without database connection")
+
     yield
 
     # Shutdown
     logger.info("Shutting down Consensus Engine API")
+    logger.info("Disposing database engine")
+    cleanup()
 
 
 def create_app() -> FastAPI:
