@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 55
+Total files: 58
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -22,6 +22,15 @@ Total files: 55
 **Summary:** Python module for env  
 **Size:** 3.08 KB  
 **LOC:** 52  
+**TODOs/FIXMEs:** 0  
+
+## migrations/versions/453a79c83bde_add_versioned_run_tables.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python module for 453a79c83bde add versioned run tables  
+**Size:** 6.33 KB  
+**LOC:** 113  
 **TODOs/FIXMEs:** 0  
 
 ## migrations/versions/9a73090ad792_initial_empty_migration.py
@@ -173,8 +182,17 @@ Total files: 55
 **Role:** module-init  
 **Role Justification:** module initialization file '__init__'  
 **Summary:** Python module initialization (role: module-init)  
-**Size:** 9.38 KB  
-**LOC:** 212  
+**Size:** 9.65 KB  
+**LOC:** 217  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/db/models.py
+**Language:** Python  
+**Role:** model  
+**Role Justification:** model/schema name 'models'  
+**Summary:** Python data models (role: model)  
+**Size:** 11.73 KB  
+**LOC:** 238  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py
@@ -317,8 +335,8 @@ Total files: 55
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 11.65 KB  
-**LOC:** 224  
+**Size:** 26.54 KB  
+**LOC:** 554  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_expand_endpoint.py
@@ -427,6 +445,15 @@ Total files: 55
 **Summary:** Python test file (role: test)  
 **Size:** 10.67 KB  
 **LOC:** 190  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_models.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 16.13 KB  
+**LOC:** 387  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_openai_client.py

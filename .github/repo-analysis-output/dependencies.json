@@ -30,6 +30,21 @@
       }
     },
     {
+      "id": "migrations/versions/453a79c83bde_add_versioned_run_tables.py",
+      "path": "migrations/versions/453a79c83bde_add_versioned_run_tables.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Sequence"
+        ],
+        "third-party": [
+          "alembic.op",
+          "sqlalchemy",
+          "sqlalchemy.dialects.postgresql"
+        ]
+      }
+    },
+    {
       "id": "migrations/versions/9a73090ad792_initial_empty_migration.py",
       "path": "migrations/versions/9a73090ad792_initial_empty_migration.py",
       "type": "file",
@@ -292,6 +307,38 @@
       }
     },
     {
+      "id": "src/consensus_engine/db/models.py",
+      "path": "src/consensus_engine/db/models.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "enum",
+          "typing.Any",
+          "uuid"
+        ],
+        "third-party": [
+          "sqlalchemy.",
+          "sqlalchemy.Boolean",
+          "sqlalchemy.CheckConstraint",
+          "sqlalchemy.DateTime",
+          "sqlalchemy.Enum",
+          "sqlalchemy.ForeignKey",
+          "sqlalchemy.Index",
+          "sqlalchemy.Numeric",
+          "sqlalchemy.String",
+          "sqlalchemy.Text",
+          "sqlalchemy.UniqueConstraint",
+          "sqlalchemy.dialects.postgresql.JSONB",
+          "sqlalchemy.dialects.postgresql.UUID",
+          "sqlalchemy.orm.Mapped",
+          "sqlalchemy.orm.mapped_column",
+          "sqlalchemy.orm.relationship"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/exceptions.py",
       "path": "src/consensus_engine/exceptions.py",
       "type": "file",
@@ -477,7 +524,8 @@
       "external_dependencies": {
         "stdlib": [
           "os",
-          "pathlib.Path"
+          "pathlib.Path",
+          "uuid"
         ],
         "third-party": [
           "alembic.command",
@@ -487,6 +535,7 @@
           "sqlalchemy.Integer",
           "sqlalchemy.String",
           "sqlalchemy.create_engine",
+          "sqlalchemy.exc.IntegrityError",
           "sqlalchemy.exc.OperationalError",
           "sqlalchemy.orm.sessionmaker",
           "sqlalchemy.text"
@@ -658,6 +707,17 @@
           "pydantic.ValidationError",
           "pytest"
         ]
+      }
+    },
+    {
+      "id": "tests/unit/test_models.py",
+      "path": "tests/unit/test_models.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "uuid"
+        ],
+        "third-party": []
       }
     },
     {
@@ -964,6 +1024,14 @@
       "target": "src/consensus_engine/config/settings.py"
     },
     {
+      "source": "src/consensus_engine/db/__init__.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "src/consensus_engine/db/models.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
       "source": "src/consensus_engine/schemas/__init__.py",
       "target": "src/consensus_engine/schemas/proposal.py"
     },
@@ -1118,6 +1186,10 @@
     {
       "source": "tests/integration/test_db.py",
       "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_db.py",
+      "target": "src/consensus_engine/db/models.py"
     },
     {
       "source": "tests/integration/test_expand_endpoint.py",
@@ -1276,6 +1348,10 @@
       "target": "src/consensus_engine/services/expand.py"
     },
     {
+      "source": "tests/unit/test_models.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
       "source": "tests/unit/test_openai_client.py",
       "target": "src/consensus_engine/clients/openai_client.py"
     },
@@ -1362,7 +1438,11 @@
       "collections.abc.Awaitable",
       "collections.abc.Callable",
       "collections.abc.Generator",
+      "collections.abc.Sequence",
       "contextlib.asynccontextmanager",
+      "datetime.UTC",
+      "datetime.datetime",
+      "enum",
       "enum.Enum",
       "functools.lru_cache",
       "json",
@@ -1416,23 +1496,40 @@
       "pydantic_settings.SettingsConfigDict",
       "pytest",
       "sqlalchemy",
+      "sqlalchemy.",
+      "sqlalchemy.Boolean",
+      "sqlalchemy.CheckConstraint",
       "sqlalchemy.Column",
+      "sqlalchemy.DateTime",
+      "sqlalchemy.Enum",
+      "sqlalchemy.ForeignKey",
+      "sqlalchemy.Index",
       "sqlalchemy.Integer",
+      "sqlalchemy.Numeric",
       "sqlalchemy.String",
+      "sqlalchemy.Text",
+      "sqlalchemy.UniqueConstraint",
       "sqlalchemy.create_engine",
+      "sqlalchemy.dialects.postgresql",
+      "sqlalchemy.dialects.postgresql.JSONB",
+      "sqlalchemy.dialects.postgresql.UUID",
       "sqlalchemy.engine.Engine",
       "sqlalchemy.engine_from_config",
       "sqlalchemy.event",
       "sqlalchemy.exc.DBAPIError",
+      "sqlalchemy.exc.IntegrityError",
       "sqlalchemy.exc.OperationalError",
+      "sqlalchemy.orm.Mapped",
       "sqlalchemy.orm.Session",
       "sqlalchemy.orm.declarative_base",
+      "sqlalchemy.orm.mapped_column",
+      "sqlalchemy.orm.relationship",
       "sqlalchemy.orm.sessionmaker",
       "sqlalchemy.pool",
       "sqlalchemy.pool.NullPool",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 26,
-    "third-party_count": 45
+    "stdlib_count": 30,
+    "third-party_count": 62
   }
 }

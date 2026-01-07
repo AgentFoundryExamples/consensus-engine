@@ -8,22 +8,26 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 55
-- **Intra-repo dependencies**: 146
-- **External stdlib dependencies**: 26
-- **External third-party dependencies**: 45
+- **Total files**: 58
+- **Intra-repo dependencies**: 150
+- **External stdlib dependencies**: 30
+- **External third-party dependencies**: 62
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 26 unique modules
+Total: 30 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
 - `collections.abc.Callable`
 - `collections.abc.Generator`
+- `collections.abc.Sequence`
 - `contextlib.asynccontextmanager`
+- `datetime.UTC`
+- `datetime.datetime`
+- `enum`
 - `enum.Enum`
 - `functools.lru_cache`
 - `json`
@@ -35,15 +39,11 @@ Total: 26 unique modules
 - `sys`
 - `threading`
 - `time`
-- `typing.Any`
-- `typing.Sequence`
-- `typing.TypeVar`
-- `typing.Union`
-- ... and 6 more (see JSON for full list)
+- ... and 10 more (see JSON for full list)
 
 ### Third-Party Packages
 
-Total: 45 unique packages
+Total: 62 unique packages
 
 - `alembic.command`
 - `alembic.config.Config`
@@ -65,7 +65,7 @@ Total: 45 unique packages
 - `openai.APIConnectionError`
 - `openai.APITimeoutError`
 - `openai.AuthenticationError`
-- ... and 25 more (see JSON for full list)
+- ... and 42 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 

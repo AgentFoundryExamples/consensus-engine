@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 55,
+  "total_files": 58,
   "files": [
     {
       "schema_version": "2.0",
@@ -27,6 +27,20 @@
       "metrics": {
         "size_bytes": 3158,
         "loc": 52,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "migrations/versions/453a79c83bde_add_versioned_run_tables.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python module for 453a79c83bde add versioned run tables",
+      "summary_text": "Python module for 453a79c83bde add versioned run tables",
+      "metrics": {
+        "size_bytes": 6486,
+        "loc": 113,
         "todo_count": 0
       }
     },
@@ -263,8 +277,22 @@
       "summary": "Python module initialization (role: module-init)",
       "summary_text": "Python module initialization (role: module-init)",
       "metrics": {
-        "size_bytes": 9603,
-        "loc": 212,
+        "size_bytes": 9885,
+        "loc": 217,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/db/models.py",
+      "language": "Python",
+      "role": "model",
+      "role_justification": "model/schema name 'models'",
+      "summary": "Python data models (role: model)",
+      "summary_text": "Python data models (role: model)",
+      "metrics": {
+        "size_bytes": 12009,
+        "loc": 238,
         "todo_count": 0
       }
     },
@@ -487,8 +515,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 11928,
-        "loc": 224,
+        "size_bytes": 27180,
+        "loc": 554,
         "todo_count": 0
       }
     },
@@ -657,6 +685,20 @@
       "metrics": {
         "size_bytes": 10931,
         "loc": 190,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_models.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 16513,
+        "loc": 387,
         "todo_count": 0
       }
     },
