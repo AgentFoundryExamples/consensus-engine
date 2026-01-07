@@ -1,6 +1,20 @@
 {
   "nodes": [
     {
+      "id": "examples/test_full_review.py",
+      "path": "examples/test_full_review.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json",
+          "sys"
+        ],
+        "third-party": [
+          "httpx"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/__init__.py",
       "path": "src/consensus_engine/__init__.py",
       "type": "file",
@@ -55,6 +69,26 @@
           "fastapi.APIRouter",
           "fastapi.Depends",
           "fastapi.HTTPException",
+          "fastapi.status"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/api/routes/full_review.py",
+      "path": "src/consensus_engine/api/routes/full_review.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json",
+          "time",
+          "typing.Any",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.APIRouter",
+          "fastapi.Depends",
+          "fastapi.Request",
+          "fastapi.responses.JSONResponse",
           "fastapi.status"
         ]
       }
@@ -411,6 +445,22 @@
       }
     },
     {
+      "id": "tests/integration/test_full_review_endpoint.py",
+      "path": "tests/integration/test_full_review_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator",
+          "unittest.mock.MagicMock",
+          "unittest.mock.patch"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/integration/test_multi_persona.py",
       "path": "tests/integration/test_multi_persona.py",
       "type": "file",
@@ -649,6 +699,10 @@
     },
     {
       "source": "src/consensus_engine/api/routes/__init__.py",
+      "target": "src/consensus_engine/api/routes/full_review.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/__init__.py",
       "target": "src/consensus_engine/api/routes/health.py"
     },
     {
@@ -674,6 +728,38 @@
     {
       "source": "src/consensus_engine/api/routes/expand.py",
       "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/services/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/services/aggregator.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/services/orchestrator.py"
     },
     {
       "source": "src/consensus_engine/api/routes/health.py",
@@ -718,6 +804,10 @@
     {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/api/routes/expand.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/api/routes/full_review.py"
     },
     {
       "source": "src/consensus_engine/app.py",
@@ -936,6 +1026,26 @@
       "target": "src/consensus_engine/services/expand.py"
     },
     {
+      "source": "tests/integration/test_full_review_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_full_review_endpoint.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "tests/integration/test_full_review_endpoint.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/integration/test_full_review_endpoint.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "tests/integration/test_full_review_endpoint.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
       "source": "tests/integration/test_multi_persona.py",
       "target": "src/consensus_engine/config/settings.py"
     },
@@ -1141,6 +1251,7 @@
       "fastapi.responses.JSONResponse",
       "fastapi.status",
       "fastapi.testclient.TestClient",
+      "httpx",
       "openai.",
       "openai.APIConnectionError",
       "openai.APITimeoutError",
@@ -1156,6 +1267,6 @@
       "pytest"
     ],
     "stdlib_count": 19,
-    "third-party_count": 23
+    "third-party_count": 24
   }
 }

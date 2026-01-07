@@ -1,7 +1,21 @@
 {
   "schema_version": "2.0",
-  "total_files": 47,
+  "total_files": 50,
   "files": [
+    {
+      "schema_version": "2.0",
+      "path": "examples/test_full_review.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 5788,
+        "loc": 102,
+        "todo_count": 0
+      }
+    },
     {
       "schema_version": "2.0",
       "path": "src/consensus_engine/__init__.py",
@@ -53,7 +67,7 @@
       "summary": "Python module initialization (role: module-init)",
       "summary_text": "Python module initialization (role: module-init)",
       "metrics": {
-        "size_bytes": 710,
+        "size_bytes": 738,
         "loc": 3,
         "todo_count": 0
       }
@@ -69,6 +83,20 @@
       "metrics": {
         "size_bytes": 9197,
         "loc": 221,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/api/routes/full_review.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 19220,
+        "loc": 436,
         "todo_count": 0
       }
     },
@@ -109,8 +137,8 @@
       "summary": "Python main entry point (role: entry-point)",
       "summary_text": "Python main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 9793,
-        "loc": 240,
+        "size_bytes": 9849,
+        "loc": 241,
         "todo_count": 0
       }
     },
@@ -249,8 +277,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 10439,
-        "loc": 215,
+        "size_bytes": 14403,
+        "loc": 302,
         "todo_count": 0
       }
     },
@@ -291,7 +319,7 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9753,
+        "size_bytes": 9745,
         "loc": 195,
         "todo_count": 0
       }
@@ -438,6 +466,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "tests/integration/test_full_review_endpoint.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 15835,
+        "loc": 331,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "tests/integration/test_multi_persona.py",
       "language": "Python",
       "role": "test",
@@ -501,8 +543,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 14404,
-        "loc": 237,
+        "size_bytes": 14391,
+        "loc": 236,
         "todo_count": 0
       }
     },
