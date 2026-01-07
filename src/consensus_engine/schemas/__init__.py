@@ -12,3 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pydantic schemas for request/response models."""
+
+from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
+
+__all__ = ["ExpandedProposal", "IdeaInput"]

@@ -12,3 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Services package for business logic."""
+
+from consensus_engine.services.expand import expand_idea
+
+__all__ = ["expand_idea"]
