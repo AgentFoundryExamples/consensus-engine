@@ -13,7 +13,6 @@
 # limitations under the License.
 """Unit tests for review schemas."""
 
-
 import pytest
 from pydantic import ValidationError
 
@@ -119,7 +118,7 @@ class TestPersonaReview:
         )
 
         assert review.persona_name == "Reviewer"
-        assert review.persona_id is None
+        assert review.persona_id == "generic"
         assert review.confidence_score == 0.5
         assert review.strengths == []
         assert review.concerns == []
@@ -206,9 +205,12 @@ class TestPersonaReview:
         )
 
         assert review.persona_name == "Reviewer"
+        assert review.persona_id == "generic"
         assert review.strengths == ["Strength 1", "Strength 2"]
         assert review.recommendations == ["Rec 1"]
-        assert review.blocking_issues == ["Issue"]
+        assert len(review.blocking_issues) == 1
+        assert review.blocking_issues[0].text == "Issue"
+        assert review.blocking_issues[0].security_critical is False
         assert review.estimated_effort == "2 weeks"
         assert review.dependency_risks == ["Risk"]
 
@@ -325,7 +327,11 @@ class TestMinorityReport:
     def test_minority_report_valid(self) -> None:
         """Test MinorityReport with valid data."""
         report = MinorityReport(
+            persona_id="critic",
             persona_name="Dissenting Reviewer",
+            confidence_score=0.5,
+            blocking_summary="Issues found",
+            mitigation_recommendation="Address concerns",
             strengths=["Good idea", "Clear goals"],
             concerns=["Too complex", "High risk"],
         )
@@ -337,19 +343,30 @@ class TestMinorityReport:
     def test_minority_report_trims_strings(self) -> None:
         """Test MinorityReport trims whitespace."""
         report = MinorityReport(
+            persona_id="  critic  ",
             persona_name="  Reviewer  ",
+            confidence_score=0.5,
+            blocking_summary="  Issues  ",
+            mitigation_recommendation="  Fix them  ",
             strengths=["  Strength  "],
             concerns=["  Concern  "],
         )
 
+        assert report.persona_id == "critic"
         assert report.persona_name == "Reviewer"
+        assert report.blocking_summary == "Issues"
+        assert report.mitigation_recommendation == "Fix them"
         assert report.strengths == ["Strength"]
         assert report.concerns == ["Concern"]
 
     def test_minority_report_empty_lists(self) -> None:
-        """Test MinorityReport accepts empty lists."""
+        """Test MinorityReport accepts empty lists for optional fields."""
         report = MinorityReport(
+            persona_id="critic",
             persona_name="Reviewer",
+            confidence_score=0.5,
+            blocking_summary="Issues found",
+            mitigation_recommendation="Address concerns",
             strengths=[],
             concerns=[],
         )
@@ -407,7 +424,11 @@ class TestDecisionAggregation:
     def test_decision_aggregation_full(self) -> None:
         """Test DecisionAggregation with all fields."""
         minority = MinorityReport(
+            persona_id="critic",
             persona_name="Dissenter",
+            confidence_score=0.5,
+            blocking_summary="Concerns identified",
+            mitigation_recommendation="Address the risks",
             strengths=["Good idea"],
             concerns=["Too risky"],
         )
@@ -609,7 +630,6 @@ class TestPersonaReviewWithPersonaId:
         with pytest.raises(ValidationError) as exc_info:
             PersonaReview(
                 persona_name="Architect",
-                persona_id="generic",
                 # persona_id missing
                 confidence_score=0.85,
                 strengths=["Good design"],
@@ -933,3 +953,86 @@ class TestDecisionAggregationExtended:
 
         # Both formats should be present
         assert aggregation.score_breakdown is not None
+
+
+class TestDecisionAggregationMixedReports:
+    """Test suite for DecisionAggregation with mixed minority report fields."""
+
+    def test_decision_aggregation_with_both_minority_report_fields(self) -> None:
+        """Test DecisionAggregation with both singular and plural minority reports."""
+        single_report = MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=0.5,
+            blocking_summary="Too many risks",
+            mitigation_recommendation="Mitigate risks",
+        )
+        multiple_reports = [
+            MinorityReport(
+                persona_id="security_guardian",
+                persona_name="SecurityGuardian",
+                confidence_score=0.4,
+                blocking_summary="Security issues",
+                mitigation_recommendation="Fix security",
+            ),
+            MinorityReport(
+                persona_id="critic",
+                persona_name="Critic",
+                confidence_score=0.5,
+                blocking_summary="Too many risks",
+                mitigation_recommendation="Mitigate risks",
+            ),
+        ]
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.65,
+            decision=DecisionEnum.REVISE,
+            minority_report=single_report,
+            minority_reports=multiple_reports,
+        )
+
+        # Both fields should be accessible
+        assert aggregation.minority_report is not None
+        assert aggregation.minority_report.persona_id == "critic"
+        assert aggregation.minority_reports is not None
+        assert len(aggregation.minority_reports) == 2
+        assert aggregation.minority_reports[0].persona_id == "security_guardian"
+
+    def test_decision_aggregation_minority_report_only(self) -> None:
+        """Test DecisionAggregation with only singular minority_report (legacy)."""
+        report = MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=0.5,
+            blocking_summary="Issues found",
+            mitigation_recommendation="Fix issues",
+        )
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.65,
+            decision=DecisionEnum.REVISE,
+            minority_report=report,
+        )
+
+        assert aggregation.minority_report is not None
+        assert aggregation.minority_report.persona_id == "critic"
+        assert aggregation.minority_reports is None
+
+    def test_decision_aggregation_minority_reports_only(self) -> None:
+        """Test DecisionAggregation with only plural minority_reports (new)."""
+        reports = [
+            MinorityReport(
+                persona_id="security_guardian",
+                persona_name="SecurityGuardian",
+                confidence_score=0.4,
+                blocking_summary="Security issues",
+                mitigation_recommendation="Fix security",
+            ),
+        ]
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.65,
+            decision=DecisionEnum.REVISE,
+            minority_reports=reports,
+        )
+
+        assert aggregation.minority_report is None
+        assert aggregation.minority_reports is not None
+        assert len(aggregation.minority_reports) == 1
