@@ -8,8 +8,8 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 29
-- **Intra-repo dependencies**: 44
+- **Total files**: 32
+- **Intra-repo dependencies**: 51
 - **External stdlib dependencies**: 19
 - **External third-party dependencies**: 23
 
@@ -67,15 +67,15 @@ Total: 23 unique packages
 
 ## Most Depended Upon Files (Intra-Repo)
 
-- `src/consensus_engine/schemas/proposal.py` (7 dependents)
-- `src/consensus_engine/exceptions.py` (7 dependents)
+- `src/consensus_engine/schemas/proposal.py` (9 dependents)
+- `src/consensus_engine/exceptions.py` (8 dependents)
+- `src/consensus_engine/config/settings.py` (7 dependents)
 - `src/consensus_engine/config/__init__.py` (6 dependents)
-- `src/consensus_engine/config/settings.py` (6 dependents)
 - `src/consensus_engine/config/logging.py` (5 dependents)
-- `src/consensus_engine/services/expand.py` (3 dependents)
-- `src/consensus_engine/schemas/requests.py` (3 dependents)
+- `src/consensus_engine/services/expand.py` (4 dependents)
+- `src/consensus_engine/schemas/requests.py` (4 dependents)
+- `src/consensus_engine/app.py` (3 dependents)
 - `src/consensus_engine/clients/openai_client.py` (2 dependents)
-- `src/consensus_engine/app.py` (2 dependents)
 - `src/consensus_engine/api/dependencies.py` (1 dependents)
 
 ## Files with Most Dependencies (Intra-Repo)
@@ -88,5 +88,5 @@ Total: 23 unique packages
 - `src/consensus_engine/api/dependencies.py` (3 dependencies)
 - `src/consensus_engine/api/routes/health.py` (3 dependencies)
 - `src/consensus_engine/clients/openai_client.py` (3 dependencies)
-- `tests/unit/test_openai_client.py` (3 dependencies)
-- `tests/integration/test_app.py` (2 dependencies)
+- `tests/conftest.py` (3 dependencies)
+- `tests/integration/test_expand_service.py` (3 dependencies)

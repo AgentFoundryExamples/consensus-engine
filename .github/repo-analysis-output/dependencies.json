@@ -243,6 +243,22 @@
       }
     },
     {
+      "id": "tests/conftest.py",
+      "path": "tests/conftest.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator",
+          "typing.Any",
+          "unittest.mock.MagicMock"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/integration/__init__.py",
       "path": "tests/integration/__init__.py",
       "type": "file",
@@ -277,6 +293,20 @@
         ],
         "third-party": [
           "fastapi.testclient.TestClient",
+          "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/integration/test_expand_service.py",
+      "path": "tests/integration/test_expand_service.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "unittest.mock.MagicMock",
+          "unittest.mock.patch"
+        ],
+        "third-party": [
           "pytest"
         ]
       }
@@ -364,6 +394,18 @@
     {
       "id": "tests/unit/test_request_schemas.py",
       "path": "tests/unit/test_request_schemas.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/unit/test_validation.py",
+      "path": "tests/unit/test_validation.py",
       "type": "file",
       "external_dependencies": {
         "stdlib": [],
@@ -484,6 +526,18 @@
       "target": "src/consensus_engine/schemas/proposal.py"
     },
     {
+      "source": "tests/conftest.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/conftest.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
+      "source": "tests/conftest.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
       "source": "tests/integration/test_app.py",
       "target": "src/consensus_engine/app.py"
     },
@@ -506,6 +560,18 @@
     {
       "source": "tests/integration/test_expand_endpoint.py",
       "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_expand_service.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "tests/integration/test_expand_service.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/integration/test_expand_service.py",
+      "target": "src/consensus_engine/services/expand.py"
     },
     {
       "source": "tests/unit/test_config.py",
@@ -549,6 +615,10 @@
     },
     {
       "source": "tests/unit/test_request_schemas.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "tests/unit/test_validation.py",
       "target": "src/consensus_engine/schemas/requests.py"
     }
   ],

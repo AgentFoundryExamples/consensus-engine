@@ -45,7 +45,8 @@
   ├── integration
     ├── __init__.py
     ├── test_app.py
-    └── test_expand_endpoint.py
+    ├── test_expand_endpoint.py
+    └── test_expand_service.py
   ├── unit
     ├── __init__.py
     ├── test_config.py
@@ -53,8 +54,10 @@
     ├── test_expand_service.py
     ├── test_openai_client.py
     ├── test_proposal_schemas.py
-    └── test_request_schemas.py
-  └── __init__.py
+    ├── test_request_schemas.py
+    └── test_validation.py
+  ├── __init__.py
+  └── conftest.py
 ├── .env.example
 ├── .gitignore
 ├── LICENSE

@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 29
+Total files: 32
 
 ## src/consensus_engine/__init__.py
 **Language:** Python  
@@ -177,6 +177,15 @@ Total files: 29
 **LOC:** 1  
 **TODOs/FIXMEs:** 0  
 
+## tests/conftest.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** located in 'tests' directory  
+**Summary:** Python test implementation (role: test)  
+**Size:** 5.88 KB  
+**LOC:** 135  
+**TODOs/FIXMEs:** 0  
+
 ## tests/integration/__init__.py
 **Language:** Python  
 **Role:** test  
@@ -202,6 +211,15 @@ Total files: 29
 **Summary:** Python test file (role: test)  
 **Size:** 14.34 KB  
 **LOC:** 289  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_expand_service.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 13.89 KB  
+**LOC:** 248  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py
@@ -265,4 +283,13 @@ Total files: 29
 **Summary:** Python test file (role: test)  
 **Size:** 9.98 KB  
 **LOC:** 206  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_validation.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 10.19 KB  
+**LOC:** 168  
 **TODOs/FIXMEs:** 0  

@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 29,
+  "total_files": 32,
   "files": [
     {
       "schema_version": "2.0",
@@ -270,6 +270,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "tests/conftest.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "located in 'tests' directory",
+      "summary": "Python test implementation (role: test)",
+      "summary_text": "Python test implementation (role: test)",
+      "metrics": {
+        "size_bytes": 6018,
+        "loc": 135,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "tests/integration/__init__.py",
       "language": "Python",
       "role": "test",
@@ -307,6 +321,20 @@
       "metrics": {
         "size_bytes": 14688,
         "loc": 289,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_expand_service.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 14225,
+        "loc": 248,
         "todo_count": 0
       }
     },
@@ -405,6 +433,20 @@
       "metrics": {
         "size_bytes": 10218,
         "loc": 206,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_validation.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 10437,
+        "loc": 168,
         "todo_count": 0
       }
     }
