@@ -396,7 +396,7 @@ class FullReviewErrorResponse(BaseModel):
 
 class PersonaReviewSummary(BaseModel):
     """Summary of a persona review for run list/detail responses.
-    
+
     Attributes:
         persona_id: Stable identifier for the persona
         persona_name: Display name for the persona
@@ -404,7 +404,7 @@ class PersonaReviewSummary(BaseModel):
         blocking_issues_present: Boolean flag indicating presence of blocking issues
         prompt_parameters_json: Prompt parameters used for this review
     """
-    
+
     persona_id: str = Field(..., description="Stable identifier for the persona")
     persona_name: str = Field(..., description="Display name for the persona")
     confidence_score: float = Field(..., description="Numeric confidence score [0.0, 1.0]")
@@ -418,7 +418,7 @@ class PersonaReviewSummary(BaseModel):
 
 class RunListItemResponse(BaseModel):
     """Response model for individual items in GET /v1/runs list.
-    
+
     Attributes:
         run_id: UUID of the run
         created_at: Timestamp when run was created
@@ -430,7 +430,7 @@ class RunListItemResponse(BaseModel):
         proposal_title: Title from the proposal (truncated metadata)
         proposal_summary: Summary from the proposal (truncated metadata)
     """
-    
+
     run_id: str = Field(..., description="UUID of the run")
     created_at: str = Field(..., description="ISO timestamp when run was created")
     status: str = Field(..., description="Current status: running, completed, or failed")
@@ -454,14 +454,14 @@ class RunListItemResponse(BaseModel):
 
 class RunListResponse(BaseModel):
     """Response model for GET /v1/runs endpoint.
-    
+
     Attributes:
         runs: List of run items
         total: Total number of runs matching filters
         limit: Number of items per page
         offset: Current offset
     """
-    
+
     runs: list[RunListItemResponse] = Field(..., description="List of run items")
     total: int = Field(..., description="Total number of runs matching filters")
     limit: int = Field(..., description="Number of items per page")
@@ -470,7 +470,7 @@ class RunListResponse(BaseModel):
 
 class RunDetailResponse(BaseModel):
     """Response model for GET /v1/runs/{run_id} endpoint.
-    
+
     Attributes:
         run_id: UUID of the run
         created_at: Timestamp when run was created
@@ -489,7 +489,7 @@ class RunDetailResponse(BaseModel):
         persona_reviews: Array of persona reviews with scores and blocking flags
         decision: Decision JSON (nullable if run failed or incomplete)
     """
-    
+
     run_id: str = Field(..., description="UUID of the run")
     created_at: str = Field(..., description="ISO timestamp when run was created")
     updated_at: str = Field(..., description="ISO timestamp when run was last updated")

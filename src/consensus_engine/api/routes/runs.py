@@ -83,7 +83,7 @@ async def list_runs(
     ),
 ) -> RunListResponse:
     """List runs with filtering and pagination.
-    
+
     Args:
         db_session: Database session injected via dependency
         limit: Number of items per page
@@ -95,10 +95,10 @@ async def list_runs(
         min_confidence: Optional filter by minimum overall_weighted_confidence
         start_date: Optional filter by created_at >= start_date
         end_date: Optional filter by created_at <= end_date
-        
+
     Returns:
         RunListResponse with paginated list of runs
-        
+
     Raises:
         HTTPException: 400 for invalid parameters (e.g., invalid UUID, date format)
     """
@@ -116,58 +116,58 @@ async def list_runs(
             "end_date": end_date,
         },
     )
-    
+
     # Parse and validate filters
     status_enum: RunStatus | None = None
     if status is not None:
         try:
             status_enum = RunStatus(status)
-        except ValueError:
+        except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid status: {status}. Must be one of: running, completed, failed",
-            )
-    
+            ) from e
+
     run_type_enum: RunType | None = None
     if run_type is not None:
         try:
             run_type_enum = RunType(run_type)
-        except ValueError:
+        except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid run_type: {run_type}. Must be one of: initial, revision",
-            )
-    
+            ) from e
+
     parent_run_uuid: uuid.UUID | None = None
     if parent_run_id is not None:
         try:
             parent_run_uuid = uuid.UUID(parent_run_id)
-        except ValueError:
+        except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid parent_run_id UUID: {parent_run_id}",
-            )
-    
+            ) from e
+
     start_date_dt: datetime | None = None
     if start_date is not None:
         try:
             start_date_dt = datetime.fromisoformat(start_date)
-        except ValueError:
+        except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid start_date format: {start_date}. Must be ISO 8601 format",
-            )
-    
+            ) from e
+
     end_date_dt: datetime | None = None
     if end_date is not None:
         try:
             end_date_dt = datetime.fromisoformat(end_date)
-        except ValueError:
+        except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid end_date format: {end_date}. Must be ISO 8601 format",
-            )
-    
+            ) from e
+
     # Query database
     runs, total = RunRepository.list_runs(
         session=db_session,
@@ -181,19 +181,19 @@ async def list_runs(
         start_date=start_date_dt,
         end_date=end_date_dt,
     )
-    
+
     # Build response items
     run_items: list[RunListItemResponse] = []
     for run in runs:
         # Extract truncated proposal metadata
         proposal_title: str | None = None
         proposal_summary: str | None = None
-        
+
         if run.proposal_version and run.proposal_version.expanded_proposal_json:
             proposal_json = run.proposal_version.expanded_proposal_json
             proposal_title = proposal_json.get("title")
             proposal_summary = proposal_json.get("summary")
-        
+
         run_item = RunListItemResponse(
             run_id=str(run.id),
             created_at=run.created_at.isoformat(),
@@ -208,12 +208,12 @@ async def list_runs(
             proposal_summary=proposal_summary,
         )
         run_items.append(run_item)
-    
+
     logger.info(
         f"Returning {len(run_items)} runs (total={total})",
         extra={"count": len(run_items), "total": total},
     )
-    
+
     return RunListResponse(
         runs=run_items,
         total=total,
@@ -237,14 +237,14 @@ async def get_run_detail(
     db_session: Session = Depends(get_db_session),
 ) -> RunDetailResponse:
     """Get full run details by ID.
-    
+
     Args:
         run_id: UUID of the run
         db_session: Database session injected via dependency
-        
+
     Returns:
         RunDetailResponse with full run details
-        
+
     Raises:
         HTTPException: 400 for invalid UUID, 404 for missing run
     """
@@ -252,30 +252,30 @@ async def get_run_detail(
         "Retrieving run detail",
         extra={"run_id": run_id},
     )
-    
+
     # Parse and validate run_id
     try:
         run_uuid = uuid.UUID(run_id)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid run_id UUID: {run_id}",
-        )
-    
+        ) from e
+
     # Retrieve run with all relations
     run = RunRepository.get_run_with_relations(db_session, run_uuid)
-    
+
     if run is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Run not found: {run_id}",
         )
-    
+
     # Extract proposal JSON
     proposal_json: dict[str, Any] | None = None
     if run.proposal_version:
         proposal_json = run.proposal_version.expanded_proposal_json
-    
+
     # Extract persona reviews
     persona_reviews: list[PersonaReviewSummary] = []
     for review in run.persona_reviews:
@@ -287,12 +287,12 @@ async def get_run_detail(
             prompt_parameters_json=review.prompt_parameters_json,
         )
         persona_reviews.append(persona_review)
-    
+
     # Extract decision JSON
     decision_json: dict[str, Any] | None = None
     if run.decision:
         decision_json = run.decision.decision_json
-    
+
     # Build response
     response = RunDetailResponse(
         run_id=str(run.id),
@@ -314,7 +314,7 @@ async def get_run_detail(
         persona_reviews=persona_reviews,
         decision=decision_json,
     )
-    
+
     logger.info(
         "Returning run detail",
         extra={
@@ -325,5 +325,5 @@ async def get_run_detail(
             "has_decision": decision_json is not None,
         },
     )
-    
+
     return response

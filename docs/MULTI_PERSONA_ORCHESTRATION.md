@@ -347,3 +347,53 @@ for session in get_session(session_factory):
 ```
 
 See full documentation in the repository for complete details.
+
+## Run Retrieval APIs
+
+The Consensus Engine exposes APIs to query stored runs for audits, debugging, and building on previous work.
+
+### GET /v1/runs
+
+Returns a paginated list of runs with filtering and sorting capabilities.
+
+**Query Parameters:**
+- `limit` (optional, 1-100, default: 30): Number of items per page
+- `offset` (optional, ≥0, default: 0): Offset for pagination
+- `status` (optional): Filter by status (`running`, `completed`, `failed`)
+- `run_type` (optional): Filter by type (`initial`, `revision`)
+- `parent_run_id` (optional, UUID): Filter revisions by parent run
+- `decision` (optional): Filter by decision label (e.g., `approve`, `revise`, `reject`)
+- `min_confidence` (optional, 0.0-1.0): Filter by minimum weighted confidence
+- `start_date` (optional, ISO 8601): Filter by created_at >= start_date
+- `end_date` (optional, ISO 8601): Filter by created_at <= end_date
+
+**Response:**
+- Sorted by `created_at` descending (newest first)
+- Returns empty list (200) for no matches
+- Each item includes truncated proposal metadata (title, summary)
+
+**Example:**
+```bash
+GET /v1/runs?status=completed&min_confidence=0.8&limit=10
+```
+
+### GET /v1/runs/{run_id}
+
+Returns full details for a single run including:
+- Run metadata (timestamps, status, type, model, parameters)
+- Complete proposal JSON (null if run failed before proposal)
+- Persona review summaries with confidence scores
+- Decision JSON (null if incomplete)
+
+**Example:**
+```bash
+GET /v1/runs/550e8400-e29b-41d4-a716-446655440000
+```
+
+**Notes:**
+- No LLM calls are made during GET requests
+- Failed runs return partial data persisted before failure
+- Useful for auditing decisions and understanding review history
+- Can be used to retrieve parent proposals when creating revisions
+
+See the main README for complete API documentation and response examples.
