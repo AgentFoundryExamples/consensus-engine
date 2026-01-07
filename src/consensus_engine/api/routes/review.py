@@ -27,7 +27,12 @@ from fastapi.responses import JSONResponse
 
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
-from consensus_engine.exceptions import ConsensusEngineError
+from consensus_engine.exceptions import (
+    ConsensusEngineError,
+    LLMAuthenticationError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+)
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
 from consensus_engine.schemas.requests import (
     ExpandIdeaResponse,
@@ -35,7 +40,12 @@ from consensus_engine.schemas.requests import (
     ReviewIdeaRequest,
     ReviewIdeaResponse,
 )
-from consensus_engine.schemas.review import DecisionAggregation, DecisionEnum, PersonaScoreBreakdown
+from consensus_engine.schemas.review import (
+    DecisionAggregation,
+    DecisionEnum,
+    PersonaReview,
+    PersonaScoreBreakdown,
+)
 from consensus_engine.services import expand_idea, review_proposal
 
 logger = get_logger(__name__)
@@ -52,12 +62,6 @@ def _map_exception_to_status_code(exc: ConsensusEngineError) -> int:
     Returns:
         HTTP status code
     """
-    from consensus_engine.exceptions import (
-        LLMAuthenticationError,
-        LLMRateLimitError,
-        LLMTimeoutError,
-    )
-
     if isinstance(exc, LLMAuthenticationError):
         return status.HTTP_401_UNAUTHORIZED
     elif isinstance(exc, LLMRateLimitError | LLMTimeoutError):
@@ -92,7 +96,7 @@ def _build_expand_response(
 
 
 def _create_single_persona_decision(
-    persona_review: Any, persona_name: str
+    persona_review: PersonaReview, persona_name: str
 ) -> DecisionAggregation:
     """Create a DecisionAggregation for a single persona review.
 
@@ -388,15 +392,18 @@ async def review_idea_endpoint(
         )
 
         # Return structured error with failed_step and partial results (expanded proposal)
-        # Build ExpandIdeaResponse from expanded_proposal for partial results
-        expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+        partial_results_data = None
+        if expanded_proposal:
+            # Build ExpandIdeaResponse from expanded_proposal for partial results
+            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            partial_results_data = {"expanded_proposal": expand_response.model_dump()}
 
         error_response = ReviewIdeaErrorResponse(
             code=e.code,
             message=e.message,
             failed_step="review",
             run_id=run_id,
-            partial_results={"expanded_proposal": expand_response.model_dump()},
+            partial_results=partial_results_data,
             details=e.details,
         )
 
@@ -416,14 +423,17 @@ async def review_idea_endpoint(
         )
 
         # Include partial results (expanded proposal)
-        expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+        partial_results_data = None
+        if expanded_proposal:
+            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            partial_results_data = {"expanded_proposal": expand_response.model_dump()}
 
         error_response = ReviewIdeaErrorResponse(
             code="INTERNAL_ERROR",
             message="An unexpected error occurred during review",
             failed_step="review",
             run_id=run_id,
-            partial_results={"expanded_proposal": expand_response.model_dump()},
+            partial_results=partial_results_data,
             details={},
         )
 
@@ -453,6 +463,42 @@ async def review_idea_endpoint(
             },
         )
 
+    except ConsensusEngineError as e:
+        elapsed_time = time.time() - start_time
+        logger.error(
+            "Step 3 failed: Aggregation error",
+            extra={
+                "run_id": run_id,
+                "step": "aggregate",
+                "error_code": e.code,
+                "elapsed_time": elapsed_time,
+            },
+        )
+
+        # Include partial results (expanded proposal and review)
+        partial_results_data = {}
+        if expanded_proposal:
+            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            partial_results_data["expanded_proposal"] = expand_response.model_dump()
+        if persona_review:
+            partial_results_data["reviews"] = [persona_review.model_dump()]
+
+        error_response = ReviewIdeaErrorResponse(
+            code=e.code,
+            message=e.message,
+            failed_step="aggregate",
+            run_id=run_id,
+            partial_results=partial_results_data if partial_results_data else None,
+            details=e.details,
+        )
+
+        status_code = _map_exception_to_status_code(e)
+
+        return JSONResponse(
+            status_code=status_code,
+            content=error_response.model_dump(),
+        )
+
     except Exception:
         elapsed_time = time.time() - start_time
         logger.error(
@@ -462,17 +508,19 @@ async def review_idea_endpoint(
         )
 
         # Include partial results (expanded proposal and review)
-        expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+        partial_results_data = {}
+        if expanded_proposal:
+            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            partial_results_data["expanded_proposal"] = expand_response.model_dump()
+        if persona_review:
+            partial_results_data["reviews"] = [persona_review.model_dump()]
 
         error_response = ReviewIdeaErrorResponse(
             code="INTERNAL_ERROR",
             message="An unexpected error occurred during decision aggregation",
             failed_step="aggregate",
             run_id=run_id,
-            partial_results={
-                "expanded_proposal": expand_response.model_dump(),
-                "reviews": [persona_review.model_dump()],
-            },
+            partial_results=partial_results_data if partial_results_data else None,
             details={},
         )
 
