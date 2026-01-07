@@ -142,6 +142,10 @@
                 },
                 {
                   "type": "file",
+                  "name": "personas.py"
+                },
+                {
+                  "type": "file",
                   "name": "settings.py"
                 }
               ]
@@ -263,6 +267,10 @@
             {
               "type": "file",
               "name": "test_openai_client.py"
+            },
+            {
+              "type": "file",
+              "name": "test_personas.py"
             },
             {
               "type": "file",

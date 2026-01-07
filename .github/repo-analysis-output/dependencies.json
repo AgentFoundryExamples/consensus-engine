@@ -171,6 +171,19 @@
       }
     },
     {
+      "id": "src/consensus_engine/config/personas.py",
+      "path": "src/consensus_engine/config/personas.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pydantic.BaseModel",
+          "pydantic.Field",
+          "pydantic.field_validator"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/config/settings.py",
       "path": "src/consensus_engine/config/settings.py",
       "type": "file",
@@ -243,8 +256,7 @@
       "external_dependencies": {
         "stdlib": [
           "enum.Enum",
-          "typing.Any",
-          "uuid.UUID"
+          "typing.Any"
         ],
         "third-party": [
           "pydantic.BaseModel",
@@ -475,6 +487,18 @@
       }
     },
     {
+      "id": "tests/unit/test_personas.py",
+      "path": "tests/unit/test_personas.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_proposal_schemas.py",
       "path": "tests/unit/test_proposal_schemas.py",
       "type": "file",
@@ -503,9 +527,7 @@
       "path": "tests/unit/test_review_schemas.py",
       "type": "file",
       "external_dependencies": {
-        "stdlib": [
-          "uuid.uuid4"
-        ],
+        "stdlib": [],
         "third-party": [
           "pydantic.ValidationError",
           "pytest"
@@ -667,6 +689,10 @@
     {
       "source": "src/consensus_engine/clients/openai_client.py",
       "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/config/__init__.py",
+      "target": "src/consensus_engine/config/personas.py"
     },
     {
       "source": "src/consensus_engine/config/__init__.py",
@@ -881,6 +907,10 @@
       "target": "src/consensus_engine/exceptions.py"
     },
     {
+      "source": "tests/unit/test_personas.py",
+      "target": "src/consensus_engine/config/personas.py"
+    },
+    {
       "source": "tests/unit/test_proposal_schemas.py",
       "target": "src/consensus_engine/schemas/proposal.py"
     },
@@ -945,9 +975,7 @@
       "unittest.mock.MagicMock",
       "unittest.mock.Mock",
       "unittest.mock.patch",
-      "uuid",
-      "uuid.UUID",
-      "uuid.uuid4"
+      "uuid"
     ],
     "third-party": [
       "fastapi.APIRouter",
@@ -974,7 +1002,7 @@
       "pydantic_settings.SettingsConfigDict",
       "pytest"
     ],
-    "stdlib_count": 21,
+    "stdlib_count": 19,
     "third-party_count": 23
   }
 }

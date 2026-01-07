@@ -31,6 +31,7 @@
     ├── config
       ├── __init__.py
       ├── logging.py
+      ├── personas.py
       └── settings.py
     ├── schemas
       ├── __init__.py
@@ -59,6 +60,7 @@
     ├── test_exceptions.py
     ├── test_expand_service.py
     ├── test_openai_client.py
+    ├── test_personas.py
     ├── test_proposal_schemas.py
     ├── test_request_schemas.py
     ├── test_review_schemas.py

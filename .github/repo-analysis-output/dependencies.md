@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 40
-- **Intra-repo dependencies**: 96
-- **External stdlib dependencies**: 21
+- **Total files**: 42
+- **Intra-repo dependencies**: 98
+- **External stdlib dependencies**: 19
 - **External third-party dependencies**: 23
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 21 unique modules
+Total: 19 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -38,8 +38,6 @@ Total: 21 unique modules
 - `unittest.mock.Mock`
 - `unittest.mock.patch`
 - `uuid`
-- `uuid.UUID`
-- ... and 1 more (see JSON for full list)
 
 ### Third-Party Packages
 

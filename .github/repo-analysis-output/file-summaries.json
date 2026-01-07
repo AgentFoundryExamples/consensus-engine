@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 40,
+  "total_files": 42,
   "files": [
     {
       "schema_version": "2.0",
@@ -95,8 +95,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 19734,
-        "loc": 454,
+        "size_bytes": 19747,
+        "loc": 455,
         "todo_count": 0
       }
     },
@@ -151,8 +151,8 @@
       "summary": "Python module initialization (role: module-init)",
       "summary_text": "Python module initialization (role: module-init)",
       "metrics": {
-        "size_bytes": 758,
-        "loc": 3,
+        "size_bytes": 1234,
+        "loc": 27,
         "todo_count": 0
       }
     },
@@ -167,6 +167,20 @@
       "metrics": {
         "size_bytes": 2025,
         "loc": 34,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/config/personas.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 9609,
+        "loc": 209,
         "todo_count": 0
       }
     },
@@ -207,8 +221,8 @@
       "summary": "Python module initialization (role: module-init)",
       "summary_text": "Python module initialization (role: module-init)",
       "metrics": {
-        "size_bytes": 1065,
-        "loc": 20,
+        "size_bytes": 1163,
+        "loc": 24,
         "todo_count": 0
       }
     },
@@ -249,8 +263,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 11382,
-        "loc": 295,
+        "size_bytes": 17121,
+        "loc": 440,
         "todo_count": 0
       }
     },
@@ -347,8 +361,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 14627,
-        "loc": 254,
+        "size_bytes": 14615,
+        "loc": 253,
         "todo_count": 0
       }
     },
@@ -494,6 +508,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "tests/unit/test_personas.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 15253,
+        "loc": 316,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "tests/unit/test_proposal_schemas.py",
       "language": "Python",
       "role": "test",
@@ -529,8 +557,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 19914,
-        "loc": 414,
+        "size_bytes": 40578,
+        "loc": 855,
         "todo_count": 0
       }
     },
