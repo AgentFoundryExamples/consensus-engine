@@ -35,7 +35,8 @@ from consensus_engine.db.models import (
     RunType,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import DecisionAggregation, PersonaReview as PersonaReviewSchema
+from consensus_engine.schemas.review import DecisionAggregation
+from consensus_engine.schemas.review import PersonaReview as PersonaReviewSchema
 
 logger = get_logger(__name__)
 
@@ -166,6 +167,155 @@ class RunRepository:
             Run instance or None if not found
         """
         return session.get(Run, run_id)
+
+    @staticmethod
+    def list_runs(
+        session: Session,
+        limit: int = 30,
+        offset: int = 0,
+        status: RunStatus | None = None,
+        run_type: RunType | None = None,
+        parent_run_id: uuid.UUID | None = None,
+        decision: str | None = None,
+        min_confidence: float | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> tuple[list[Run], int]:
+        """List runs with filtering, pagination, and ordering.
+
+        Args:
+            session: Database session
+            limit: Number of items per page
+            offset: Offset for pagination
+            status: Optional filter by status
+            run_type: Optional filter by run_type
+            parent_run_id: Optional filter by parent_run_id
+            decision: Optional filter by decision_label
+            min_confidence: Optional filter by minimum overall_weighted_confidence
+            start_date: Optional filter by created_at >= start_date
+            end_date: Optional filter by created_at <= end_date
+
+        Returns:
+            Tuple of (list of Run instances, total count)
+
+        Raises:
+            SQLAlchemyError: If database query fails
+        """
+        from sqlalchemy import func, select
+        from sqlalchemy.exc import SQLAlchemyError
+        from sqlalchemy.orm import joinedload
+
+        try:
+            query = select(Run).options(
+                joinedload(Run.proposal_version)
+            )
+            count_query = select(func.count()).select_from(Run)
+
+            # Apply filters
+            if status is not None:
+                query = query.where(Run.status == status)
+                count_query = count_query.where(Run.status == status)
+
+            if run_type is not None:
+                query = query.where(Run.run_type == run_type)
+                count_query = count_query.where(Run.run_type == run_type)
+
+            if parent_run_id is not None:
+                query = query.where(Run.parent_run_id == parent_run_id)
+                count_query = count_query.where(Run.parent_run_id == parent_run_id)
+
+            if decision is not None:
+                query = query.where(Run.decision_label == decision)
+                count_query = count_query.where(Run.decision_label == decision)
+
+            if min_confidence is not None:
+                query = query.where(Run.overall_weighted_confidence >= min_confidence)
+                count_query = count_query.where(Run.overall_weighted_confidence >= min_confidence)
+
+            if start_date is not None:
+                query = query.where(Run.created_at >= start_date)
+                count_query = count_query.where(Run.created_at >= start_date)
+
+            if end_date is not None:
+                query = query.where(Run.created_at <= end_date)
+                count_query = count_query.where(Run.created_at <= end_date)
+
+            # Order by created_at descending (newest first)
+            query = query.order_by(Run.created_at.desc())
+
+            # Apply pagination
+            query = query.limit(limit).offset(offset)
+
+            # Execute queries
+            runs = list(session.execute(query).scalars().all())
+            total = session.execute(count_query).scalar_one()
+
+            logger.info(
+                f"Listed {len(runs)} runs (total={total}, limit={limit}, offset={offset})",
+                extra={"count": len(runs), "total": total, "limit": limit, "offset": offset}
+            )
+
+            return runs, total
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Database error while listing runs: {e}",
+                extra={"limit": limit, "offset": offset},
+                exc_info=True
+            )
+            raise
+
+    @staticmethod
+    def get_run_with_relations(session: Session, run_id: uuid.UUID) -> Run | None:
+        """Retrieve a Run by ID with all related data eagerly loaded.
+
+        Args:
+            session: Database session
+            run_id: Run ID
+
+        Returns:
+            Run instance with relations loaded, or None if not found
+
+        Raises:
+            SQLAlchemyError: If database query fails
+        """
+        from sqlalchemy import select
+        from sqlalchemy.exc import SQLAlchemyError
+        from sqlalchemy.orm import joinedload, selectinload
+
+        try:
+            query = (
+                select(Run)
+                .where(Run.id == run_id)
+                .options(
+                    joinedload(Run.proposal_version),
+                    selectinload(Run.persona_reviews),
+                    joinedload(Run.decision),
+                )
+            )
+
+            result = session.execute(query).scalar_one_or_none()
+
+            if result:
+                logger.info(
+                    f"Retrieved run {run_id} with relations",
+                    extra={"run_id": str(run_id)}
+                )
+            else:
+                logger.warning(
+                    f"Run {run_id} not found",
+                    extra={"run_id": str(run_id)}
+                )
+
+            return result
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Database error while retrieving run {run_id}: {e}",
+                extra={"run_id": str(run_id)},
+                exc_info=True
+            )
+            raise
 
 
 class ProposalVersionRepository:
@@ -362,8 +512,11 @@ class DecisionRepository:
             return decision
 
         except IntegrityError as e:
-            logger.error(f"Integrity error creating Decision for run_id={run_id}: {e}", exc_info=True)
+            logger.error(
+                f"Integrity error creating Decision for run_id={run_id}: {e}", exc_info=True
+            )
             raise
         except SQLAlchemyError as e:
             logger.error(f"Failed to create Decision for run_id={run_id}: {e}", exc_info=True)
             raise
+

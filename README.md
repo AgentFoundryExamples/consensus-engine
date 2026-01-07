@@ -1054,6 +1054,159 @@ All exceptions include a `details` dict with additional context like `request_id
 
 #### Logging
 
+### Get Runs (GET /v1/runs)
+
+Retrieves a paginated list of runs with filtering and sorting capabilities. This endpoint allows you to query run history for audits and tooling without re-triggering the pipeline.
+
+**Request:**
+```bash
+GET /v1/runs?limit=30&offset=0&status=completed&min_confidence=0.8
+```
+
+**Query Parameters:**
+- `limit` (optional, integer, 1-100, default: 30): Number of items per page
+- `offset` (optional, integer, ≥0, default: 0): Offset for pagination
+- `status` (optional, string): Filter by status - `running`, `completed`, or `failed`
+- `run_type` (optional, string): Filter by run type - `initial` or `revision`
+- `parent_run_id` (optional, UUID): Filter by parent run ID (for revisions)
+- `decision` (optional, string): Filter by decision label (e.g., `approve`, `revise`, `reject`)
+- `min_confidence` (optional, float, 0.0-1.0): Filter by minimum overall_weighted_confidence
+- `start_date` (optional, ISO 8601): Filter by created_at >= start_date
+- `end_date` (optional, ISO 8601): Filter by created_at <= end_date
+
+**Success Response (200):**
+```json
+{
+  "runs": [
+    {
+      "run_id": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2025-01-07T10:30:00Z",
+      "status": "completed",
+      "run_type": "initial",
+      "parent_run_id": null,
+      "overall_weighted_confidence": 0.85,
+      "decision_label": "approve",
+      "proposal_title": "User Management API",
+      "proposal_summary": "A comprehensive REST API for managing users"
+    },
+    {
+      "run_id": "660f9511-f3ac-52e5-b827-557766551111",
+      "created_at": "2025-01-06T14:20:00Z",
+      "status": "completed",
+      "run_type": "revision",
+      "parent_run_id": "550e8400-e29b-41d4-a716-446655440000",
+      "overall_weighted_confidence": 0.90,
+      "decision_label": "approve",
+      "proposal_title": "User Management API v2",
+      "proposal_summary": "Enhanced API with OAuth support"
+    }
+  ],
+  "total": 42,
+  "limit": 30,
+  "offset": 0
+}
+```
+
+**Response Fields:**
+- `runs`: Array of run items with metadata and truncated proposal info
+- `total`: Total number of runs matching the filters
+- `limit`: Number of items per page (as requested)
+- `offset`: Current offset (as requested)
+
+**Notes:**
+- Results are sorted by `created_at` descending (newest first)
+- Returns empty list (200) for no matches or nonexistent filters
+- No LLM calls are made during GET requests
+
+**Error Responses:**
+- `400 Bad Request`: Invalid parameters (e.g., invalid UUID, date format, status/run_type values)
+
+### Get Run Detail (GET /v1/runs/{run_id})
+
+Retrieves the full details of a single run including metadata, proposal JSON, persona reviews, and decision JSON.
+
+**Request:**
+```bash
+GET /v1/runs/550e8400-e29b-41d4-a716-446655440000
+```
+
+**Path Parameters:**
+- `run_id` (required, UUID): The unique identifier of the run
+
+**Success Response (200):**
+```json
+{
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "created_at": "2025-01-07T10:30:00Z",
+  "updated_at": "2025-01-07T10:35:00Z",
+  "status": "completed",
+  "run_type": "initial",
+  "parent_run_id": null,
+  "input_idea": "Build a REST API for user management with authentication",
+  "extra_context": {
+    "language": "Python",
+    "version": "3.11+"
+  },
+  "model": "gpt-5.1",
+  "temperature": 0.7,
+  "parameters_json": {
+    "expand_model": "gpt-5.1",
+    "expand_temperature": 0.7,
+    "review_model": "gpt-5.1",
+    "review_temperature": 0.2
+  },
+  "overall_weighted_confidence": 0.85,
+  "decision_label": "approve",
+  "proposal": {
+    "title": "User Management API",
+    "summary": "A comprehensive REST API for managing users",
+    "problem_statement": "Need user management capabilities",
+    "proposed_solution": "Build a REST API with CRUD operations",
+    "assumptions": ["Python 3.11+"],
+    "scope_non_goals": ["No mobile app"]
+  },
+  "persona_reviews": [
+    {
+      "persona_id": "architect",
+      "persona_name": "Architect",
+      "confidence_score": 0.85,
+      "blocking_issues_present": false,
+      "prompt_parameters_json": {
+        "model": "gpt-5.1",
+        "temperature": 0.2,
+        "persona_version": "1.0"
+      }
+    }
+  ],
+  "decision": {
+    "decision": "approve",
+    "overall_weighted_confidence": 0.85,
+    "score_breakdown": {
+      "Architect": {
+        "weight": 0.25,
+        "notes": "Strong architectural design"
+      }
+    }
+  }
+}
+```
+
+**Response Fields:**
+- All run metadata fields (id, timestamps, status, type, etc.)
+- `proposal`: Full proposal JSON (null if run failed before proposal creation)
+- `persona_reviews`: Array of persona review summaries with confidence scores
+- `decision`: Full decision JSON (null if run failed or is incomplete)
+
+**Notes:**
+- Returns partial data for failed runs (null fields for incomplete steps)
+- No LLM calls are made during GET requests
+- Useful for auditing, debugging, and building on previous proposals
+
+**Error Responses:**
+- `400 Bad Request`: Invalid UUID format
+- `404 Not Found`: Run ID does not exist
+
+
 The service logs the following without exposing sensitive data:
 - Request start with request_id, model, and temperature
 - Request completion with elapsed time and status

@@ -392,3 +392,134 @@ class FullReviewErrorResponse(BaseModel):
     details: dict[str, Any] | None = Field(
         default=None, description="Optional additional error details"
     )
+
+
+class PersonaReviewSummary(BaseModel):
+    """Summary of a persona review for run list/detail responses.
+
+    Attributes:
+        persona_id: Stable identifier for the persona
+        persona_name: Display name for the persona
+        confidence_score: Numeric confidence score [0.0, 1.0]
+        blocking_issues_present: Boolean flag indicating presence of blocking issues
+        prompt_parameters_json: Prompt parameters used for this review
+    """
+
+    persona_id: str = Field(..., description="Stable identifier for the persona")
+    persona_name: str = Field(..., description="Display name for the persona")
+    confidence_score: float = Field(..., description="Numeric confidence score [0.0, 1.0]")
+    blocking_issues_present: bool = Field(
+        ..., description="Boolean flag indicating presence of blocking issues"
+    )
+    prompt_parameters_json: dict[str, Any] = Field(
+        ..., description="Prompt parameters (model, temperature, persona version, retries)"
+    )
+
+
+class RunListItemResponse(BaseModel):
+    """Response model for individual items in GET /v1/runs list.
+
+    Attributes:
+        run_id: UUID of the run
+        created_at: Timestamp when run was created
+        status: Current status of the run
+        run_type: Whether this is an initial run or revision
+        parent_run_id: Optional UUID of parent run for revisions
+        overall_weighted_confidence: Final weighted confidence score
+        decision_label: Final decision label
+        proposal_title: Title from the proposal (truncated metadata)
+        proposal_summary: Summary from the proposal (truncated metadata)
+    """
+
+    run_id: str = Field(..., description="UUID of the run")
+    created_at: str = Field(..., description="ISO timestamp when run was created")
+    status: str = Field(..., description="Current status: running, completed, or failed")
+    run_type: str = Field(..., description="Whether this is an initial run or revision")
+    parent_run_id: str | None = Field(
+        default=None, description="Optional UUID of parent run for revisions"
+    )
+    overall_weighted_confidence: float | None = Field(
+        default=None, description="Final weighted confidence score (null until decision)"
+    )
+    decision_label: str | None = Field(
+        default=None, description="Final decision label (null until decision)"
+    )
+    proposal_title: str | None = Field(
+        default=None, description="Title from the proposal (truncated)"
+    )
+    proposal_summary: str | None = Field(
+        default=None, description="Summary from the proposal (truncated)"
+    )
+
+
+class RunListResponse(BaseModel):
+    """Response model for GET /v1/runs endpoint.
+
+    Attributes:
+        runs: List of run items
+        total: Total number of runs matching filters
+        limit: Number of items per page
+        offset: Current offset
+    """
+
+    runs: list[RunListItemResponse] = Field(..., description="List of run items")
+    total: int = Field(..., description="Total number of runs matching filters")
+    limit: int = Field(..., description="Number of items per page")
+    offset: int = Field(..., description="Current offset")
+
+
+class RunDetailResponse(BaseModel):
+    """Response model for GET /v1/runs/{run_id} endpoint.
+
+    Attributes:
+        run_id: UUID of the run
+        created_at: Timestamp when run was created
+        updated_at: Timestamp when run was last updated
+        status: Current status of the run
+        run_type: Whether this is an initial run or revision
+        parent_run_id: Optional UUID of parent run for revisions
+        input_idea: The original idea text
+        extra_context: Optional additional context as JSON
+        model: LLM model identifier used for this run
+        temperature: Temperature parameter used for LLM calls
+        parameters_json: Additional LLM parameters as JSON
+        overall_weighted_confidence: Final weighted confidence score
+        decision_label: Final decision label
+        proposal: Structured proposal JSON (nullable if run failed early)
+        persona_reviews: Array of persona reviews with scores and blocking flags
+        decision: Decision JSON (nullable if run failed or incomplete)
+    """
+
+    run_id: str = Field(..., description="UUID of the run")
+    created_at: str = Field(..., description="ISO timestamp when run was created")
+    updated_at: str = Field(..., description="ISO timestamp when run was last updated")
+    status: str = Field(..., description="Current status: running, completed, or failed")
+    run_type: str = Field(..., description="Whether this is an initial run or revision")
+    parent_run_id: str | None = Field(
+        default=None, description="Optional UUID of parent run for revisions"
+    )
+    input_idea: str = Field(..., description="The original idea text")
+    extra_context: dict[str, Any] | None = Field(
+        default=None, description="Optional additional context as JSON"
+    )
+    model: str = Field(..., description="LLM model identifier used for this run")
+    temperature: float = Field(..., description="Temperature parameter used for LLM calls")
+    parameters_json: dict[str, Any] = Field(
+        ..., description="Additional LLM parameters as JSON"
+    )
+    overall_weighted_confidence: float | None = Field(
+        default=None, description="Final weighted confidence score (null until decision)"
+    )
+    decision_label: str | None = Field(
+        default=None, description="Final decision label (null until decision)"
+    )
+    proposal: dict[str, Any] | None = Field(
+        default=None, description="Structured proposal JSON (null if run failed early)"
+    )
+    persona_reviews: list[PersonaReviewSummary] = Field(
+        default_factory=list,
+        description="Array of persona reviews with scores and blocking flags",
+    )
+    decision: dict[str, Any] | None = Field(
+        default=None, description="Decision JSON (null if run failed or incomplete)"
+    )
