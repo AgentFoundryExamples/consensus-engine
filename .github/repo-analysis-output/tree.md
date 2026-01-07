@@ -1,4 +1,4 @@
-# agent-foundry-ai-template
+# consensus-engine
 
 ├── .github
   ├── af-config
