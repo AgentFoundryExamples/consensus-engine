@@ -15,9 +15,11 @@
 
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
 from consensus_engine.schemas.review import (
+    BlockingIssue,
     Concern,
     DecisionAggregation,
     DecisionEnum,
+    DetailedScoreBreakdown,
     MinorityReport,
     PersonaReview,
     PersonaScoreBreakdown,
@@ -27,9 +29,11 @@ __all__ = [
     "ExpandedProposal",
     "IdeaInput",
     "Concern",
+    "BlockingIssue",
     "PersonaReview",
     "DecisionAggregation",
     "DecisionEnum",
     "MinorityReport",
     "PersonaScoreBreakdown",
+    "DetailedScoreBreakdown",
 ]

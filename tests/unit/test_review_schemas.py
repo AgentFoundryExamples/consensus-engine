@@ -19,9 +19,11 @@ import pytest
 from pydantic import ValidationError
 
 from consensus_engine.schemas.review import (
+    BlockingIssue,
     Concern,
     DecisionAggregation,
     DecisionEnum,
+    DetailedScoreBreakdown,
     MinorityReport,
     PersonaReview,
     PersonaScoreBreakdown,
@@ -524,3 +526,380 @@ class TestDecisionAggregation:
         assert "0.75" in json_data
         assert "approve" in json_data
         assert "Reviewer" in json_data
+
+
+class TestBlockingIssue:
+    """Test suite for BlockingIssue schema."""
+
+    def test_blocking_issue_valid(self) -> None:
+        """Test BlockingIssue with valid data."""
+        issue = BlockingIssue(text="Critical security flaw", security_critical=True)
+
+        assert issue.text == "Critical security flaw"
+        assert issue.security_critical is True
+
+    def test_blocking_issue_without_security_critical(self) -> None:
+        """Test BlockingIssue without security_critical flag."""
+        issue = BlockingIssue(text="Missing error handling")
+
+        assert issue.text == "Missing error handling"
+        assert issue.security_critical is None
+
+    def test_blocking_issue_security_critical_false(self) -> None:
+        """Test BlockingIssue with security_critical=False."""
+        issue = BlockingIssue(text="Non-security issue", security_critical=False)
+
+        assert issue.text == "Non-security issue"
+        assert issue.security_critical is False
+
+    def test_blocking_issue_trims_whitespace(self) -> None:
+        """Test BlockingIssue trims whitespace from text."""
+        issue = BlockingIssue(text="  Critical issue  ", security_critical=True)
+
+        assert issue.text == "Critical issue"
+
+    def test_blocking_issue_empty_text_rejected(self) -> None:
+        """Test BlockingIssue rejects empty text."""
+        with pytest.raises(ValidationError) as exc_info:
+            BlockingIssue(text="")
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("text",) for e in errors)
+
+    def test_blocking_issue_whitespace_only_rejected(self) -> None:
+        """Test BlockingIssue rejects whitespace-only text."""
+        with pytest.raises(ValidationError) as exc_info:
+            BlockingIssue(text="   ")
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("text",) for e in errors)
+
+
+class TestPersonaReviewWithPersonaId:
+    """Test suite for PersonaReview with persona_id field."""
+
+    def test_persona_review_with_persona_id(self) -> None:
+        """Test PersonaReview with persona_id string."""
+        review = PersonaReview(
+            persona_name="Architect",
+            persona_id="architect",
+            confidence_score=0.85,
+            strengths=["Good design"],
+            concerns=[Concern(text="Minor issue", is_blocking=False)],
+            recommendations=["Improve docs"],
+            blocking_issues=[],
+            estimated_effort="2 weeks",
+            dependency_risks=[],
+        )
+
+        assert review.persona_id == "architect"
+        assert review.persona_name == "Architect"
+
+    def test_persona_review_persona_id_required(self) -> None:
+        """Test PersonaReview requires persona_id."""
+        with pytest.raises(ValidationError) as exc_info:
+            PersonaReview(
+                persona_name="Architect",
+                # persona_id missing
+                confidence_score=0.85,
+                strengths=["Good design"],
+                concerns=[],
+                recommendations=["Improve docs"],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            )
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("persona_id",) for e in errors)
+
+    def test_persona_review_with_internal_metadata(self) -> None:
+        """Test PersonaReview with internal_metadata."""
+        metadata = {
+            "model": "gpt-5.1",
+            "duration": 2.5,
+            "timestamp": "2024-01-07T10:00:00Z",
+        }
+        review = PersonaReview(
+            persona_name="Architect",
+            persona_id="architect",
+            confidence_score=0.85,
+            strengths=["Good design"],
+            concerns=[],
+            recommendations=["Improve docs"],
+            blocking_issues=[],
+            estimated_effort="2 weeks",
+            dependency_risks=[],
+            internal_metadata=metadata,
+        )
+
+        assert review.internal_metadata == metadata
+        assert review.internal_metadata["model"] == "gpt-5.1"
+        assert review.internal_metadata["duration"] == 2.5
+
+    def test_persona_review_with_blocking_issue_objects(self) -> None:
+        """Test PersonaReview with BlockingIssue objects."""
+        blocking_issues = [
+            BlockingIssue(text="SQL injection vulnerability", security_critical=True),
+            BlockingIssue(text="Missing input validation", security_critical=False),
+        ]
+        review = PersonaReview(
+            persona_name="SecurityGuardian",
+            persona_id="security_guardian",
+            confidence_score=0.4,
+            strengths=["Good architecture"],
+            concerns=[],
+            recommendations=["Fix security issues"],
+            blocking_issues=blocking_issues,
+            estimated_effort="1 week",
+            dependency_risks=[],
+        )
+
+        assert len(review.blocking_issues) == 2
+        assert review.blocking_issues[0].text == "SQL injection vulnerability"
+        assert review.blocking_issues[0].security_critical is True
+        assert review.blocking_issues[1].security_critical is False
+
+
+class TestDetailedScoreBreakdown:
+    """Test suite for DetailedScoreBreakdown schema."""
+
+    def test_detailed_score_breakdown_valid(self) -> None:
+        """Test DetailedScoreBreakdown with valid data."""
+        breakdown = DetailedScoreBreakdown(
+            weights={"architect": 0.25, "critic": 0.25},
+            individual_scores={"architect": 0.8, "critic": 0.7},
+            weighted_contributions={"architect": 0.2, "critic": 0.175},
+            formula="sum(weight * score for each persona)",
+        )
+
+        assert breakdown.weights == {"architect": 0.25, "critic": 0.25}
+        assert breakdown.individual_scores == {"architect": 0.8, "critic": 0.7}
+        assert breakdown.weighted_contributions == {"architect": 0.2, "critic": 0.175}
+        assert breakdown.formula == "sum(weight * score for each persona)"
+
+    def test_detailed_score_breakdown_trims_formula(self) -> None:
+        """Test DetailedScoreBreakdown trims whitespace from formula."""
+        breakdown = DetailedScoreBreakdown(
+            weights={"architect": 0.5},
+            individual_scores={"architect": 0.8},
+            weighted_contributions={"architect": 0.4},
+            formula="  weighted average  ",
+        )
+
+        assert breakdown.formula == "weighted average"
+
+    def test_detailed_score_breakdown_empty_formula_rejected(self) -> None:
+        """Test DetailedScoreBreakdown rejects empty formula."""
+        with pytest.raises(ValidationError) as exc_info:
+            DetailedScoreBreakdown(
+                weights={"architect": 0.5},
+                individual_scores={"architect": 0.8},
+                weighted_contributions={"architect": 0.4},
+                formula="",
+            )
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("formula",) for e in errors)
+
+
+class TestMinorityReportExtended:
+    """Test suite for extended MinorityReport schema."""
+
+    def test_minority_report_with_all_new_fields(self) -> None:
+        """Test MinorityReport with all new required fields."""
+        report = MinorityReport(
+            persona_id="security_guardian",
+            persona_name="SecurityGuardian",
+            confidence_score=0.4,
+            blocking_summary="Critical security vulnerabilities found",
+            mitigation_recommendation="Implement input validation and parameterized queries",
+        )
+
+        assert report.persona_id == "security_guardian"
+        assert report.persona_name == "SecurityGuardian"
+        assert report.confidence_score == 0.4
+        assert report.blocking_summary == "Critical security vulnerabilities found"
+        assert report.mitigation_recommendation == "Implement input validation and parameterized queries"
+
+    def test_minority_report_with_optional_legacy_fields(self) -> None:
+        """Test MinorityReport with optional strengths and concerns."""
+        report = MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=0.5,
+            blocking_summary="Too many edge cases not addressed",
+            mitigation_recommendation="Add comprehensive error handling",
+            strengths=["Clear problem statement"],
+            concerns=["Missing edge case handling", "No error recovery"],
+        )
+
+        assert report.strengths == ["Clear problem statement"]
+        assert report.concerns == ["Missing edge case handling", "No error recovery"]
+
+    def test_minority_report_without_optional_fields(self) -> None:
+        """Test MinorityReport without optional fields."""
+        report = MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=0.5,
+            blocking_summary="Issues found",
+            mitigation_recommendation="Fix issues",
+        )
+
+        assert report.strengths is None
+        assert report.concerns is None
+
+    def test_minority_report_trims_string_fields(self) -> None:
+        """Test MinorityReport trims whitespace from string fields."""
+        report = MinorityReport(
+            persona_id="  security_guardian  ",
+            persona_name="  SecurityGuardian  ",
+            confidence_score=0.4,
+            blocking_summary="  Security issues  ",
+            mitigation_recommendation="  Fix security  ",
+        )
+
+        assert report.persona_id == "security_guardian"
+        assert report.persona_name == "SecurityGuardian"
+        assert report.blocking_summary == "Security issues"
+        assert report.mitigation_recommendation == "Fix security"
+
+    def test_minority_report_confidence_score_range(self) -> None:
+        """Test MinorityReport validates confidence_score range."""
+        # Valid scores
+        MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=0.0,
+            blocking_summary="Summary",
+            mitigation_recommendation="Recommendation",
+        )
+        MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=1.0,
+            blocking_summary="Summary",
+            mitigation_recommendation="Recommendation",
+        )
+
+        # Invalid score (too low)
+        with pytest.raises(ValidationError):
+            MinorityReport(
+                persona_id="critic",
+                persona_name="Critic",
+                confidence_score=-0.1,
+                blocking_summary="Summary",
+                mitigation_recommendation="Recommendation",
+            )
+
+        # Invalid score (too high)
+        with pytest.raises(ValidationError):
+            MinorityReport(
+                persona_id="critic",
+                persona_name="Critic",
+                confidence_score=1.1,
+                blocking_summary="Summary",
+                mitigation_recommendation="Recommendation",
+            )
+
+
+class TestDecisionAggregationExtended:
+    """Test suite for extended DecisionAggregation schema."""
+
+    def test_decision_aggregation_with_weighted_confidence(self) -> None:
+        """Test DecisionAggregation with weighted_confidence field."""
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.75,
+            weighted_confidence=0.75,
+            decision=DecisionEnum.APPROVE,
+        )
+
+        assert aggregation.overall_weighted_confidence == 0.75
+        assert aggregation.weighted_confidence == 0.75
+
+    def test_decision_aggregation_with_detailed_score_breakdown(self) -> None:
+        """Test DecisionAggregation with detailed_score_breakdown."""
+        detailed_breakdown = DetailedScoreBreakdown(
+            weights={"architect": 0.25, "critic": 0.25, "optimist": 0.15, "security_guardian": 0.20, "user_advocate": 0.15},
+            individual_scores={"architect": 0.8, "critic": 0.7, "optimist": 0.9, "security_guardian": 0.75, "user_advocate": 0.85},
+            weighted_contributions={"architect": 0.2, "critic": 0.175, "optimist": 0.135, "security_guardian": 0.15, "user_advocate": 0.1275},
+            formula="weighted_confidence = sum(weight_i * score_i for each persona i)",
+        )
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.7875,
+            decision=DecisionEnum.APPROVE,
+            detailed_score_breakdown=detailed_breakdown,
+        )
+
+        assert aggregation.detailed_score_breakdown is not None
+        assert aggregation.detailed_score_breakdown.weights["architect"] == 0.25
+        assert aggregation.detailed_score_breakdown.individual_scores["critic"] == 0.7
+
+    def test_decision_aggregation_with_multiple_minority_reports(self) -> None:
+        """Test DecisionAggregation with minority_reports list."""
+        reports = [
+            MinorityReport(
+                persona_id="security_guardian",
+                persona_name="SecurityGuardian",
+                confidence_score=0.4,
+                blocking_summary="Security issues",
+                mitigation_recommendation="Fix security",
+            ),
+            MinorityReport(
+                persona_id="critic",
+                persona_name="Critic",
+                confidence_score=0.5,
+                blocking_summary="Too many risks",
+                mitigation_recommendation="Mitigate risks",
+            ),
+        ]
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.65,
+            decision=DecisionEnum.REVISE,
+            minority_reports=reports,
+        )
+
+        assert aggregation.minority_reports is not None
+        assert len(aggregation.minority_reports) == 2
+        assert aggregation.minority_reports[0].persona_id == "security_guardian"
+        assert aggregation.minority_reports[1].persona_id == "critic"
+
+    def test_decision_aggregation_backward_compatible(self) -> None:
+        """Test DecisionAggregation is backward compatible with old schema."""
+        # Old schema style with score_breakdown and single minority_report
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.75,
+            decision=DecisionEnum.APPROVE,
+            score_breakdown={
+                "Reviewer": PersonaScoreBreakdown(weight=1.0, notes="Good review"),
+            },
+            minority_report=None,
+        )
+
+        assert aggregation.overall_weighted_confidence == 0.75
+        assert aggregation.score_breakdown is not None
+        assert "Reviewer" in aggregation.score_breakdown
+        assert aggregation.minority_report is None
+
+    def test_decision_aggregation_with_both_new_and_old_fields(self) -> None:
+        """Test DecisionAggregation with both new and legacy fields."""
+        detailed_breakdown = DetailedScoreBreakdown(
+            weights={"architect": 0.5, "critic": 0.5},
+            individual_scores={"architect": 0.8, "critic": 0.6},
+            weighted_contributions={"architect": 0.4, "critic": 0.3},
+            formula="weighted average",
+        )
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.7,
+            weighted_confidence=0.7,
+            decision=DecisionEnum.APPROVE,
+            score_breakdown={
+                "Architect": PersonaScoreBreakdown(weight=0.5, notes="Good"),
+            },
+            detailed_score_breakdown=detailed_breakdown,
+        )
+
+        # Both formats should be present
+        assert aggregation.score_breakdown is not None
+        assert aggregation.detailed_score_breakdown is not None
