@@ -84,8 +84,7 @@ class TestAcceptanceCriteria:
         assert isinstance(result, PersonaReview), "Should return PersonaReview instance"
         assert result.persona_name == "GenericReviewer", "Should use GenericReviewer persona"
         assert (
-            mock_client.create_structured_response.call_args[1]["response_model"]
-            == PersonaReview
+            mock_client.create_structured_response.call_args[1]["response_model"] == PersonaReview
         ), "Should use PersonaReview schema"
 
     @patch("consensus_engine.services.review.OpenAIClientWrapper")

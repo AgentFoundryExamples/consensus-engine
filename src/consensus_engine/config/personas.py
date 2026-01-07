@@ -17,7 +17,6 @@ This module defines the persona templates, weights, and thresholds used
 in the multi-persona pipeline for deterministic consensus aggregation.
 """
 
-from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -201,9 +200,10 @@ def validate_persona_weights() -> None:
     tolerance = 0.0001
 
     if abs(total_weight - 1.0) > tolerance:
+        weights_str = ", ".join(f"{k}: {v.default_weight}" for k, v in PERSONAS.items())
         raise ValueError(
             f"Persona weights must sum to 1.0, got {total_weight:.4f}. "
-            f"Individual weights: {{{', '.join(f'{k}: {v.default_weight}' for k, v in PERSONAS.items())}}}"
+            f"Individual weights: {{{weights_str}}}"
         )
 
 
@@ -221,9 +221,7 @@ def get_persona(persona_id: str) -> PersonaConfig:
     """
     if persona_id not in PERSONAS:
         available = ", ".join(PERSONAS.keys())
-        raise KeyError(
-            f"Unknown persona_id '{persona_id}'. Available personas: {available}"
-        )
+        raise KeyError(f"Unknown persona_id '{persona_id}'. Available personas: {available}")
     return PERSONAS[persona_id]
 
 

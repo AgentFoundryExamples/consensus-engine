@@ -19,7 +19,6 @@ including structured outputs for multi-persona consensus building.
 
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -116,7 +115,8 @@ class PersonaReview(BaseModel):
         strengths: List of identified strengths in the proposal (required)
         concerns: List of concerns with blocking flags (required)
         recommendations: List of actionable recommendations (required)
-        blocking_issues: List of critical blocking issues with optional security flags (required, can be empty)
+        blocking_issues: List of critical blocking issues with optional security flags
+            (required, can be empty)
         estimated_effort: Effort estimation as string or structured data (required)
         dependency_risks: List of identified dependency risks (required, can be empty)
         internal_metadata: Optional metadata for tracking (e.g., model, duration)
@@ -152,7 +152,10 @@ class PersonaReview(BaseModel):
     )
     blocking_issues: list[BlockingIssue] = Field(
         ...,
-        description="List of critical blocking issues with optional security_critical flags (can be empty)",
+        description=(
+            "List of critical blocking issues with optional security_critical flags "
+            "(can be empty)"
+        ),
     )
     estimated_effort: str | dict[str, Any] = Field(
         ...,
@@ -318,7 +321,9 @@ class MinorityReport(BaseModel):
         description="Concerns from minority view (optional for backward compatibility)",
     )
 
-    @field_validator("persona_id", "persona_name", "blocking_summary", "mitigation_recommendation", mode="before")
+    @field_validator(
+        "persona_id", "persona_name", "blocking_summary", "mitigation_recommendation", mode="before"
+    )
     @classmethod
     def trim_string_fields(cls, v: Any) -> Any:
         """Trim whitespace from string fields.
@@ -433,7 +438,10 @@ class DetailedScoreBreakdown(BaseModel):
     )
     weighted_contributions: dict[str, float] = Field(
         ...,
-        description="Dictionary mapping persona IDs to their weighted contribution (weight * score)",
+        description=(
+            "Dictionary mapping persona IDs to their weighted contribution "
+            "(weight * score)"
+        ),
     )
     formula: str = Field(
         ...,
@@ -475,7 +483,8 @@ class DecisionAggregation(BaseModel):
         decision: Final decision outcome (approve/revise/reject)
         score_breakdown: Per-persona scoring details with weights and notes (legacy, optional)
         detailed_score_breakdown: Detailed scoring breakdown with formula (new field, optional)
-        minority_report: Optional dissenting opinion from minority persona (supports multiple dissenters)
+        minority_report: Optional dissenting opinion from minority persona
+            (supports multiple dissenters)
         minority_reports: Optional list of dissenting opinions from multiple personas (new field)
     """
 
@@ -489,7 +498,10 @@ class DecisionAggregation(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="Weighted confidence score across all personas (new field, mirrors overall_weighted_confidence)",
+        description=(
+            "Weighted confidence score across all personas (new field, mirrors "
+            "overall_weighted_confidence)"
+        ),
     )
     decision: DecisionEnum = Field(
         ...,
@@ -501,11 +513,17 @@ class DecisionAggregation(BaseModel):
     )
     detailed_score_breakdown: DetailedScoreBreakdown | None = Field(
         default=None,
-        description="Detailed score breakdown with weights, individual scores, contributions, and formula",
+        description=(
+            "Detailed score breakdown with weights, individual scores, "
+            "contributions, and formula"
+        ),
     )
     minority_report: MinorityReport | None = Field(
         default=None,
-        description="Optional dissenting opinion from minority persona (single dissenter, legacy field)",
+        description=(
+            "Optional dissenting opinion from minority persona "
+            "(single dissenter, legacy field)"
+        ),
     )
     minority_reports: list[MinorityReport] | None = Field(
         default=None,
