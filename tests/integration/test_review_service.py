@@ -26,7 +26,7 @@ from consensus_engine.exceptions import (
     SchemaValidationError,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import Concern, PersonaReview
+from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 from consensus_engine.services.review import review_proposal
 
 
@@ -70,6 +70,7 @@ class TestReviewProposalServiceIntegration:
         """Test that review_proposal returns a properly serialized PersonaReview."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.75,
             strengths=[
                 "Well-defined problem statement",
@@ -85,7 +86,7 @@ class TestReviewProposalServiceIntegration:
                 "Implement rate limiting",
                 "Add monitoring and logging",
             ],
-            blocking_issues=["Missing security audit plan"],
+            blocking_issues=[BlockingIssue(text="Missing security audit plan")],
             estimated_effort="3-4 weeks for MVP",
             dependency_risks=["PostgreSQL cluster setup", "JWT library security updates"],
         )
@@ -125,6 +126,7 @@ class TestReviewProposalServiceIntegration:
         """Test that review logs success without exposing sensitive proposal data."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.8,
             strengths=["Good"],
             concerns=[],
@@ -169,6 +171,7 @@ class TestReviewProposalServiceIntegration:
         """Test review with minimal fields populated."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.5,
             strengths=[],
             concerns=[],
@@ -301,6 +304,7 @@ class TestReviewProposalServiceIntegration:
         """Test that review constructs proper prompt including all proposal fields."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],
@@ -340,6 +344,7 @@ class TestReviewProposalServiceIntegration:
         """Test that custom persona name is properly used."""
         mock_review = PersonaReview(
             persona_name="SecurityAuditor",
+            persona_id="security_auditor",
             confidence_score=0.6,
             strengths=["Good"],
             concerns=[],

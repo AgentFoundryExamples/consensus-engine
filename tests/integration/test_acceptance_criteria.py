@@ -20,7 +20,7 @@ import pytest
 from consensus_engine.clients.openai_client import OpenAIClientWrapper
 from consensus_engine.config.settings import Settings
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import Concern, PersonaReview
+from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 from consensus_engine.services.review import review_proposal
 
 
@@ -63,6 +63,7 @@ class TestAcceptanceCriteria:
         # Setup mock
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.8,
             strengths=["Good architecture"],
             concerns=[Concern(text="Missing tests", is_blocking=False)],
@@ -101,6 +102,7 @@ class TestAcceptanceCriteria:
         """
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.7,
             strengths=[],
             concerns=[],
@@ -216,6 +218,7 @@ class TestAcceptanceCriteria:
         """
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.8,
             strengths=[],
             concerns=[],
@@ -300,6 +303,7 @@ class TestAcceptanceCriteria:
         # Create a complete PersonaReview
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.85,
             strengths=["Clear requirements", "Good technology choice"],
             concerns=[
@@ -307,7 +311,7 @@ class TestAcceptanceCriteria:
                 Concern(text="No error handling", is_blocking=True),
             ],
             recommendations=["Add comprehensive docs", "Implement error handling"],
-            blocking_issues=["Critical security review needed"],
+            blocking_issues=[BlockingIssue(text="Critical security review needed")],
             estimated_effort="3-4 weeks",
             dependency_risks=["Third-party API availability", "Database migration complexity"],
         )

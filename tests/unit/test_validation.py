@@ -291,6 +291,7 @@ class TestPersonaReviewValidationEdgeCases:
 
         review = PersonaReview(
             persona_name="Reviewer",
+            persona_id="reviewer",
             confidence_score=0.123456789,
             strengths=[],
             concerns=[],
@@ -308,6 +309,7 @@ class TestPersonaReviewValidationEdgeCases:
 
         review = PersonaReview(
             persona_name="Reviewer",
+            persona_id="reviewer",
             confidence_score=0.8,
             strengths=[],
             concerns=[],
@@ -327,10 +329,11 @@ class TestPersonaReviewValidationEdgeCases:
 
     def test_persona_review_concerns_with_mixed_blocking(self) -> None:
         """Test PersonaReview handles concerns with mixed blocking status."""
-        from consensus_engine.schemas.review import Concern, PersonaReview
+        from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 
         review = PersonaReview(
             persona_name="Reviewer",
+            persona_id="reviewer",
             confidence_score=0.7,
             strengths=[],
             concerns=[
@@ -339,7 +342,10 @@ class TestPersonaReviewValidationEdgeCases:
                 Concern(text="Another blocker", is_blocking=True),
             ],
             recommendations=[],
-            blocking_issues=["Blocking issue", "Another blocker"],
+            blocking_issues=[
+                BlockingIssue(text="Blocking issue"),
+                BlockingIssue(text="Another blocker"),
+            ],
             estimated_effort="Unknown",
             dependency_risks=[],
         )
@@ -352,25 +358,26 @@ class TestPersonaReviewValidationEdgeCases:
 
     def test_persona_review_duplicate_blocking_issues(self) -> None:
         """Test PersonaReview allows duplicate text in concerns and blocking_issues."""
-        from consensus_engine.schemas.review import Concern, PersonaReview
+        from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 
         issue_text = "Critical security vulnerability"
         review = PersonaReview(
             persona_name="Security",
+            persona_id="security_guardian",
             confidence_score=0.3,
             strengths=[],
             concerns=[
                 Concern(text=issue_text, is_blocking=True),
             ],
             recommendations=[],
-            blocking_issues=[issue_text],  # Same text in both places
+            blocking_issues=[BlockingIssue(text=issue_text)],  # Same text in both places
             estimated_effort="Unknown",
             dependency_risks=[],
         )
 
         # This should be allowed - same issue can appear in both lists
         assert review.concerns[0].text == issue_text
-        assert review.blocking_issues[0] == issue_text
+        assert review.blocking_issues[0].text == issue_text
 
 
 class TestDecisionAggregationValidationEdgeCases:
@@ -428,7 +435,11 @@ class TestDecisionAggregationValidationEdgeCases:
         )
 
         minority = MinorityReport(
+            persona_id="conservative_reviewer",
             persona_name="Conservative Reviewer",
+            confidence_score=0.5,
+            blocking_summary="Too aggressive timeline and insufficient testing strategy",
+            mitigation_recommendation="Extend timeline and add comprehensive test coverage",
             strengths=["Well-documented", "Clear scope"],
             concerns=[
                 "Too aggressive timeline",
