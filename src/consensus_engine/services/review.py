@@ -45,7 +45,8 @@ Do not include any free-form text outside the structured format.
 Base your review on technical merit, feasibility, and completeness."""
 
 # Developer instruction template for persona-specific guidance
-REVIEW_DEVELOPER_INSTRUCTION_TEMPLATE = """Review this proposal from the perspective of: {persona_name}
+REVIEW_DEVELOPER_INSTRUCTION_TEMPLATE = (
+    """Review this proposal from the perspective of: {persona_name}
 
 Persona instructions: {persona_instructions}
 
@@ -60,6 +61,7 @@ Provide your review using the PersonaReview schema with the following fields:
 - dependency_risks: List of identified dependency risks (can be empty)
 
 Be thorough, specific, and constructive in your feedback."""
+)
 
 
 def review_proposal(
@@ -103,12 +105,13 @@ def review_proposal(
         persona_instructions=persona_instructions,
     )
 
-    # Construct user prompt with proposal details (note: prompt contains proposal but is never logged)
+    # Construct user prompt with proposal details
+    # Note: prompt contains proposal but is never logged
     # Truncate very long fields to avoid token limits
     max_field_length = 2000
     problem_statement = expanded_proposal.problem_statement[:max_field_length]
     proposed_solution = expanded_proposal.proposed_solution[:max_field_length]
-    
+
     user_prompt = f"""Review the following proposal:
 
 **Problem Statement:**
@@ -127,7 +130,7 @@ def review_proposal(
     # Add optional fields if present
     if expanded_proposal.title:
         user_prompt = f"**Title:** {expanded_proposal.title}\n\n" + user_prompt
-    
+
     if expanded_proposal.summary:
         summary_truncated = expanded_proposal.summary[:max_field_length]
         user_prompt = f"**Summary:** {summary_truncated}\n\n" + user_prompt

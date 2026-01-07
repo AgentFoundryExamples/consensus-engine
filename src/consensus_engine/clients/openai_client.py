@@ -102,7 +102,7 @@ class OpenAIClientWrapper:
         """
         request_id = str(uuid.uuid4())
         start_time = time.time()
-        
+
         # Use overrides or fall back to defaults
         model = model_override or self.model
         temperature = temperature_override if temperature_override is not None else self.temperature
