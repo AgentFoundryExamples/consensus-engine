@@ -72,6 +72,16 @@
     },
     {
       "type": "directory",
+      "name": "docs",
+      "children": [
+        {
+          "type": "file",
+          "name": "MULTI_PERSONA_ORCHESTRATION.md"
+        }
+      ]
+    },
+    {
+      "type": "directory",
       "name": "src",
       "children": [
         {
@@ -182,7 +192,15 @@
                 },
                 {
                   "type": "file",
+                  "name": "aggregator.py"
+                },
+                {
+                  "type": "file",
                   "name": "expand.py"
+                },
+                {
+                  "type": "file",
+                  "name": "orchestrator.py"
                 },
                 {
                   "type": "file",
@@ -236,6 +254,10 @@
             },
             {
               "type": "file",
+              "name": "test_multi_persona.py"
+            },
+            {
+              "type": "file",
               "name": "test_review_endpoint.py"
             },
             {
@@ -254,6 +276,10 @@
             },
             {
               "type": "file",
+              "name": "test_aggregator.py"
+            },
+            {
+              "type": "file",
               "name": "test_config.py"
             },
             {
@@ -267,6 +293,10 @@
             {
               "type": "file",
               "name": "test_openai_client.py"
+            },
+            {
+              "type": "file",
+              "name": "test_orchestrator.py"
             },
             {
               "type": "file",

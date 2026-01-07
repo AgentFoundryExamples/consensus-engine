@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 42
+Total files: 47
 
 ## src/consensus_engine/__init__.py
 **Language:** Python  
@@ -182,8 +182,17 @@ Total files: 42
 **Role:** module-init  
 **Role Justification:** module initialization file '__init__'  
 **Summary:** Python module initialization (role: module-init)  
-**Size:** 0.77 KB  
-**LOC:** 4  
+**Size:** 0.99 KB  
+**LOC:** 11  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/services/aggregator.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 9.52 KB  
+**LOC:** 195  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/expand.py
@@ -193,6 +202,15 @@ Total files: 42
 **Summary:** Python core implementation  
 **Size:** 4.16 KB  
 **LOC:** 70  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/services/orchestrator.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 9.50 KB  
+**LOC:** 160  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/review.py
@@ -236,8 +254,8 @@ Total files: 42
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 14.27 KB  
-**LOC:** 253  
+**Size:** 14.47 KB  
+**LOC:** 257  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_app.py
@@ -267,13 +285,22 @@ Total files: 42
 **LOC:** 256  
 **TODOs/FIXMEs:** 0  
 
+## tests/integration/test_multi_persona.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 13.67 KB  
+**LOC:** 284  
+**TODOs/FIXMEs:** 0  
+
 ## tests/integration/test_review_endpoint.py
 **Language:** Python  
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 22.15 KB  
-**LOC:** 488  
+**Size:** 22.39 KB  
+**LOC:** 493  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_review_service.py
@@ -281,8 +308,8 @@ Total files: 42
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 14.06 KB  
-**LOC:** 295  
+**Size:** 14.30 KB  
+**LOC:** 300  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py
@@ -292,6 +319,15 @@ Total files: 42
 **Summary:** Python test module initialization (role: test)  
 **Size:** 0.59 KB  
 **LOC:** 1  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_aggregator.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 14.07 KB  
+**LOC:** 237  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_config.py
@@ -328,6 +364,15 @@ Total files: 42
 **Summary:** Python test file (role: test)  
 **Size:** 11.38 KB  
 **LOC:** 224  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_orchestrator.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 11.83 KB  
+**LOC:** 250  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_personas.py
@@ -371,8 +416,8 @@ Total files: 42
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 15.93 KB  
-**LOC:** 323  
+**Size:** 16.32 KB  
+**LOC:** 331  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_validation.py
@@ -380,6 +425,6 @@ Total files: 42
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 18.46 KB  
-**LOC:** 349  
+**Size:** 19.01 KB  
+**LOC:** 360  
 **TODOs/FIXMEs:** 0  
