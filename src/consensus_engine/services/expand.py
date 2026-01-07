@@ -59,7 +59,7 @@ def expand_idea(
     """
     logger.info("Starting idea expansion")
 
-    # Construct user prompt
+    # Construct user prompt (note: prompt contains user input but is never logged)
     user_prompt = f"Expand the following idea into a detailed proposal:\n\n{idea_input.idea}"
 
     # Add extra context if provided

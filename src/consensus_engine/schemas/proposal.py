@@ -58,5 +58,10 @@ class ExpandedProposal(BaseModel):
     )
     raw_expanded_proposal: str = Field(
         default="",
-        description="The complete expanded proposal text or additional notes",
+        description=(
+            "Optional field for storing the complete expanded proposal text in narrative form "
+            "or additional notes that don't fit into the structured fields above. "
+            "This field allows the LLM to provide supplementary information beyond the "
+            "structured problem_statement, proposed_solution, assumptions, and scope_non_goals."
+        ),
     )

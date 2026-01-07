@@ -148,14 +148,14 @@ class TestOpenAIClientWrapperStructuredResponse:
             developer_instruction="Test developer instruction",
         )
 
-        # Verify developer instruction included in messages
+        # Verify developer instruction is merged into system instruction
         call_args = mock_client.beta.chat.completions.parse.call_args
         messages = call_args[1]["messages"]
-        assert len(messages) == 3
+        assert len(messages) == 2
         assert messages[0]["role"] == "system"
-        assert messages[1]["role"] == "developer"
-        assert messages[1]["content"] == "Test developer instruction"
-        assert messages[2]["role"] == "user"
+        assert "Test system" in messages[0]["content"]
+        assert "Test developer instruction" in messages[0]["content"]
+        assert messages[1]["role"] == "user"
 
     @patch("consensus_engine.clients.openai_client.OpenAI")
     def test_authentication_error_handling(

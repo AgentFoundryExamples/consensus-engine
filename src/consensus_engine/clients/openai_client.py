@@ -92,18 +92,17 @@ class OpenAIClientWrapper:
         )
 
         try:
-            # Build messages list - use type: ignore to bypass strict type checking
-            # The OpenAI SDK accepts dict format which is converted internally
-            messages: list[dict[str, str]] = [
-                {"role": "system", "content": system_instruction},
-            ]
-
-            # Add developer instruction if provided
+            # Build messages list
+            # Note: Developer instruction is merged into system instruction if provided
+            # to avoid using non-standard message roles
+            combined_system = system_instruction
             if developer_instruction:
-                messages.append({"role": "developer", "content": developer_instruction})
+                combined_system = f"{system_instruction}\n\n{developer_instruction}"
 
-            # Add user prompt
-            messages.append({"role": "user", "content": user_prompt})
+            messages: list[dict[str, str]] = [
+                {"role": "system", "content": combined_system},
+                {"role": "user", "content": user_prompt},
+            ]
 
             # Make API call with structured output
             response = self.client.beta.chat.completions.parse(
@@ -130,7 +129,7 @@ class OpenAIClientWrapper:
                 "model": self.model,
                 "temperature": self.temperature,
                 "elapsed_time": elapsed_time,
-                "finish_reason": response.choices[0].finish_reason if response.choices else None,
+                "finish_reason": response.choices[0].finish_reason,
                 "usage": response.usage.model_dump() if response.usage else None,
             }
 
