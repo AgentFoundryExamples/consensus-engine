@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 60
+Total files: 62
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -74,7 +74,7 @@ Total files: 60
 **Role:** module-init  
 **Role Justification:** module initialization file '__init__'  
 **Summary:** Python module initialization (role: module-init)  
-**Size:** 0.72 KB  
+**Size:** 0.73 KB  
 **LOC:** 3  
 **TODOs/FIXMEs:** 0  
 
@@ -114,13 +114,22 @@ Total files: 60
 **LOC:** 455  
 **TODOs/FIXMEs:** 0  
 
+## src/consensus_engine/api/routes/runs.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 12.24 KB  
+**LOC:** 316  
+**TODOs/FIXMEs:** 0  
+
 ## src/consensus_engine/app.py
 **Language:** Python  
 **Role:** entry-point  
 **Role Justification:** common entry point name 'app'  
 **Summary:** Python main entry point (role: entry-point)  
-**Size:** 10.49 KB  
-**LOC:** 255  
+**Size:** 10.53 KB  
+**LOC:** 256  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/__init__.py
@@ -209,8 +218,8 @@ Total files: 60
 **Role:** data-access  
 **Role Justification:** data access name 'repositories'  
 **Summary:** Python data access layer (role: data-access)  
-**Size:** 11.97 KB  
-**LOC:** 289  
+**Size:** 17.25 KB  
+**LOC:** 410  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py
@@ -245,8 +254,8 @@ Total files: 60
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 14.07 KB  
-**LOC:** 302  
+**Size:** 19.86 KB  
+**LOC:** 417  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -409,6 +418,15 @@ Total files: 60
 **Summary:** Python test file (role: test)  
 **Size:** 14.30 KB  
 **LOC:** 300  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_runs_endpoint.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 22.46 KB  
+**LOC:** 463  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py

@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 60
-- **Intra-repo dependencies**: 159
-- **External stdlib dependencies**: 30
-- **External third-party dependencies**: 63
+- **Total files**: 62
+- **Intra-repo dependencies**: 170
+- **External stdlib dependencies**: 31
+- **External third-party dependencies**: 68
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 30 unique modules
+Total: 31 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -27,6 +27,7 @@ Total: 30 unique modules
 - `contextlib.asynccontextmanager`
 - `datetime.UTC`
 - `datetime.datetime`
+- `datetime.timedelta`
 - `enum`
 - `enum.Enum`
 - `functools.lru_cache`
@@ -38,12 +39,11 @@ Total: 30 unique modules
 - `re`
 - `sys`
 - `threading`
-- `time`
-- ... and 10 more (see JSON for full list)
+- ... and 11 more (see JSON for full list)
 
 ### Third-Party Packages
 
-Total: 63 unique packages
+Total: 68 unique packages
 
 - `alembic.command`
 - `alembic.config.Config`
@@ -53,6 +53,7 @@ Total: 63 unique packages
 - `fastapi.Depends`
 - `fastapi.FastAPI`
 - `fastapi.HTTPException`
+- `fastapi.Query`
 - `fastapi.Request`
 - `fastapi.Response`
 - `fastapi.exceptions.RequestValidationError`
@@ -64,8 +65,7 @@ Total: 63 unique packages
 - `openai.`
 - `openai.APIConnectionError`
 - `openai.APITimeoutError`
-- `openai.AuthenticationError`
-- ... and 43 more (see JSON for full list)
+- ... and 48 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 
@@ -74,21 +74,21 @@ Total: 63 unique packages
 - `src/consensus_engine/exceptions.py` (16 dependents)
 - `src/consensus_engine/config/settings.py` (15 dependents)
 - `src/consensus_engine/config/__init__.py` (13 dependents)
-- `src/consensus_engine/config/logging.py` (11 dependents)
-- `src/consensus_engine/schemas/requests.py` (6 dependents)
+- `src/consensus_engine/config/logging.py` (12 dependents)
+- `src/consensus_engine/schemas/requests.py` (7 dependents)
+- `src/consensus_engine/db/models.py` (7 dependents)
+- `src/consensus_engine/db/__init__.py` (6 dependents)
 - `src/consensus_engine/config/personas.py` (6 dependents)
-- `src/consensus_engine/db/__init__.py` (5 dependents)
-- `src/consensus_engine/services/review.py` (5 dependents)
 
 ## Files with Most Dependencies (Intra-Repo)
 
 - `src/consensus_engine/api/routes/full_review.py` (11 dependencies)
-- `src/consensus_engine/app.py` (9 dependencies)
+- `src/consensus_engine/app.py` (10 dependencies)
 - `src/consensus_engine/api/routes/review.py` (7 dependencies)
 - `src/consensus_engine/services/orchestrator.py` (6 dependencies)
 - `tests/integration/test_acceptance_criteria.py` (6 dependencies)
 - `tests/integration/test_full_review_endpoint.py` (6 dependencies)
 - `src/consensus_engine/api/dependencies.py` (5 dependencies)
+- `src/consensus_engine/api/routes/__init__.py` (5 dependencies)
 - `src/consensus_engine/api/routes/expand.py` (5 dependencies)
-- `src/consensus_engine/services/review.py` (5 dependencies)
-- `tests/integration/test_multi_persona.py` (5 dependencies)
+- `src/consensus_engine/api/routes/runs.py` (5 dependencies)

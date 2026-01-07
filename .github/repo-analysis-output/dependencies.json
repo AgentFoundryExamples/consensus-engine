@@ -176,6 +176,26 @@
       }
     },
     {
+      "id": "src/consensus_engine/api/routes/runs.py",
+      "path": "src/consensus_engine/api/routes/runs.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.datetime",
+          "typing.Any",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.APIRouter",
+          "fastapi.Depends",
+          "fastapi.HTTPException",
+          "fastapi.Query",
+          "fastapi.status",
+          "sqlalchemy.orm.Session"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/app.py",
       "path": "src/consensus_engine/app.py",
       "type": "file",
@@ -370,7 +390,11 @@
         "third-party": [
           "sqlalchemy.exc.IntegrityError",
           "sqlalchemy.exc.SQLAlchemyError",
-          "sqlalchemy.orm.Session"
+          "sqlalchemy.func",
+          "sqlalchemy.orm.Session",
+          "sqlalchemy.orm.joinedload",
+          "sqlalchemy.orm.selectinload",
+          "sqlalchemy.select"
         ]
       }
     },
@@ -670,6 +694,28 @@
       }
     },
     {
+      "id": "tests/integration/test_runs_endpoint.py",
+      "path": "tests/integration/test_runs_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "datetime.timedelta",
+          "json",
+          "os",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest",
+          "sqlalchemy.create_engine",
+          "sqlalchemy.orm.sessionmaker",
+          "sqlalchemy.text"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/__init__.py",
       "path": "tests/unit/__init__.py",
       "type": "file",
@@ -912,6 +958,10 @@
       "target": "src/consensus_engine/api/routes/review.py"
     },
     {
+      "source": "src/consensus_engine/api/routes/__init__.py",
+      "target": "src/consensus_engine/api/routes/runs.py"
+    },
+    {
       "source": "src/consensus_engine/api/routes/expand.py",
       "target": "src/consensus_engine/api/dependencies.py"
     },
@@ -1016,6 +1066,26 @@
       "target": "src/consensus_engine/services/__init__.py"
     },
     {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/api/routes/expand.py"
     },
@@ -1030,6 +1100,10 @@
     {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/api/routes/review.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/api/routes/runs.py"
     },
     {
       "source": "src/consensus_engine/app.py",
@@ -1376,6 +1450,22 @@
       "target": "src/consensus_engine/services/review.py"
     },
     {
+      "source": "tests/integration/test_runs_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_runs_endpoint.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_runs_endpoint.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "tests/integration/test_runs_endpoint.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
       "source": "tests/unit/test_aggregator.py",
       "target": "src/consensus_engine/schemas/review.py"
     },
@@ -1514,6 +1604,7 @@
       "contextlib.asynccontextmanager",
       "datetime.UTC",
       "datetime.datetime",
+      "datetime.timedelta",
       "enum",
       "enum.Enum",
       "functools.lru_cache",
@@ -1546,6 +1637,7 @@
       "fastapi.Depends",
       "fastapi.FastAPI",
       "fastapi.HTTPException",
+      "fastapi.Query",
       "fastapi.Request",
       "fastapi.Response",
       "fastapi.exceptions.RequestValidationError",
@@ -1592,17 +1684,21 @@
       "sqlalchemy.exc.IntegrityError",
       "sqlalchemy.exc.OperationalError",
       "sqlalchemy.exc.SQLAlchemyError",
+      "sqlalchemy.func",
       "sqlalchemy.orm.Mapped",
       "sqlalchemy.orm.Session",
       "sqlalchemy.orm.declarative_base",
+      "sqlalchemy.orm.joinedload",
       "sqlalchemy.orm.mapped_column",
       "sqlalchemy.orm.relationship",
+      "sqlalchemy.orm.selectinload",
       "sqlalchemy.orm.sessionmaker",
       "sqlalchemy.pool",
       "sqlalchemy.pool.NullPool",
+      "sqlalchemy.select",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 30,
-    "third-party_count": 63
+    "stdlib_count": 31,
+    "third-party_count": 68
   }
 }
