@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 50
+Total files: 55
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -13,6 +13,24 @@ Total files: 50
 **Summary:** Python test file (role: test)  
 **Size:** 5.65 KB  
 **LOC:** 102  
+**TODOs/FIXMEs:** 0  
+
+## migrations/env.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python module for env  
+**Size:** 3.08 KB  
+**LOC:** 52  
+**TODOs/FIXMEs:** 0  
+
+## migrations/versions/9a73090ad792_initial_empty_migration.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python module for 9a73090ad792 initial empty migration  
+**Size:** 1.03 KB  
+**LOC:** 16  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/__init__.py
@@ -128,8 +146,8 @@ Total files: 50
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 1.98 KB  
-**LOC:** 34  
+**Size:** 2.32 KB  
+**LOC:** 39  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/config/personas.py
@@ -146,8 +164,17 @@ Total files: 50
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 6.75 KB  
-**LOC:** 156  
+**Size:** 10.37 KB  
+**LOC:** 257  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/db/__init__.py
+**Language:** Python  
+**Role:** module-init  
+**Role Justification:** module initialization file '__init__'  
+**Summary:** Python module initialization (role: module-init)  
+**Size:** 9.38 KB  
+**LOC:** 212  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py
@@ -285,6 +312,15 @@ Total files: 50
 **LOC:** 70  
 **TODOs/FIXMEs:** 0  
 
+## tests/integration/test_db.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 11.65 KB  
+**LOC:** 224  
+**TODOs/FIXMEs:** 0  
+
 ## tests/integration/test_expand_endpoint.py
 **Language:** Python  
 **Role:** test  
@@ -364,6 +400,15 @@ Total files: 50
 **Summary:** Python test file (role: test)  
 **Size:** 9.48 KB  
 **LOC:** 180  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_db.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 13.44 KB  
+**LOC:** 262  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_exceptions.py

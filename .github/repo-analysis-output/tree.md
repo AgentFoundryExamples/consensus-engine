@@ -19,6 +19,12 @@
   └── MULTI_PERSONA_ORCHESTRATION.md
 ├── examples
   └── test_full_review.py
+├── migrations
+  ├── versions
+    └── 9a73090ad792_initial_empty_migration.py
+  ├── env.py
+  ├── README
+  └── script.py.mako
 ├── src
   └── consensus_engine
     ├── api
@@ -38,6 +44,8 @@
       ├── logging.py
       ├── personas.py
       └── settings.py
+    ├── db
+      └── __init__.py
     ├── schemas
       ├── __init__.py
       ├── proposal.py
@@ -57,6 +65,7 @@
     ├── __init__.py
     ├── test_acceptance_criteria.py
     ├── test_app.py
+    ├── test_db.py
     ├── test_expand_endpoint.py
     ├── test_expand_service.py
     ├── test_full_review_endpoint.py
@@ -67,6 +76,7 @@
     ├── __init__.py
     ├── test_aggregator.py
     ├── test_config.py
+    ├── test_db.py
     ├── test_exceptions.py
     ├── test_expand_service.py
     ├── test_openai_client.py
@@ -81,6 +91,8 @@
   └── conftest.py
 ├── .env.example
 ├── .gitignore
+├── alembic.ini
+├── docker-compose.yml
 ├── IMPLEMENTATION_SUMMARY.md
 ├── LICENSE
 ├── LLMs.md

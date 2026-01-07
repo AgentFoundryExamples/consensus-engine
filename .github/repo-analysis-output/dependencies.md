@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 50
-- **Intra-repo dependencies**: 139
-- **External stdlib dependencies**: 19
-- **External third-party dependencies**: 24
+- **Total files**: 55
+- **Intra-repo dependencies**: 146
+- **External stdlib dependencies**: 26
+- **External third-party dependencies**: 45
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 19 unique modules
+Total: 26 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -28,21 +28,27 @@ Total: 19 unique modules
 - `functools.lru_cache`
 - `json`
 - `logging`
+- `logging.config.fileConfig`
+- `os`
+- `pathlib.Path`
 - `re`
 - `sys`
+- `threading`
 - `time`
 - `typing.Any`
+- `typing.Sequence`
 - `typing.TypeVar`
-- `typing.cast`
-- `unittest.mock.MagicMock`
-- `unittest.mock.Mock`
-- `unittest.mock.patch`
-- `uuid`
+- `typing.Union`
+- ... and 6 more (see JSON for full list)
 
 ### Third-Party Packages
 
-Total: 24 unique packages
+Total: 45 unique packages
 
+- `alembic.command`
+- `alembic.config.Config`
+- `alembic.context`
+- `alembic.op`
 - `fastapi.APIRouter`
 - `fastapi.Depends`
 - `fastapi.FastAPI`
@@ -53,25 +59,21 @@ Total: 24 unique packages
 - `fastapi.responses.JSONResponse`
 - `fastapi.status`
 - `fastapi.testclient.TestClient`
+- `google.cloud.sql.connector.Connector`
 - `httpx`
 - `openai.`
 - `openai.APIConnectionError`
 - `openai.APITimeoutError`
 - `openai.AuthenticationError`
-- `openai.OpenAI`
-- `openai.RateLimitError`
-- `pydantic.BaseModel`
-- `pydantic.Field`
-- `pydantic.ValidationError`
-- ... and 4 more (see JSON for full list)
+- ... and 25 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 
 - `src/consensus_engine/schemas/proposal.py` (21 dependents)
 - `src/consensus_engine/schemas/review.py` (18 dependents)
 - `src/consensus_engine/exceptions.py` (16 dependents)
-- `src/consensus_engine/config/settings.py` (14 dependents)
-- `src/consensus_engine/config/__init__.py` (10 dependents)
+- `src/consensus_engine/config/settings.py` (15 dependents)
+- `src/consensus_engine/config/__init__.py` (13 dependents)
 - `src/consensus_engine/config/logging.py` (10 dependents)
 - `src/consensus_engine/schemas/requests.py` (6 dependents)
 - `src/consensus_engine/config/personas.py` (6 dependents)
