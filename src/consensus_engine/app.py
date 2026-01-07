@@ -27,7 +27,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from consensus_engine.api.routes import expand, full_review, health, review
+from consensus_engine.api.routes import expand, full_review, health, review, runs
 from consensus_engine.config import get_settings
 from consensus_engine.config.logging import get_logger, setup_logging
 from consensus_engine.db import create_engine_from_settings, create_session_factory
@@ -313,6 +313,7 @@ def create_app() -> FastAPI:
     app.include_router(full_review.router)
     app.include_router(health.router)
     app.include_router(review.router)
+    app.include_router(runs.router)
 
     # Root endpoint
     @app.get("/", tags=["root"])

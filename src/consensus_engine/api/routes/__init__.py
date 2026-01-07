@@ -13,6 +13,6 @@
 # limitations under the License.
 """API routes package."""
 
-from consensus_engine.api.routes import expand, full_review, health, review
+from consensus_engine.api.routes import expand, full_review, health, review, runs
 
-__all__ = ["expand", "full_review", "health", "review"]
+__all__ = ["expand", "full_review", "health", "review", "runs"]
