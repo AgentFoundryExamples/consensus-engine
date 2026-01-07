@@ -786,12 +786,28 @@ class TestFullReviewEndpointComprehensive:
         assert decision["decision"] == "revise", "SecurityGuardian veto should force REVISE"
 
     @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_full_review_failure_no_partial_persona_data(
         self,
+        mock_expand_client_class: MagicMock,
         mock_orchestrator_client_class: MagicMock,
         client: TestClient,
     ) -> None:
         """Test that failure during persona orchestration returns no partial persona data."""
+        # Setup expand mock to succeed
+        mock_proposal = ExpandedProposal(
+            problem_statement="Test problem",
+            proposed_solution="Test solution",
+            assumptions=["Test assumption"],
+            scope_non_goals=["Test non-goal"],
+        )
+        mock_expand_client = MagicMock()
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            {"request_id": "expand-123", "elapsed_time": 1.0},
+        )
+        mock_expand_client_class.return_value = mock_expand_client
+
         # Setup orchestrator to fail on first persona
         from consensus_engine.exceptions import LLMServiceError
 

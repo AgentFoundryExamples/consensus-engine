@@ -26,6 +26,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from consensus_engine.schemas.proposal import ExpandedProposal
+from consensus_engine.schemas.review import PersonaReview
 
 
 @pytest.fixture
@@ -202,7 +203,7 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def persona_review_architect_high_confidence() -> Any:
+def persona_review_architect_high_confidence() -> PersonaReview:
     """Fixture for Architect persona review with high confidence.
 
     Returns:
@@ -233,7 +234,7 @@ def persona_review_architect_high_confidence() -> Any:
 
 
 @pytest.fixture
-def persona_review_critic_medium_confidence() -> Any:
+def persona_review_critic_medium_confidence() -> PersonaReview:
     """Fixture for Critic persona review with medium confidence.
 
     Returns:
@@ -261,7 +262,7 @@ def persona_review_critic_medium_confidence() -> Any:
 
 
 @pytest.fixture
-def persona_review_optimist_high_confidence() -> Any:
+def persona_review_optimist_high_confidence() -> PersonaReview:
     """Fixture for Optimist persona review with high confidence.
 
     Returns:
@@ -288,7 +289,7 @@ def persona_review_optimist_high_confidence() -> Any:
 
 
 @pytest.fixture
-def persona_review_security_guardian_with_critical_issue() -> Any:
+def persona_review_security_guardian_with_critical_issue() -> PersonaReview:
     """Fixture for SecurityGuardian with critical security issue (veto).
 
     Returns:
@@ -322,7 +323,7 @@ def persona_review_security_guardian_with_critical_issue() -> Any:
 
 
 @pytest.fixture
-def persona_review_security_guardian_no_veto() -> Any:
+def persona_review_security_guardian_no_veto() -> PersonaReview:
     """Fixture for SecurityGuardian without critical security issue (no veto).
 
     Returns:
@@ -348,7 +349,7 @@ def persona_review_security_guardian_no_veto() -> Any:
 
 
 @pytest.fixture
-def persona_review_user_advocate_high_confidence() -> Any:
+def persona_review_user_advocate_high_confidence() -> PersonaReview:
     """Fixture for UserAdvocate persona review with high confidence.
 
     Returns:
@@ -379,7 +380,7 @@ def persona_review_user_advocate_high_confidence() -> Any:
 
 
 @pytest.fixture
-def persona_review_critic_low_confidence() -> Any:
+def persona_review_critic_low_confidence() -> PersonaReview:
     """Fixture for Critic persona review with low confidence (dissenter).
 
     Returns:
@@ -415,7 +416,7 @@ def persona_review_critic_low_confidence() -> Any:
 
 
 @pytest.fixture
-def all_personas_approve_scenario() -> list[Any]:
+def all_personas_approve_scenario() -> list[PersonaReview]:
     """Fixture for all five personas with high confidence (approve scenario).
 
     Returns:
@@ -483,7 +484,7 @@ def all_personas_approve_scenario() -> list[Any]:
 
 
 @pytest.fixture
-def all_personas_revise_scenario() -> list[Any]:
+def all_personas_revise_scenario() -> list[PersonaReview]:
     """Fixture for all five personas with medium confidence (revise scenario).
 
     Returns:

@@ -412,8 +412,8 @@ class TestPersonaConfigMapping:
             # Each persona should have non-empty developer instructions
             assert len(persona_config.developer_instructions) > 0
             # Instructions should mention the persona's focus
-            assert persona_id in persona_config.developer_instructions.lower() or \
-                   persona_config.display_name.lower() in persona_config.developer_instructions.lower()
+            assert (persona_id in persona_config.developer_instructions.lower() or
+                    persona_config.display_name.lower() in persona_config.developer_instructions.lower())
 
     def test_all_personas_use_consistent_temperature(self) -> None:
         """Test all personas use the same temperature value for consistency."""
@@ -452,27 +452,32 @@ class TestPersonaConfigMapping:
         for persona_id, persona_config in PERSONAS.items():
             prompt = persona_config.system_prompt
             # System prompt should be substantial
-            assert len(prompt) > 100, f"Persona {persona_id} system prompt too short"
+            assert len(prompt) > 100, (
+                f"Persona {persona_id} system prompt too short"
+            )
             # Should mention reviewing/evaluation
             assert any(word in prompt.lower() for word in ["review", "evaluat", "assess", "analyz"])
 
     def test_persona_weights_are_normalized(self) -> None:
         """Test persona weights are properly normalized to sum to 1.0."""
         total_weight = sum(p.default_weight for p in PERSONAS.values())
-        assert abs(total_weight - 1.0) < 0.0001, \
+        assert abs(total_weight - 1.0) < 0.0001, (
             f"Persona weights sum to {total_weight}, expected 1.0"
+        )
 
     def test_each_persona_has_non_zero_weight(self) -> None:
         """Test each persona has a non-zero weight for meaningful contribution."""
         for persona_id, persona_config in PERSONAS.items():
-            assert persona_config.default_weight > 0.0, \
+            assert persona_config.default_weight > 0.0, (
                 f"Persona {persona_id} has zero weight, which would make it ineffective"
+            )
 
     def test_persona_id_matches_dict_key(self) -> None:
         """Test persona config ID matches its dictionary key."""
         for key, persona_config in PERSONAS.items():
-            assert persona_config.id == key, \
+            assert persona_config.id == key, (
                 f"Persona config ID '{persona_config.id}' doesn't match key '{key}'"
+            )
 
     def test_display_name_is_pascal_case_or_similar(self) -> None:
         """Test display names follow consistent naming convention."""
@@ -480,13 +485,20 @@ class TestPersonaConfigMapping:
             display_name = persona_config.display_name
             # Display name should not be empty and should start with capital
             assert len(display_name) > 0
-            assert display_name[0].isupper(), \
+            assert display_name[0].isupper(), (
                 f"Persona {persona_id} display name '{display_name}' should start with uppercase"
+            )
 
     def test_persona_temperature_in_deterministic_range(self) -> None:
         """Test PERSONA_TEMPERATURE is low enough for deterministic output."""
-        # Temperature should be ≤ 0.3 for deterministic responses
-        assert PERSONA_TEMPERATURE <= 0.3, \
-            f"PERSONA_TEMPERATURE {PERSONA_TEMPERATURE} too high for deterministic responses"
-        assert PERSONA_TEMPERATURE >= 0.0, \
+        # Temperature threshold for deterministic responses
+        DETERMINISTIC_TEMP_THRESHOLD = 0.3
+        
+        # Temperature should be at or below the threshold for deterministic responses
+        assert PERSONA_TEMPERATURE <= DETERMINISTIC_TEMP_THRESHOLD, (
+            f"PERSONA_TEMPERATURE {PERSONA_TEMPERATURE} too high for deterministic responses "
+            f"(>{DETERMINISTIC_TEMP_THRESHOLD})"
+        )
+        assert PERSONA_TEMPERATURE >= 0.0, (
             f"PERSONA_TEMPERATURE {PERSONA_TEMPERATURE} must be non-negative"
+        )
