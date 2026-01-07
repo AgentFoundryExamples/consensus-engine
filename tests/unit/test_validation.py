@@ -230,3 +230,223 @@ class TestConfigDefaultBehavior:
         # Perform a full round-trip validation
         rehydrated = ExpandIdeaRequest.model_validate_json(json_str)
         assert rehydrated == original
+
+
+class TestExpandedProposalValidationEdgeCases:
+    """Test suite for ExpandedProposal validation edge cases."""
+
+    def test_expanded_proposal_with_unicode(self) -> None:
+        """Test ExpandedProposal accepts unicode characters."""
+        from consensus_engine.schemas.proposal import ExpandedProposal
+
+        proposal = ExpandedProposal(
+            problem_statement="Problème avec émojis 🎉",
+            proposed_solution="Solution avec caractères spéciaux ©",
+            assumptions=["Assumption with émojis 🚀"],
+            scope_non_goals=["Non-goal with unicode ™"],
+        )
+
+        assert "émojis" in proposal.problem_statement
+        assert "🎉" in proposal.problem_statement
+        assert "©" in proposal.proposed_solution
+
+    def test_expanded_proposal_very_long_strings(self) -> None:
+        """Test ExpandedProposal handles very long strings."""
+        from consensus_engine.schemas.proposal import ExpandedProposal
+
+        long_text = "A" * 10000
+        proposal = ExpandedProposal(
+            problem_statement=long_text,
+            proposed_solution=long_text,
+            assumptions=[long_text],
+            scope_non_goals=[long_text],
+        )
+
+        assert len(proposal.problem_statement) == 10000
+        assert len(proposal.proposed_solution) == 10000
+        assert len(proposal.assumptions[0]) == 10000
+
+    def test_expanded_proposal_many_list_items(self) -> None:
+        """Test ExpandedProposal handles many list items."""
+        from consensus_engine.schemas.proposal import ExpandedProposal
+
+        many_items = [f"Item {i}" for i in range(1000)]
+        proposal = ExpandedProposal(
+            problem_statement="Problem",
+            proposed_solution="Solution",
+            assumptions=many_items,
+            scope_non_goals=many_items,
+        )
+
+        assert len(proposal.assumptions) == 1000
+        assert len(proposal.scope_non_goals) == 1000
+
+
+class TestPersonaReviewValidationEdgeCases:
+    """Test suite for PersonaReview validation edge cases."""
+
+    def test_persona_review_confidence_precision(self) -> None:
+        """Test PersonaReview handles high-precision confidence scores."""
+        from consensus_engine.schemas.review import PersonaReview
+
+        review = PersonaReview(
+            persona_name="Reviewer",
+            confidence_score=0.123456789,
+            strengths=[],
+            concerns=[],
+            recommendations=[],
+            blocking_issues=[],
+            estimated_effort="Unknown",
+            dependency_risks=[],
+        )
+
+        assert review.confidence_score == 0.123456789
+
+    def test_persona_review_mixed_dependency_risks(self) -> None:
+        """Test PersonaReview handles mixed string and dict dependency risks."""
+        from consensus_engine.schemas.review import PersonaReview
+
+        review = PersonaReview(
+            persona_name="Reviewer",
+            confidence_score=0.8,
+            strengths=[],
+            concerns=[],
+            recommendations=[],
+            blocking_issues=[],
+            estimated_effort="2 weeks",
+            dependency_risks=[
+                "Simple string risk",
+                {"name": "Complex risk", "severity": "high", "mitigation": "Plan B"},
+                "Another string risk",
+            ],
+        )
+
+        assert len(review.dependency_risks) == 3
+        assert review.dependency_risks[0] == "Simple string risk"
+        assert review.dependency_risks[1]["severity"] == "high"
+
+    def test_persona_review_concerns_with_mixed_blocking(self) -> None:
+        """Test PersonaReview handles concerns with mixed blocking status."""
+        from consensus_engine.schemas.review import Concern, PersonaReview
+
+        review = PersonaReview(
+            persona_name="Reviewer",
+            confidence_score=0.7,
+            strengths=[],
+            concerns=[
+                Concern(text="Blocking issue", is_blocking=True),
+                Concern(text="Non-blocking concern", is_blocking=False),
+                Concern(text="Another blocker", is_blocking=True),
+            ],
+            recommendations=[],
+            blocking_issues=["Blocking issue", "Another blocker"],
+            estimated_effort="Unknown",
+            dependency_risks=[],
+        )
+
+        blocking_concerns = [c for c in review.concerns if c.is_blocking]
+        non_blocking_concerns = [c for c in review.concerns if not c.is_blocking]
+
+        assert len(blocking_concerns) == 2
+        assert len(non_blocking_concerns) == 1
+
+    def test_persona_review_duplicate_blocking_issues(self) -> None:
+        """Test PersonaReview allows duplicate text in concerns and blocking_issues."""
+        from consensus_engine.schemas.review import Concern, PersonaReview
+
+        issue_text = "Critical security vulnerability"
+        review = PersonaReview(
+            persona_name="Security",
+            confidence_score=0.3,
+            strengths=[],
+            concerns=[
+                Concern(text=issue_text, is_blocking=True),
+            ],
+            recommendations=[],
+            blocking_issues=[issue_text],  # Same text in both places
+            estimated_effort="Unknown",
+            dependency_risks=[],
+        )
+
+        # This should be allowed - same issue can appear in both lists
+        assert review.concerns[0].text == issue_text
+        assert review.blocking_issues[0] == issue_text
+
+
+class TestDecisionAggregationValidationEdgeCases:
+    """Test suite for DecisionAggregation validation edge cases."""
+
+    def test_decision_aggregation_multiple_personas(self) -> None:
+        """Test DecisionAggregation with multiple personas."""
+        from consensus_engine.schemas.review import (
+            DecisionAggregation,
+            DecisionEnum,
+            PersonaScoreBreakdown,
+        )
+
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.7,
+            decision=DecisionEnum.REVISE,
+            score_breakdown={
+                "Security": PersonaScoreBreakdown(weight=0.3, notes="Security concerns"),
+                "Performance": PersonaScoreBreakdown(weight=0.3, notes="Performance OK"),
+                "UX": PersonaScoreBreakdown(weight=0.4, notes="UX needs work"),
+            },
+        )
+
+        assert len(aggregation.score_breakdown) == 3
+        total_weight = sum(p.weight for p in aggregation.score_breakdown.values())
+        assert total_weight == pytest.approx(1.0)
+
+    def test_decision_aggregation_uneven_weights(self) -> None:
+        """Test DecisionAggregation allows uneven persona weights."""
+        from consensus_engine.schemas.review import (
+            DecisionAggregation,
+            DecisionEnum,
+            PersonaScoreBreakdown,
+        )
+
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.8,
+            decision=DecisionEnum.APPROVE,
+            score_breakdown={
+                "Senior": PersonaScoreBreakdown(weight=0.7, notes="Senior approval"),
+                "Junior": PersonaScoreBreakdown(weight=0.3, notes="Junior approval"),
+            },
+        )
+
+        assert aggregation.score_breakdown["Senior"].weight == 0.7
+        assert aggregation.score_breakdown["Junior"].weight == 0.3
+
+    def test_decision_aggregation_minority_report_structure(self) -> None:
+        """Test DecisionAggregation with minority report."""
+        from consensus_engine.schemas.review import (
+            DecisionAggregation,
+            DecisionEnum,
+            MinorityReport,
+            PersonaScoreBreakdown,
+        )
+
+        minority = MinorityReport(
+            persona_name="Conservative Reviewer",
+            strengths=["Well-documented", "Clear scope"],
+            concerns=[
+                "Too aggressive timeline",
+                "Insufficient testing strategy",
+                "High technical debt risk",
+            ],
+        )
+
+        aggregation = DecisionAggregation(
+            overall_weighted_confidence=0.6,
+            decision=DecisionEnum.APPROVE,
+            score_breakdown={
+                "Optimist": PersonaScoreBreakdown(weight=0.6, notes="Ready to go"),
+                "Realist": PersonaScoreBreakdown(weight=0.4, notes="Acceptable risk"),
+            },
+            minority_report=minority,
+        )
+
+        assert aggregation.minority_report is not None
+        assert len(aggregation.minority_report.concerns) == 3
+        assert aggregation.minority_report.persona_name == "Conservative Reviewer"

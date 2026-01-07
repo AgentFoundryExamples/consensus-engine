@@ -90,6 +90,8 @@ class TestExpandIdea:
         mock_proposal = ExpandedProposal(
             problem_statement="Test problem",
             proposed_solution="Test solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-request-456"}
 
@@ -117,6 +119,8 @@ class TestExpandIdea:
         mock_proposal = ExpandedProposal(
             problem_statement="Test problem",
             proposed_solution="Test solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-request-789"}
 
@@ -143,6 +147,8 @@ class TestExpandIdea:
         mock_proposal = ExpandedProposal(
             problem_statement="Test problem",
             proposed_solution="Test solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-request-xyz"}
 
@@ -170,6 +176,8 @@ class TestExpandIdea:
         mock_proposal = ExpandedProposal(
             problem_statement="Test problem",
             proposed_solution="Test solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-request-dev"}
 
@@ -240,7 +248,8 @@ class TestExpandIdea:
         mock_proposal = ExpandedProposal(
             problem_statement="Minimal problem",
             proposed_solution="Minimal solution",
-            # assumptions and scope_non_goals will be empty lists
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-minimal"}
 
@@ -257,4 +266,4 @@ class TestExpandIdea:
         assert result.proposed_solution == "Minimal solution"
         assert result.assumptions == []
         assert result.scope_non_goals == []
-        assert result.raw_expanded_proposal == ""
+        assert result.raw_expanded_proposal is None

@@ -148,6 +148,9 @@ class TestExpandIdeaResponse:
             proposed_solution="Solution",
             assumptions=["Assumption 1"],
             scope_non_goals=["Non-goal 1"],
+            title="Test Title",
+            summary="Test Summary",
+            raw_idea="Original idea",
             raw_expanded_proposal="Full proposal",
             metadata={"request_id": "test-123"},
         )
@@ -155,6 +158,9 @@ class TestExpandIdeaResponse:
         assert response.proposed_solution == "Solution"
         assert len(response.assumptions) == 1
         assert len(response.scope_non_goals) == 1
+        assert response.title == "Test Title"
+        assert response.summary == "Test Summary"
+        assert response.raw_idea == "Original idea"
         assert response.metadata["request_id"] == "test-123"
 
     def test_minimal_response(self) -> None:
@@ -162,17 +168,24 @@ class TestExpandIdeaResponse:
         response = ExpandIdeaResponse(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
             metadata={"request_id": "test-456"},
         )
         assert response.assumptions == []
         assert response.scope_non_goals == []
-        assert response.raw_expanded_proposal == ""
+        assert response.title is None
+        assert response.summary is None
+        assert response.raw_idea is None
+        assert response.raw_expanded_proposal is None
 
     def test_json_serializable(self) -> None:
         """Test that response is JSON serializable."""
         response = ExpandIdeaResponse(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
             metadata={"request_id": "test-789"},
         )
         json_data = response.model_dump()
