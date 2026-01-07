@@ -85,9 +85,7 @@ class TestExpandIdea:
         mock_client_class.return_value = mock_client
 
         # Create input with extra context
-        idea_input = IdeaInput(
-            idea="Build a new API", extra_context="Must support Python 3.11+"
-        )
+        idea_input = IdeaInput(idea="Build a new API", extra_context="Must support Python 3.11+")
         result, metadata = expand_idea(idea_input, mock_settings)
 
         # Verify extra context was included in prompt

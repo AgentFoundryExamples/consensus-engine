@@ -34,9 +34,7 @@ class LLMServiceError(ConsensusEngineError):
     Used for wrapping OpenAI API errors and transport failures.
     """
 
-    def __init__(
-        self, message: str, code: str = "LLM_SERVICE_ERROR", details: dict | None = None
-    ):
+    def __init__(self, message: str, code: str = "LLM_SERVICE_ERROR", details: dict | None = None):
         """Initialize LLM service error.
 
         Args:
@@ -76,9 +74,7 @@ class LLMRateLimitError(LLMServiceError):
 class LLMAuthenticationError(LLMServiceError):
     """Exception for LLM authentication errors."""
 
-    def __init__(
-        self, message: str = "LLM authentication failed", details: dict | None = None
-    ):
+    def __init__(self, message: str = "LLM authentication failed", details: dict | None = None):
         """Initialize authentication error.
 
         Args:
@@ -91,9 +87,7 @@ class LLMAuthenticationError(LLMServiceError):
 class SchemaValidationError(ConsensusEngineError):
     """Exception for structured output schema validation failures."""
 
-    def __init__(
-        self, message: str = "Schema validation failed", details: dict | None = None
-    ):
+    def __init__(self, message: str = "Schema validation failed", details: dict | None = None):
         """Initialize schema validation error.
 
         Args:

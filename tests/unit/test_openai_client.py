@@ -182,9 +182,7 @@ class TestOpenAIClientWrapperStructuredResponse:
         assert "request_id" in exc_info.value.details
 
     @patch("consensus_engine.clients.openai_client.OpenAI")
-    def test_rate_limit_error_handling(
-        self, mock_openai: Mock, mock_settings: Settings
-    ) -> None:
+    def test_rate_limit_error_handling(self, mock_openai: Mock, mock_settings: Settings) -> None:
         """Test rate limit error is properly wrapped."""
         mock_client = MagicMock()
         mock_client.beta.chat.completions.parse.side_effect = RateLimitError(
@@ -209,9 +207,7 @@ class TestOpenAIClientWrapperStructuredResponse:
     def test_timeout_error_handling(self, mock_openai: Mock, mock_settings: Settings) -> None:
         """Test timeout error is properly wrapped."""
         mock_client = MagicMock()
-        mock_client.beta.chat.completions.parse.side_effect = APITimeoutError(
-            request=MagicMock()
-        )
+        mock_client.beta.chat.completions.parse.side_effect = APITimeoutError(request=MagicMock())
         mock_openai.return_value = mock_client
 
         wrapper = OpenAIClientWrapper(mock_settings)
@@ -228,9 +224,7 @@ class TestOpenAIClientWrapperStructuredResponse:
         assert exc_info.value.details["retryable"] is True
 
     @patch("consensus_engine.clients.openai_client.OpenAI")
-    def test_connection_error_handling(
-        self, mock_openai: Mock, mock_settings: Settings
-    ) -> None:
+    def test_connection_error_handling(self, mock_openai: Mock, mock_settings: Settings) -> None:
         """Test connection error is properly wrapped."""
         mock_client = MagicMock()
         mock_client.beta.chat.completions.parse.side_effect = APIConnectionError(
@@ -274,9 +268,7 @@ class TestOpenAIClientWrapperStructuredResponse:
         assert exc_info.value.code == "SCHEMA_VALIDATION_ERROR"
 
     @patch("consensus_engine.clients.openai_client.OpenAI")
-    def test_unexpected_error_handling(
-        self, mock_openai: Mock, mock_settings: Settings
-    ) -> None:
+    def test_unexpected_error_handling(self, mock_openai: Mock, mock_settings: Settings) -> None:
         """Test unexpected error is properly wrapped."""
         mock_client = MagicMock()
         mock_client.beta.chat.completions.parse.side_effect = Exception("Unexpected error")
