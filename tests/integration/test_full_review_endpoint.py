@@ -25,7 +25,7 @@ from consensus_engine.exceptions import (
     LLMRateLimitError,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import Concern, PersonaReview
+from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 
 
 @pytest.fixture
@@ -421,3 +421,508 @@ class TestFullReviewEndpoint:
         assert "expanded_proposal" in data
         assert len(data["persona_reviews"]) == 5
         assert "decision" in data
+
+
+class TestFullReviewEndpointComprehensive:
+    """Comprehensive test suite for full-review endpoint with detailed scenarios."""
+
+    @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    @patch("consensus_engine.services.expand.OpenAIClientWrapper")
+    def test_full_review_all_five_personas_in_response(
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_orchestrator_client_class: MagicMock,
+        client: TestClient,
+    ) -> None:
+        """Test that response contains all five persona reviews with correct IDs."""
+        # Setup expand mock
+        mock_proposal = ExpandedProposal(
+            problem_statement="Test problem",
+            proposed_solution="Test solution",
+            assumptions=["Test assumption"],
+            scope_non_goals=["Test non-goal"],
+        )
+        mock_expand_client = MagicMock()
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            {"request_id": "expand-123", "elapsed_time": 1.0},
+        )
+        mock_expand_client_class.return_value = mock_expand_client
+
+        # Setup orchestrator mock with all five personas
+        persona_configs = [
+            ("architect", "Architect", 0.85),
+            ("critic", "Critic", 0.80),
+            ("optimist", "Optimist", 0.90),
+            ("security_guardian", "SecurityGuardian", 0.82),
+            ("user_advocate", "UserAdvocate", 0.88),
+        ]
+
+        persona_reviews = []
+        for persona_id, persona_name, confidence in persona_configs:
+            review = PersonaReview(
+                persona_name=persona_name,
+                persona_id=persona_id,
+                confidence_score=confidence,
+                strengths=["Good"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            )
+            persona_reviews.append(review)
+
+        mock_orchestrator_client = MagicMock()
+        mock_orchestrator_client.create_structured_response.side_effect = [
+            (persona_reviews[i], {"request_id": f"review-{i}", "latency": 2.0})
+            for i in range(5)
+        ]
+        mock_orchestrator_client_class.return_value = mock_orchestrator_client
+
+        # Make request
+        response = client.post("/v1/full-review", json={"idea": "Build an API"})
+
+        # Verify response structure
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check all five personas are present
+        assert "persona_reviews" in data
+        assert len(data["persona_reviews"]) == 5
+
+        # Verify each expected persona is in the response
+        persona_ids = {review["persona_id"] for review in data["persona_reviews"]}
+        expected_ids = {"architect", "critic", "optimist", "security_guardian", "user_advocate"}
+        assert persona_ids == expected_ids
+
+        # Verify each review has required fields
+        for review in data["persona_reviews"]:
+            assert "persona_id" in review
+            assert "persona_name" in review
+            assert "confidence_score" in review
+            assert "strengths" in review
+            assert "concerns" in review
+            assert "recommendations" in review
+            assert "blocking_issues" in review
+
+    @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    @patch("consensus_engine.services.expand.OpenAIClientWrapper")
+    def test_full_review_persona_order_preserved(
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_orchestrator_client_class: MagicMock,
+        client: TestClient,
+    ) -> None:
+        """Test that persona order is preserved in response."""
+        # Setup mocks
+        mock_proposal = ExpandedProposal(
+            problem_statement="Test",
+            assumptions=[],
+            proposed_solution="Solution",
+            scope_non_goals=[],
+        )
+        mock_expand_client = MagicMock()
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            {"request_id": "expand-123"},
+        )
+        mock_expand_client_class.return_value = mock_expand_client
+
+        # Create personas in specific order
+        ordered_personas = [
+            ("architect", "Architect", 0.80),
+            ("critic", "Critic", 0.75),
+            ("optimist", "Optimist", 0.85),
+            ("security_guardian", "SecurityGuardian", 0.78),
+            ("user_advocate", "UserAdvocate", 0.82),
+        ]
+
+        reviews = []
+        for persona_id, persona_name, confidence in ordered_personas:
+            review = PersonaReview(
+                persona_name=persona_name,
+                persona_id=persona_id,
+                confidence_score=confidence,
+                strengths=["Test"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="1 week",
+                dependency_risks=[],
+            )
+            reviews.append(review)
+
+        mock_orchestrator_client = MagicMock()
+        mock_orchestrator_client.create_structured_response.side_effect = [
+            (reviews[i], {"request_id": f"review-{i}"}) for i in range(5)
+        ]
+        mock_orchestrator_client_class.return_value = mock_orchestrator_client
+
+        # Make request
+        response = client.post("/v1/full-review", json={"idea": "Test idea"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify order is preserved (based on config order, not execution order)
+        persona_ids_in_response = [r["persona_id"] for r in data["persona_reviews"]]
+        expected_order = ["architect", "critic", "optimist", "security_guardian", "user_advocate"]
+        assert persona_ids_in_response == expected_order
+
+    @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    @patch("consensus_engine.services.expand.OpenAIClientWrapper")
+    def test_full_review_includes_minority_reports_in_decision(
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_orchestrator_client_class: MagicMock,
+        client: TestClient,
+    ) -> None:
+        """Test that minority reports are included in decision when applicable."""
+        # Setup mocks
+        mock_proposal = ExpandedProposal(
+            problem_statement="Test",
+            assumptions=[],
+            proposed_solution="Solution",
+            scope_non_goals=[],
+        )
+        mock_expand_client = MagicMock()
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            {"request_id": "expand-123"},
+        )
+        mock_expand_client_class.return_value = mock_expand_client
+
+        # Create personas where one has low confidence (triggers minority report)
+        reviews = [
+            PersonaReview(
+                persona_name="Architect",
+                persona_id="architect",
+                confidence_score=0.95,
+                strengths=["Excellent"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="Critic",
+                persona_id="critic",
+                confidence_score=0.55,  # Low - triggers minority report
+                strengths=["Some good points"],
+                concerns=[Concern(text="Too risky", is_blocking=True)],
+                recommendations=["Reduce scope"],
+                blocking_issues=[],
+                estimated_effort="4 weeks",
+                dependency_risks=["High risk"],
+            ),
+            PersonaReview(
+                persona_name="Optimist",
+                persona_id="optimist",
+                confidence_score=0.98,
+                strengths=["Great"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="SecurityGuardian",
+                persona_id="security_guardian",
+                confidence_score=0.90,
+                strengths=["Secure"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="UserAdvocate",
+                persona_id="user_advocate",
+                confidence_score=0.93,
+                strengths=["Good UX"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+        ]
+
+        mock_orchestrator_client = MagicMock()
+        mock_orchestrator_client.create_structured_response.side_effect = [
+            (reviews[i], {"request_id": f"review-{i}"}) for i in range(5)
+        ]
+        mock_orchestrator_client_class.return_value = mock_orchestrator_client
+
+        # Make request
+        response = client.post("/v1/full-review", json={"idea": "Test idea"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify decision includes minority reports
+        assert "decision" in data
+        decision = data["decision"]
+
+        # Should have minority reports
+        assert "minority_reports" in decision
+        assert decision["minority_reports"] is not None
+        assert len(decision["minority_reports"]) > 0
+
+        # Verify minority report for Critic
+        minority = decision["minority_reports"][0]
+        assert minority["persona_id"] == "critic"
+        assert minority["confidence_score"] == 0.55
+
+    @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    @patch("consensus_engine.services.expand.OpenAIClientWrapper")
+    def test_full_review_security_guardian_veto_in_integration(
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_orchestrator_client_class: MagicMock,
+        client: TestClient,
+    ) -> None:
+        """Test SecurityGuardian veto works in full integration."""
+        # Setup mocks
+        mock_proposal = ExpandedProposal(
+            problem_statement="Test",
+            assumptions=[],
+            proposed_solution="Solution",
+            scope_non_goals=[],
+        )
+        mock_expand_client = MagicMock()
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            {"request_id": "expand-123"},
+        )
+        mock_expand_client_class.return_value = mock_expand_client
+
+        # High confidence overall but SecurityGuardian has critical issue
+        reviews = [
+            PersonaReview(
+                persona_name="Architect",
+                persona_id="architect",
+                confidence_score=0.90,
+                strengths=["Great design"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="Critic",
+                persona_id="critic",
+                confidence_score=0.85,
+                strengths=["Well thought out"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="Optimist",
+                persona_id="optimist",
+                confidence_score=0.95,
+                strengths=["Excellent"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="SecurityGuardian",
+                persona_id="security_guardian",
+                confidence_score=0.80,
+                strengths=["Good base security"],
+                concerns=[Concern(text="Critical security flaw", is_blocking=True)],
+                recommendations=["Fix security issue"],
+                blocking_issues=[
+                    BlockingIssue(text="SQL injection vulnerability", security_critical=True)
+                ],
+                estimated_effort="1 week for fix",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="UserAdvocate",
+                persona_id="user_advocate",
+                confidence_score=0.88,
+                strengths=["Good UX"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+        ]
+
+        mock_orchestrator_client = MagicMock()
+        mock_orchestrator_client.create_structured_response.side_effect = [
+            (reviews[i], {"request_id": f"review-{i}"}) for i in range(5)
+        ]
+        mock_orchestrator_client_class.return_value = mock_orchestrator_client
+
+        # Make request
+        response = client.post("/v1/full-review", json={"idea": "Test idea"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify SecurityGuardian veto forced REVISE despite high overall confidence
+        decision = data["decision"]
+        # Weighted confidence would be high (>0.80) but veto forces REVISE
+        assert decision["decision"] == "revise", "SecurityGuardian veto should force REVISE"
+
+    @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    def test_full_review_failure_no_partial_persona_data(
+        self,
+        mock_orchestrator_client_class: MagicMock,
+        client: TestClient,
+    ) -> None:
+        """Test that failure during persona orchestration returns no partial persona data."""
+        # Setup orchestrator to fail on first persona
+        from consensus_engine.exceptions import LLMServiceError
+
+        mock_orchestrator_client = MagicMock()
+        mock_orchestrator_client.create_structured_response.side_effect = LLMServiceError(
+            message="OpenAI API error",
+            code="LLM_SERVICE_ERROR",
+            details={"retryable": True},
+        )
+        mock_orchestrator_client_class.return_value = mock_orchestrator_client
+
+        # Make request
+        response = client.post("/v1/full-review", json={"idea": "Test idea"})
+
+        # Verify error response
+        assert response.status_code in [500, 503]  # Service error codes
+        data = response.json()
+
+        # Verify structured error format
+        assert "code" in data
+        assert "message" in data
+        assert "failed_step" in data
+
+        # Verify no partial persona data is included
+        # If expand succeeded, we'd have partial_results with expanded_proposal
+        # But if review (orchestration) fails, we should not expose partial persona reviews
+        if "partial_results" in data and data["partial_results"] is not None:
+            # If partial results exist, they should only have expanded_proposal
+            assert "expanded_proposal" in data["partial_results"]
+            # Should NOT have persona_reviews or decision
+            assert "persona_reviews" not in data["partial_results"]
+            assert "decision" not in data["partial_results"]
+
+    @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
+    @patch("consensus_engine.services.expand.OpenAIClientWrapper")
+    def test_full_review_decision_includes_score_breakdown(
+        self,
+        mock_expand_client_class: MagicMock,
+        mock_orchestrator_client_class: MagicMock,
+        client: TestClient,
+    ) -> None:
+        """Test that decision includes detailed score breakdown."""
+        # Setup mocks
+        mock_proposal = ExpandedProposal(
+            problem_statement="Test",
+            assumptions=[],
+            proposed_solution="Solution",
+            scope_non_goals=[],
+        )
+        mock_expand_client = MagicMock()
+        mock_expand_client.create_structured_response.return_value = (
+            mock_proposal,
+            {"request_id": "expand-123"},
+        )
+        mock_expand_client_class.return_value = mock_expand_client
+
+        reviews = [
+            PersonaReview(
+                persona_name="Architect",
+                persona_id="architect",
+                confidence_score=0.85,
+                strengths=["Good"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="Critic",
+                persona_id="critic",
+                confidence_score=0.80,
+                strengths=["Good"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="Optimist",
+                persona_id="optimist",
+                confidence_score=0.90,
+                strengths=["Good"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="SecurityGuardian",
+                persona_id="security_guardian",
+                confidence_score=0.82,
+                strengths=["Good"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+            PersonaReview(
+                persona_name="UserAdvocate",
+                persona_id="user_advocate",
+                confidence_score=0.87,
+                strengths=["Good"],
+                concerns=[],
+                recommendations=[],
+                blocking_issues=[],
+                estimated_effort="2 weeks",
+                dependency_risks=[],
+            ),
+        ]
+
+        mock_orchestrator_client = MagicMock()
+        mock_orchestrator_client.create_structured_response.side_effect = [
+            (reviews[i], {"request_id": f"review-{i}"}) for i in range(5)
+        ]
+        mock_orchestrator_client_class.return_value = mock_orchestrator_client
+
+        # Make request
+        response = client.post("/v1/full-review", json={"idea": "Test idea"})
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify decision has detailed score breakdown
+        decision = data["decision"]
+        assert "detailed_score_breakdown" in decision
+
+        breakdown = decision["detailed_score_breakdown"]
+        assert "weights" in breakdown
+        assert "individual_scores" in breakdown
+        assert "weighted_contributions" in breakdown
+        assert "formula" in breakdown
+
+        # Verify all five personas in breakdown
+        assert len(breakdown["weights"]) == 5
+        assert len(breakdown["individual_scores"]) == 5
+        assert len(breakdown["weighted_contributions"]) == 5

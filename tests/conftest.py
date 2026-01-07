@@ -192,3 +192,359 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     ]
     for var in env_vars:
         monkeypatch.delenv(var, raising=False)
+
+
+# ==============================================================================
+# Multi-Persona Review Fixtures
+# ==============================================================================
+# These fixtures provide reusable persona review payloads for testing the
+# multi-persona consensus pipeline with various scenarios.
+
+
+@pytest.fixture
+def persona_review_architect_high_confidence() -> Any:
+    """Fixture for Architect persona review with high confidence.
+
+    Returns:
+        PersonaReview with Architect persona at 0.85 confidence
+    """
+    from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
+
+    return PersonaReview(
+        persona_name="Architect",
+        persona_id="architect",
+        confidence_score=0.85,
+        strengths=[
+            "Well-structured system design",
+            "Scalable architecture approach",
+            "Clear separation of concerns",
+        ],
+        concerns=[
+            Concern(text="Potential database performance bottleneck", is_blocking=False),
+        ],
+        recommendations=[
+            "Consider adding caching layer",
+            "Review database indexing strategy",
+        ],
+        blocking_issues=[],
+        estimated_effort="3-4 weeks",
+        dependency_risks=["Database migration complexity"],
+    )
+
+
+@pytest.fixture
+def persona_review_critic_medium_confidence() -> Any:
+    """Fixture for Critic persona review with medium confidence.
+
+    Returns:
+        PersonaReview with Critic persona at 0.70 confidence
+    """
+    from consensus_engine.schemas.review import Concern, PersonaReview
+
+    return PersonaReview(
+        persona_name="Critic",
+        persona_id="critic",
+        confidence_score=0.70,
+        strengths=["Clear problem statement"],
+        concerns=[
+            Concern(text="Edge case handling unclear", is_blocking=True),
+            Concern(text="Error recovery not specified", is_blocking=False),
+        ],
+        recommendations=[
+            "Document edge case handling",
+            "Add comprehensive error recovery plan",
+        ],
+        blocking_issues=[],
+        estimated_effort="2 weeks",
+        dependency_risks=["Third-party API changes", "Network reliability"],
+    )
+
+
+@pytest.fixture
+def persona_review_optimist_high_confidence() -> Any:
+    """Fixture for Optimist persona review with high confidence.
+
+    Returns:
+        PersonaReview with Optimist persona at 0.90 confidence
+    """
+    from consensus_engine.schemas.review import PersonaReview
+
+    return PersonaReview(
+        persona_name="Optimist",
+        persona_id="optimist",
+        confidence_score=0.90,
+        strengths=[
+            "Innovative approach",
+            "Clear value proposition",
+            "Feasible implementation path",
+            "Good use of existing technologies",
+        ],
+        concerns=[],
+        recommendations=["Consider expanding scope to include mobile support"],
+        blocking_issues=[],
+        estimated_effort="2-3 weeks",
+        dependency_risks=[],
+    )
+
+
+@pytest.fixture
+def persona_review_security_guardian_with_critical_issue() -> Any:
+    """Fixture for SecurityGuardian with critical security issue (veto).
+
+    Returns:
+        PersonaReview with SecurityGuardian at 0.65 confidence and security_critical issue
+    """
+    from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
+
+    return PersonaReview(
+        persona_name="SecurityGuardian",
+        persona_id="security_guardian",
+        confidence_score=0.65,
+        strengths=["Uses HTTPS for all communications"],
+        concerns=[
+            Concern(text="Missing input validation", is_blocking=True),
+            Concern(text="No rate limiting", is_blocking=True),
+        ],
+        recommendations=[
+            "Implement comprehensive input validation",
+            "Add rate limiting to all endpoints",
+            "Conduct security audit before deployment",
+        ],
+        blocking_issues=[
+            BlockingIssue(
+                text="SQL injection vulnerability in user input handling",
+                security_critical=True,  # Triggers veto
+            ),
+        ],
+        estimated_effort="1 week for security fixes",
+        dependency_risks=["Security library updates"],
+    )
+
+
+@pytest.fixture
+def persona_review_security_guardian_no_veto() -> Any:
+    """Fixture for SecurityGuardian without critical security issue (no veto).
+
+    Returns:
+        PersonaReview with SecurityGuardian at 0.80 confidence, no security_critical
+    """
+    from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
+
+    return PersonaReview(
+        persona_name="SecurityGuardian",
+        persona_id="security_guardian",
+        confidence_score=0.80,
+        strengths=["Good authentication design", "Proper use of HTTPS"],
+        concerns=[
+            Concern(text="Logging could expose sensitive data", is_blocking=False),
+        ],
+        recommendations=["Review logging implementation for PII"],
+        blocking_issues=[
+            BlockingIssue(text="Minor: consider adding CSRF tokens", security_critical=False)
+        ],
+        estimated_effort="1-2 days",
+        dependency_risks=[],
+    )
+
+
+@pytest.fixture
+def persona_review_user_advocate_high_confidence() -> Any:
+    """Fixture for UserAdvocate persona review with high confidence.
+
+    Returns:
+        PersonaReview with UserAdvocate persona at 0.85 confidence
+    """
+    from consensus_engine.schemas.review import Concern, PersonaReview
+
+    return PersonaReview(
+        persona_name="UserAdvocate",
+        persona_id="user_advocate",
+        confidence_score=0.85,
+        strengths=[
+            "Clear user value proposition",
+            "Intuitive API design",
+            "Good error messages",
+        ],
+        concerns=[
+            Concern(text="Accessibility not explicitly addressed", is_blocking=False),
+        ],
+        recommendations=[
+            "Add accessibility documentation",
+            "Consider internationalization support",
+        ],
+        blocking_issues=[],
+        estimated_effort="2 weeks",
+        dependency_risks=[],
+    )
+
+
+@pytest.fixture
+def persona_review_critic_low_confidence() -> Any:
+    """Fixture for Critic persona review with low confidence (dissenter).
+
+    Returns:
+        PersonaReview with Critic persona at 0.55 confidence (triggers minority report)
+    """
+    from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
+
+    return PersonaReview(
+        persona_name="Critic",
+        persona_id="critic",
+        confidence_score=0.55,  # Low confidence - triggers minority report
+        strengths=["Problem is well-defined"],
+        concerns=[
+            Concern(text="Too many unknowns in implementation", is_blocking=True),
+            Concern(text="High complexity without clear benefits", is_blocking=True),
+            Concern(text="Timeline appears optimistic", is_blocking=False),
+        ],
+        recommendations=[
+            "Break down into smaller phases",
+            "Conduct proof-of-concept first",
+            "Add more detailed technical specification",
+        ],
+        blocking_issues=[
+            BlockingIssue(text="Implementation complexity not adequately addressed"),
+        ],
+        estimated_effort="6-8 weeks (much higher than estimated)",
+        dependency_risks=[
+            "Multiple external API dependencies",
+            "Unproven technology stack",
+            "Team expertise gaps",
+        ],
+    )
+
+
+@pytest.fixture
+def all_personas_approve_scenario() -> list[Any]:
+    """Fixture for all five personas with high confidence (approve scenario).
+
+    Returns:
+        List of PersonaReview instances representing unanimous approval
+    """
+    from consensus_engine.schemas.review import PersonaReview
+
+    return [
+        PersonaReview(
+            persona_name="Architect",
+            persona_id="architect",
+            confidence_score=0.88,
+            strengths=["Excellent architecture"],
+            concerns=[],
+            recommendations=["Minor: Consider adding monitoring"],
+            blocking_issues=[],
+            estimated_effort="3 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="Critic",
+            persona_id="critic",
+            confidence_score=0.82,
+            strengths=["Well thought out"],
+            concerns=[],
+            recommendations=["Add more test coverage"],
+            blocking_issues=[],
+            estimated_effort="3 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="Optimist",
+            persona_id="optimist",
+            confidence_score=0.95,
+            strengths=["Great potential", "Clear value"],
+            concerns=[],
+            recommendations=[],
+            blocking_issues=[],
+            estimated_effort="2-3 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="SecurityGuardian",
+            persona_id="security_guardian",
+            confidence_score=0.87,
+            strengths=["Good security design"],
+            concerns=[],
+            recommendations=["Schedule security audit"],
+            blocking_issues=[],
+            estimated_effort="3 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="UserAdvocate",
+            persona_id="user_advocate",
+            confidence_score=0.90,
+            strengths=["Excellent UX"],
+            concerns=[],
+            recommendations=[],
+            blocking_issues=[],
+            estimated_effort="2-3 weeks",
+            dependency_risks=[],
+        ),
+    ]
+
+
+@pytest.fixture
+def all_personas_revise_scenario() -> list[Any]:
+    """Fixture for all five personas with medium confidence (revise scenario).
+
+    Returns:
+        List of PersonaReview instances representing revise decision
+    """
+    from consensus_engine.schemas.review import Concern, PersonaReview
+
+    return [
+        PersonaReview(
+            persona_name="Architect",
+            persona_id="architect",
+            confidence_score=0.70,
+            strengths=["Decent approach"],
+            concerns=[Concern(text="Some design concerns", is_blocking=False)],
+            recommendations=["Refine architecture"],
+            blocking_issues=[],
+            estimated_effort="4 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="Critic",
+            persona_id="critic",
+            confidence_score=0.68,
+            strengths=["Problem is clear"],
+            concerns=[Concern(text="Implementation risks", is_blocking=False)],
+            recommendations=["Add more detail"],
+            blocking_issues=[],
+            estimated_effort="4 weeks",
+            dependency_risks=["External dependencies"],
+        ),
+        PersonaReview(
+            persona_name="Optimist",
+            persona_id="optimist",
+            confidence_score=0.75,
+            strengths=["Has potential"],
+            concerns=[],
+            recommendations=["Expand on benefits"],
+            blocking_issues=[],
+            estimated_effort="3-4 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="SecurityGuardian",
+            persona_id="security_guardian",
+            confidence_score=0.72,
+            strengths=["Basic security covered"],
+            concerns=[Concern(text="Need more security details", is_blocking=False)],
+            recommendations=["Add security specification"],
+            blocking_issues=[],
+            estimated_effort="4 weeks",
+            dependency_risks=[],
+        ),
+        PersonaReview(
+            persona_name="UserAdvocate",
+            persona_id="user_advocate",
+            confidence_score=0.68,
+            strengths=["Clear user need"],
+            concerns=[Concern(text="UX could be better", is_blocking=False)],
+            recommendations=["Improve UX design"],
+            blocking_issues=[],
+            estimated_effort="3-4 weeks",
+            dependency_risks=[],
+        ),
+    ]
