@@ -43,6 +43,54 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/v1", tags=["review"])
 
 
+def _map_exception_to_status_code(exc: ConsensusEngineError) -> int:
+    """Map domain exception to HTTP status code.
+
+    Args:
+        exc: ConsensusEngineError instance
+
+    Returns:
+        HTTP status code
+    """
+    from consensus_engine.exceptions import (
+        LLMAuthenticationError,
+        LLMRateLimitError,
+        LLMTimeoutError,
+    )
+
+    if isinstance(exc, LLMAuthenticationError):
+        return status.HTTP_401_UNAUTHORIZED
+    elif isinstance(exc, LLMRateLimitError | LLMTimeoutError):
+        return status.HTTP_503_SERVICE_UNAVAILABLE
+    else:
+        return status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+def _build_expand_response(
+    proposal: ExpandedProposal, metadata: dict[str, Any]
+) -> ExpandIdeaResponse:
+    """Build ExpandIdeaResponse from ExpandedProposal and metadata.
+
+    Args:
+        proposal: ExpandedProposal instance
+        metadata: Metadata dictionary from expand service
+
+    Returns:
+        ExpandIdeaResponse instance
+    """
+    return ExpandIdeaResponse(
+        problem_statement=proposal.problem_statement,
+        proposed_solution=proposal.proposed_solution,
+        assumptions=proposal.assumptions,
+        scope_non_goals=proposal.scope_non_goals,
+        title=proposal.title,
+        summary=proposal.summary,
+        raw_idea=proposal.raw_idea,
+        raw_expanded_proposal=proposal.raw_expanded_proposal,
+        metadata=metadata,
+    )
+
+
 def _create_single_persona_decision(
     persona_review: Any, persona_name: str
 ) -> DecisionAggregation:
@@ -274,19 +322,7 @@ async def review_idea_endpoint(
             details=e.details,
         )
 
-        # Determine status code based on error type
-        from consensus_engine.exceptions import (
-            LLMAuthenticationError,
-            LLMRateLimitError,
-            LLMTimeoutError,
-        )
-
-        if isinstance(e, LLMAuthenticationError):
-            status_code = status.HTTP_401_UNAUTHORIZED
-        elif isinstance(e, LLMRateLimitError | LLMTimeoutError):
-            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        else:
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        status_code = _map_exception_to_status_code(e)
 
         return JSONResponse(
             status_code=status_code,
@@ -353,17 +389,7 @@ async def review_idea_endpoint(
 
         # Return structured error with failed_step and partial results (expanded proposal)
         # Build ExpandIdeaResponse from expanded_proposal for partial results
-        expand_response = ExpandIdeaResponse(
-            problem_statement=expanded_proposal.problem_statement,
-            proposed_solution=expanded_proposal.proposed_solution,
-            assumptions=expanded_proposal.assumptions,
-            scope_non_goals=expanded_proposal.scope_non_goals,
-            title=expanded_proposal.title,
-            summary=expanded_proposal.summary,
-            raw_idea=expanded_proposal.raw_idea,
-            raw_expanded_proposal=expanded_proposal.raw_expanded_proposal,
-            metadata=expand_metadata or {},
-        )
+        expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
 
         error_response = ReviewIdeaErrorResponse(
             code=e.code,
@@ -374,19 +400,7 @@ async def review_idea_endpoint(
             details=e.details,
         )
 
-        # Determine status code based on error type
-        from consensus_engine.exceptions import (
-            LLMAuthenticationError,
-            LLMRateLimitError,
-            LLMTimeoutError,
-        )
-
-        if isinstance(e, LLMAuthenticationError):
-            status_code = status.HTTP_401_UNAUTHORIZED
-        elif isinstance(e, LLMRateLimitError | LLMTimeoutError):
-            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        else:
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        status_code = _map_exception_to_status_code(e)
 
         return JSONResponse(
             status_code=status_code,
@@ -402,17 +416,7 @@ async def review_idea_endpoint(
         )
 
         # Include partial results (expanded proposal)
-        expand_response = ExpandIdeaResponse(
-            problem_statement=expanded_proposal.problem_statement,
-            proposed_solution=expanded_proposal.proposed_solution,
-            assumptions=expanded_proposal.assumptions,
-            scope_non_goals=expanded_proposal.scope_non_goals,
-            title=expanded_proposal.title,
-            summary=expanded_proposal.summary,
-            raw_idea=expanded_proposal.raw_idea,
-            raw_expanded_proposal=expanded_proposal.raw_expanded_proposal,
-            metadata=expand_metadata or {},
-        )
+        expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
 
         error_response = ReviewIdeaErrorResponse(
             code="INTERNAL_ERROR",
@@ -458,17 +462,7 @@ async def review_idea_endpoint(
         )
 
         # Include partial results (expanded proposal and review)
-        expand_response = ExpandIdeaResponse(
-            problem_statement=expanded_proposal.problem_statement,
-            proposed_solution=expanded_proposal.proposed_solution,
-            assumptions=expanded_proposal.assumptions,
-            scope_non_goals=expanded_proposal.scope_non_goals,
-            title=expanded_proposal.title,
-            summary=expanded_proposal.summary,
-            raw_idea=expanded_proposal.raw_idea,
-            raw_expanded_proposal=expanded_proposal.raw_expanded_proposal,
-            metadata=expand_metadata or {},
-        )
+        expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
 
         error_response = ReviewIdeaErrorResponse(
             code="INTERNAL_ERROR",
@@ -491,17 +485,7 @@ async def review_idea_endpoint(
     elapsed_time = time.time() - start_time
 
     # Build ExpandIdeaResponse from expanded_proposal
-    expand_response = ExpandIdeaResponse(
-        problem_statement=expanded_proposal.problem_statement,
-        proposed_solution=expanded_proposal.proposed_solution,
-        assumptions=expanded_proposal.assumptions,
-        scope_non_goals=expanded_proposal.scope_non_goals,
-        title=expanded_proposal.title,
-        summary=expanded_proposal.summary,
-        raw_idea=expanded_proposal.raw_idea,
-        raw_expanded_proposal=expanded_proposal.raw_expanded_proposal,
-        metadata=expand_metadata or {},
-    )
+    expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
 
     response = ReviewIdeaResponse(
         expanded_proposal=expand_response,

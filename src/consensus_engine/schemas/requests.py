@@ -22,7 +22,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-# Import schemas from other modules for composite responses
+# Import schemas for use in response models
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
 
 
