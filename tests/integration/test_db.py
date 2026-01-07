@@ -349,3 +349,408 @@ class TestDatabaseModels:
                 )
             )
             assert result.fetchone()[0] is False
+
+
+class TestVersionedRunModels:
+    """Test versioned run models with database operations."""
+
+    def test_create_run_with_all_fields(self, clean_database, test_session_factory):
+        """Test creating a run with all fields."""
+        import uuid
+
+        from consensus_engine.db.models import Run, RunStatus, RunType
+
+        for session in get_session(test_session_factory):
+            run = Run(
+                user_id=uuid.uuid4(),
+                status=RunStatus.RUNNING,
+                input_idea="Build a scalable API",
+                extra_context={"priority": "high", "deadline": "2024-12-31"},
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={"max_tokens": 1000, "top_p": 0.9},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+        # Verify run was created
+        for session in get_session(test_session_factory):
+            result = session.query(Run).filter_by(id=run_id).first()
+            assert result is not None
+            assert result.input_idea == "Build a scalable API"
+            assert result.status == RunStatus.RUNNING
+            assert result.run_type == RunType.INITIAL
+            assert result.model == "gpt-5.1"
+            assert float(result.temperature) == 0.7
+            assert result.parameters_json["max_tokens"] == 1000
+            assert result.extra_context["priority"] == "high"
+
+    def test_create_run_with_parent(self, clean_database, test_session_factory):
+        """Test creating a revision run with parent."""
+        from consensus_engine.db.models import Run, RunStatus, RunType
+
+        parent_run_id = None
+        child_run_id = None
+
+        for session in get_session(test_session_factory):
+            # Create parent run
+            parent = Run(
+                status=RunStatus.COMPLETED,
+                input_idea="Original idea",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(parent)
+            session.commit()
+            parent_run_id = parent.id
+
+            # Create child run
+            child = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Revised idea",
+                run_type=RunType.REVISION,
+                parent_run_id=parent_run_id,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(child)
+            session.commit()
+            child_run_id = child.id
+
+        # Verify parent-child relationship
+        for session in get_session(test_session_factory):
+            child = session.query(Run).filter_by(id=child_run_id).first()
+            assert child.parent_run_id == parent_run_id
+            assert child.run_type == RunType.REVISION
+
+    def test_create_proposal_version(self, clean_database, test_session_factory):
+        """Test creating a proposal version."""
+        from consensus_engine.db.models import ProposalVersion, Run, RunStatus, RunType
+
+        run_id = None
+
+        for session in get_session(test_session_factory):
+            # Create run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create proposal
+            proposal = ProposalVersion(
+                run_id=run_id,
+                expanded_proposal_json={
+                    "problem_statement": "Build a scalable API",
+                    "proposed_solution": "Use FastAPI with async handlers",
+                    "assumptions": ["Python 3.11+"],
+                    "scope_non_goals": ["Mobile app"],
+                },
+                persona_template_version="v1.0",
+                edit_notes="Initial expansion",
+            )
+            session.add(proposal)
+            session.commit()
+
+        # Verify proposal was created
+        for session in get_session(test_session_factory):
+            result = session.query(ProposalVersion).filter_by(run_id=run_id).first()
+            assert result is not None
+            assert result.expanded_proposal_json["problem_statement"] == "Build a scalable API"
+            assert result.persona_template_version == "v1.0"
+            assert result.edit_notes == "Initial expansion"
+
+    def test_create_persona_reviews(self, clean_database, test_session_factory):
+        """Test creating multiple persona reviews for a run."""
+        from consensus_engine.db.models import PersonaReview, Run, RunStatus, RunType
+
+        run_id = None
+
+        for session in get_session(test_session_factory):
+            # Create run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create multiple reviews
+            reviews_data = [
+                ("architect", "Architect", 0.85, False, False),
+                ("critic", "Critic", 0.65, True, False),
+                ("security_guardian", "Security Guardian", 0.70, False, True),
+            ]
+
+            for persona_id, persona_name, confidence, blocking, security in reviews_data:
+                review = PersonaReview(
+                    run_id=run_id,
+                    persona_id=persona_id,
+                    persona_name=persona_name,
+                    review_json={
+                        "confidence_score": confidence,
+                        "strengths": ["Good design"],
+                        "concerns": [],
+                    },
+                    confidence_score=confidence,
+                    blocking_issues_present=blocking,
+                    security_concerns_present=security,
+                    prompt_parameters_json={
+                        "model": "gpt-5.1",
+                        "temperature": 0.2,
+                        "version": "v1.0",
+                    },
+                )
+                session.add(review)
+            session.commit()
+
+        # Verify reviews were created
+        for session in get_session(test_session_factory):
+            results = session.query(PersonaReview).filter_by(run_id=run_id).all()
+            assert len(results) == 3
+            persona_ids = [r.persona_id for r in results]
+            assert "architect" in persona_ids
+            assert "critic" in persona_ids
+            assert "security_guardian" in persona_ids
+
+    def test_persona_review_unique_constraint(self, clean_database, test_session_factory):
+        """Test that unique constraint prevents duplicate persona reviews."""
+        from sqlalchemy.exc import IntegrityError
+
+        from consensus_engine.db.models import PersonaReview, Run, RunStatus, RunType
+
+        for session in get_session(test_session_factory):
+            # Create run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create first review
+            review1 = PersonaReview(
+                run_id=run_id,
+                persona_id="architect",
+                persona_name="Architect",
+                review_json={},
+                confidence_score=0.8,
+                blocking_issues_present=False,
+                security_concerns_present=False,
+                prompt_parameters_json={},
+            )
+            session.add(review1)
+            session.commit()
+
+            # Try to create duplicate review - should fail
+            review2 = PersonaReview(
+                run_id=run_id,
+                persona_id="architect",  # Same persona_id
+                persona_name="Architect",
+                review_json={},
+                confidence_score=0.9,
+                blocking_issues_present=False,
+                security_concerns_present=False,
+                prompt_parameters_json={},
+            )
+            session.add(review2)
+
+            with pytest.raises(IntegrityError):
+                session.commit()
+
+    def test_create_decision(self, clean_database, test_session_factory):
+        """Test creating a decision."""
+        from consensus_engine.db.models import Decision, Run, RunStatus, RunType
+
+        run_id = None
+
+        for session in get_session(test_session_factory):
+            # Create run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create decision
+            decision = Decision(
+                run_id=run_id,
+                decision_json={
+                    "decision": "approve",
+                    "overall_weighted_confidence": 0.85,
+                    "score_breakdown": {},
+                },
+                overall_weighted_confidence=0.85,
+                decision_notes="All personas agreed",
+            )
+            session.add(decision)
+            session.commit()
+
+        # Verify decision was created
+        for session in get_session(test_session_factory):
+            result = session.query(Decision).filter_by(run_id=run_id).first()
+            assert result is not None
+            assert float(result.overall_weighted_confidence) == 0.85
+            assert result.decision_json["decision"] == "approve"
+            assert result.decision_notes == "All personas agreed"
+
+    def test_cascade_delete_run(self, clean_database, test_session_factory):
+        """Test that deleting a run cascades to related records."""
+        from consensus_engine.db.models import (
+            Decision,
+            PersonaReview,
+            ProposalVersion,
+            Run,
+            RunStatus,
+            RunType,
+        )
+
+        run_id = None
+
+        for session in get_session(test_session_factory):
+            # Create run with all related records
+            run = Run(
+                status=RunStatus.COMPLETED,
+                input_idea="Test",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Add proposal
+            proposal = ProposalVersion(
+                run_id=run_id,
+                expanded_proposal_json={},
+                persona_template_version="v1.0",
+            )
+            session.add(proposal)
+
+            # Add review
+            review = PersonaReview(
+                run_id=run_id,
+                persona_id="architect",
+                persona_name="Architect",
+                review_json={},
+                confidence_score=0.8,
+                blocking_issues_present=False,
+                security_concerns_present=False,
+                prompt_parameters_json={},
+            )
+            session.add(review)
+
+            # Add decision
+            decision = Decision(
+                run_id=run_id,
+                decision_json={},
+                overall_weighted_confidence=0.85,
+            )
+            session.add(decision)
+            session.commit()
+
+        # Verify all records exist
+        for session in get_session(test_session_factory):
+            assert session.query(Run).filter_by(id=run_id).first() is not None
+            assert session.query(ProposalVersion).filter_by(run_id=run_id).first() is not None
+            assert session.query(PersonaReview).filter_by(run_id=run_id).first() is not None
+            assert session.query(Decision).filter_by(run_id=run_id).first() is not None
+
+        # Delete run
+        for session in get_session(test_session_factory):
+            run = session.query(Run).filter_by(id=run_id).first()
+            session.delete(run)
+            session.commit()
+
+        # Verify all related records were deleted
+        for session in get_session(test_session_factory):
+            assert session.query(Run).filter_by(id=run_id).first() is None
+            assert session.query(ProposalVersion).filter_by(run_id=run_id).first() is None
+            assert session.query(PersonaReview).filter_by(run_id=run_id).first() is None
+            assert session.query(Decision).filter_by(run_id=run_id).first() is None
+
+    def test_query_by_indexes(self, clean_database, test_session_factory):
+        """Test querying by indexed columns."""
+        from consensus_engine.db.models import Decision, Run, RunStatus, RunType
+
+        for session in get_session(test_session_factory):
+            # Create multiple runs with different statuses
+            run1 = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test 1",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            run2 = Run(
+                status=RunStatus.COMPLETED,
+                input_idea="Test 2",
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add_all([run1, run2])
+            session.commit()
+
+            # Query by status (indexed)
+            running_runs = session.query(Run).filter(Run.status == RunStatus.RUNNING).all()
+            assert len(running_runs) == 1
+            assert running_runs[0].input_idea == "Test 1"
+
+            completed_runs = session.query(Run).filter(Run.status == RunStatus.COMPLETED).all()
+            assert len(completed_runs) == 1
+            assert completed_runs[0].input_idea == "Test 2"
+
+            # Create decisions and query by confidence (indexed)
+            decision1 = Decision(
+                run_id=run1.id,
+                decision_json={},
+                overall_weighted_confidence=0.75,
+            )
+            decision2 = Decision(
+                run_id=run2.id,
+                decision_json={},
+                overall_weighted_confidence=0.95,
+            )
+            session.add_all([decision1, decision2])
+            session.commit()
+
+            # Query decisions with high confidence
+            high_confidence = (
+                session.query(Decision)
+                .filter(Decision.overall_weighted_confidence >= 0.90)
+                .all()
+            )
+            assert len(high_confidence) == 1
+            assert float(high_confidence[0].overall_weighted_confidence) == 0.95

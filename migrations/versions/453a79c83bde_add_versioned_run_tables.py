@@ -5,17 +5,17 @@ Revises: 9a73090ad792
 Create Date: 2026-01-07 21:58:25.102436
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '453a79c83bde'
-down_revision: Union[str, None] = '9a73090ad792'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '9a73090ad792'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -57,7 +57,9 @@ def upgrade() -> None:
         'proposal_versions',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('run_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('expanded_proposal_json', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            'expanded_proposal_json', postgresql.JSONB(astext_type=sa.Text()), nullable=False
+        ),
         sa.Column('proposal_diff_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column('persona_template_version', sa.Text(), nullable=False),
         sa.Column('edit_notes', sa.Text(), nullable=True),
@@ -77,7 +79,9 @@ def upgrade() -> None:
         sa.Column('confidence_score', sa.Numeric(precision=5, scale=4), nullable=False),
         sa.Column('blocking_issues_present', sa.Boolean(), nullable=False),
         sa.Column('security_concerns_present', sa.Boolean(), nullable=False),
-        sa.Column('prompt_parameters_json', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            'prompt_parameters_json', postgresql.JSONB(astext_type=sa.Text()), nullable=False
+        ),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.CheckConstraint(
             'confidence_score >= 0.0 AND confidence_score <= 1.0',
