@@ -190,10 +190,13 @@
       "path": "src/consensus_engine/schemas/proposal.py",
       "type": "file",
       "external_dependencies": {
-        "stdlib": [],
+        "stdlib": [
+          "typing.Any"
+        ],
         "third-party": [
           "pydantic.BaseModel",
-          "pydantic.Field"
+          "pydantic.Field",
+          "pydantic.field_validator"
         ]
       }
     },
@@ -205,6 +208,23 @@
         "stdlib": [
           "re",
           "typing.Any"
+        ],
+        "third-party": [
+          "pydantic.BaseModel",
+          "pydantic.Field",
+          "pydantic.field_validator"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/schemas/review.py",
+      "path": "src/consensus_engine/schemas/review.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "enum.Enum",
+          "typing.Any",
+          "uuid.UUID"
         ],
         "third-party": [
           "pydantic.BaseModel",
@@ -404,6 +424,20 @@
       }
     },
     {
+      "id": "tests/unit/test_review_schemas.py",
+      "path": "tests/unit/test_review_schemas.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "uuid.uuid4"
+        ],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_validation.py",
       "path": "tests/unit/test_validation.py",
       "type": "file",
@@ -504,6 +538,10 @@
     {
       "source": "src/consensus_engine/schemas/__init__.py",
       "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/schemas/__init__.py",
+      "target": "src/consensus_engine/schemas/review.py"
     },
     {
       "source": "src/consensus_engine/services/__init__.py",
@@ -618,8 +656,20 @@
       "target": "src/consensus_engine/schemas/requests.py"
     },
     {
+      "source": "tests/unit/test_review_schemas.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
       "source": "tests/unit/test_validation.py",
       "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "tests/unit/test_validation.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/unit/test_validation.py",
+      "target": "src/consensus_engine/schemas/review.py"
     }
   ],
   "external_dependencies_summary": {
@@ -642,7 +692,9 @@
       "unittest.mock.MagicMock",
       "unittest.mock.Mock",
       "unittest.mock.patch",
-      "uuid"
+      "uuid",
+      "uuid.UUID",
+      "uuid.uuid4"
     ],
     "third-party": [
       "fastapi.APIRouter",
@@ -669,7 +721,7 @@
       "pydantic_settings.SettingsConfigDict",
       "pytest"
     ],
-    "stdlib_count": 19,
+    "stdlib_count": 21,
     "third-party_count": 23
   }
 }

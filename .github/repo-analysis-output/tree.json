@@ -157,6 +157,10 @@
                 {
                   "type": "file",
                   "name": "requests.py"
+                },
+                {
+                  "type": "file",
+                  "name": "review.py"
                 }
               ]
             },
@@ -247,6 +251,10 @@
             {
               "type": "file",
               "name": "test_request_schemas.py"
+            },
+            {
+              "type": "file",
+              "name": "test_review_schemas.py"
             },
             {
               "type": "file",

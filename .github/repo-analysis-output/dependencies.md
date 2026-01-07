@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 32
-- **Intra-repo dependencies**: 51
-- **External stdlib dependencies**: 19
+- **Total files**: 34
+- **Intra-repo dependencies**: 55
+- **External stdlib dependencies**: 21
 - **External third-party dependencies**: 23
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 19 unique modules
+Total: 21 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -38,6 +38,8 @@ Total: 19 unique modules
 - `unittest.mock.Mock`
 - `unittest.mock.patch`
 - `uuid`
+- `uuid.UUID`
+- ... and 1 more (see JSON for full list)
 
 ### Third-Party Packages
 
@@ -67,16 +69,16 @@ Total: 23 unique packages
 
 ## Most Depended Upon Files (Intra-Repo)
 
-- `src/consensus_engine/schemas/proposal.py` (9 dependents)
+- `src/consensus_engine/schemas/proposal.py` (10 dependents)
 - `src/consensus_engine/exceptions.py` (8 dependents)
 - `src/consensus_engine/config/settings.py` (7 dependents)
 - `src/consensus_engine/config/__init__.py` (6 dependents)
 - `src/consensus_engine/config/logging.py` (5 dependents)
 - `src/consensus_engine/services/expand.py` (4 dependents)
 - `src/consensus_engine/schemas/requests.py` (4 dependents)
+- `src/consensus_engine/schemas/review.py` (3 dependents)
 - `src/consensus_engine/app.py` (3 dependents)
 - `src/consensus_engine/clients/openai_client.py` (2 dependents)
-- `src/consensus_engine/api/dependencies.py` (1 dependents)
 
 ## Files with Most Dependencies (Intra-Repo)
 

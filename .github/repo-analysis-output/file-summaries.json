@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 32,
+  "total_files": 34,
   "files": [
     {
       "schema_version": "2.0",
@@ -193,8 +193,8 @@
       "summary": "Python module initialization (role: module-init)",
       "summary_text": "Python module initialization (role: module-init)",
       "metrics": {
-        "size_bytes": 750,
-        "loc": 3,
+        "size_bytes": 1065,
+        "loc": 20,
         "todo_count": 0
       }
     },
@@ -207,8 +207,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 3024,
-        "loc": 56,
+        "size_bytes": 6012,
+        "loc": 138,
         "todo_count": 0
       }
     },
@@ -221,8 +221,22 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 5919,
-        "loc": 121,
+        "size_bytes": 6402,
+        "loc": 129,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/schemas/review.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 11382,
+        "loc": 295,
         "todo_count": 0
       }
     },
@@ -319,8 +333,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 14688,
-        "loc": 289,
+        "size_bytes": 14808,
+        "loc": 293,
         "todo_count": 0
       }
     },
@@ -333,8 +347,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 14225,
-        "loc": 248,
+        "size_bytes": 14388,
+        "loc": 256,
         "todo_count": 0
       }
     },
@@ -389,8 +403,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 10695,
-        "loc": 180,
+        "size_bytes": 10931,
+        "loc": 190,
         "todo_count": 0
       }
     },
@@ -417,8 +431,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 6164,
-        "loc": 111,
+        "size_bytes": 9406,
+        "loc": 179,
         "todo_count": 0
       }
     },
@@ -431,8 +445,22 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 10218,
-        "loc": 206,
+        "size_bytes": 10713,
+        "loc": 219,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_review_schemas.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 19914,
+        "loc": 414,
         "todo_count": 0
       }
     },
@@ -445,8 +473,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 10437,
-        "loc": 168,
+        "size_bytes": 18907,
+        "loc": 349,
         "todo_count": 0
       }
     }
