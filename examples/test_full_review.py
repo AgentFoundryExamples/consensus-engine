@@ -117,6 +117,12 @@ def test_full_review():
         print("Make sure the server is running:")
         print("  uvicorn consensus_engine.app:app --reload")
         sys.exit(1)
+    except httpx.TimeoutException:
+        print(
+            "\nERROR: Request timed out. The server might be overloaded "
+            "or the operation is taking too long."
+        )
+        sys.exit(1)
     except Exception as e:
         print(f"\nERROR: {type(e).__name__}: {e}")
         sys.exit(1)

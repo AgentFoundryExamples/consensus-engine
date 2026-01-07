@@ -427,21 +427,20 @@ async def full_review_endpoint(
         )
 
         # Include partial results (expanded proposal and reviews)
-        partial_results_data = {}
-        if expanded_proposal:
+        partial_results_data: dict[str, Any] | None = None
+        if expanded_proposal and persona_reviews:
             expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
-            partial_results_data["expanded_proposal"] = expand_response.model_dump()
-        if persona_reviews:
-            partial_results_data["persona_reviews"] = [
-                review.model_dump() for review in persona_reviews
-            ]
+            partial_results_data = {
+                "expanded_proposal": expand_response.model_dump(),
+                "persona_reviews": [review.model_dump() for review in persona_reviews],
+            }
 
         error_response = FullReviewErrorResponse(
             code=e.code,
             message=e.message,
             failed_step="aggregate",
             run_id=run_id,
-            partial_results=partial_results_data if partial_results_data else None,
+            partial_results=partial_results_data,
             details=e.details,
         )
 
@@ -461,21 +460,20 @@ async def full_review_endpoint(
         )
 
         # Include partial results (expanded proposal and reviews)
-        partial_results_data = {}
-        if expanded_proposal:
+        partial_results_data: dict[str, Any] | None = None
+        if expanded_proposal and persona_reviews:
             expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
-            partial_results_data["expanded_proposal"] = expand_response.model_dump()
-        if persona_reviews:
-            partial_results_data["persona_reviews"] = [
-                review.model_dump() for review in persona_reviews
-            ]
+            partial_results_data = {
+                "expanded_proposal": expand_response.model_dump(),
+                "persona_reviews": [review.model_dump() for review in persona_reviews],
+            }
 
         error_response = FullReviewErrorResponse(
             code="INTERNAL_ERROR",
             message="An unexpected error occurred during decision aggregation",
             failed_step="aggregate",
             run_id=run_id,
-            partial_results=partial_results_data if partial_results_data else None,
+            partial_results=partial_results_data,
             details={},
         )
 
