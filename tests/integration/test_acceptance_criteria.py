@@ -119,14 +119,52 @@ class TestAcceptanceCriteria:
         # Execute
         review_proposal(sample_proposal, mock_settings)
 
-        # Verify instruction order in OpenAI client call
+        # Verify instruction order in service call
         call_args = mock_client.create_structured_response.call_args
         assert "system_instruction" in call_args[1], "System instruction must be present"
         assert "developer_instruction" in call_args[1], "Developer instruction must be present"
         assert "user_prompt" in call_args[1], "User prompt must be present"
 
-        # OpenAI client should merge them in correct order (system, developer, user)
-        # This is verified by checking the client constructs messages correctly
+        # Verify that the OpenAI client actually constructs messages in the correct order
+        # by checking the actual client call (not just the mock)
+        from consensus_engine.clients.openai_client import OpenAIClientWrapper
+
+        with patch("consensus_engine.clients.openai_client.OpenAI") as mock_openai_sdk:
+            mock_response = MagicMock()
+            mock_response.choices = [MagicMock()]
+            mock_response.choices[0].message.parsed = mock_review
+            mock_response.choices[0].finish_reason = "stop"
+            mock_response.usage = None
+
+            mock_sdk_instance = MagicMock()
+            mock_sdk_instance.beta.chat.completions.parse.return_value = mock_response
+            mock_openai_sdk.return_value = mock_sdk_instance
+
+            # Create a real client and call it
+            real_client = OpenAIClientWrapper(mock_settings)
+            real_client.create_structured_response(
+                system_instruction="Test System",
+                user_prompt="Test User",
+                response_model=PersonaReview,
+                developer_instruction="Test Developer",
+                step_name="test",
+            )
+
+            # Verify the messages were constructed in the correct order
+            call = mock_sdk_instance.beta.chat.completions.parse.call_args
+            messages = call[1]["messages"]
+
+            # Assert order: system first, then user
+            assert len(messages) == 2, "Should have exactly 2 messages"
+            assert messages[0]["role"] == "system", "First message must be system"
+            assert messages[1]["role"] == "user", "Second message must be user"
+
+            # Verify system instruction includes both system and developer instructions
+            assert "Test System" in messages[0]["content"]
+            assert "Test Developer" in messages[0]["content"]
+
+            # Verify user prompt is in user message
+            assert "Test User" in messages[1]["content"]
 
     def test_ac3_settings_support_distinct_models_and_temperatures(
         self, monkeypatch: pytest.MonkeyPatch

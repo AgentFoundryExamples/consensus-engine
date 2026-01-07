@@ -138,6 +138,8 @@ class OpenAIClientWrapper:
                 temperature=temperature,
             )
 
+            # Calculate elapsed time immediately after API call for consistency
+            # This ensures both success and error paths measure the same duration
             elapsed_time = time.time() - start_time
 
             # Extract the parsed response

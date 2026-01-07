@@ -109,8 +109,46 @@ def review_proposal(
     # Note: prompt contains proposal but is never logged
     # Truncate very long fields to avoid token limits
     max_field_length = 2000
-    problem_statement = expanded_proposal.problem_statement[:max_field_length]
-    proposed_solution = expanded_proposal.proposed_solution[:max_field_length]
+    max_list_item_length = 500
+    max_list_items = 10
+
+    # Track if truncation occurred
+    truncation_occurred = False
+    truncation_details = []
+
+    # Truncate main fields
+    problem_statement = expanded_proposal.problem_statement
+    if len(problem_statement) > max_field_length:
+        problem_statement = problem_statement[:max_field_length]
+        truncation_occurred = True
+        truncation_details.append("problem_statement")
+
+    proposed_solution = expanded_proposal.proposed_solution
+    if len(proposed_solution) > max_field_length:
+        proposed_solution = proposed_solution[:max_field_length]
+        truncation_occurred = True
+        truncation_details.append("proposed_solution")
+
+    # Truncate list fields
+    assumptions = expanded_proposal.assumptions[:max_list_items]
+    if len(expanded_proposal.assumptions) > max_list_items:
+        truncation_occurred = True
+        truncation_details.append(f"assumptions (limited to {max_list_items})")
+
+    scope_non_goals = expanded_proposal.scope_non_goals[:max_list_items]
+    if len(expanded_proposal.scope_non_goals) > max_list_items:
+        truncation_occurred = True
+        truncation_details.append(f"scope_non_goals (limited to {max_list_items})")
+
+    # Log truncation if it occurred
+    if truncation_occurred:
+        logger.info(
+            "Proposal fields truncated for review to avoid token limits",
+            extra={
+                "truncated_fields": truncation_details,
+                "persona_name": persona_name,
+            },
+        )
 
     user_prompt = f"""Review the following proposal:
 
@@ -121,10 +159,10 @@ def review_proposal(
 {proposed_solution}
 
 **Assumptions:**
-{chr(10).join(f"- {a[:500]}" for a in expanded_proposal.assumptions[:10])}
+{chr(10).join(f"- {a[:max_list_item_length]}" for a in assumptions)}
 
 **Scope/Non-Goals:**
-{chr(10).join(f"- {s[:500]}" for s in expanded_proposal.scope_non_goals[:10])}
+{chr(10).join(f"- {s[:max_list_item_length]}" for s in scope_non_goals)}
 """
 
     # Add optional fields if present
@@ -132,7 +170,19 @@ def review_proposal(
         user_prompt = f"**Title:** {expanded_proposal.title}\n\n" + user_prompt
 
     if expanded_proposal.summary:
-        summary_truncated = expanded_proposal.summary[:max_field_length]
+        summary_truncated = expanded_proposal.summary
+        if len(summary_truncated) > max_field_length:
+            summary_truncated = summary_truncated[:max_field_length]
+            if not truncation_occurred:
+                truncation_occurred = True
+                truncation_details.append("summary")
+                logger.info(
+                    "Proposal summary truncated for review",
+                    extra={
+                        "truncated_fields": ["summary"],
+                        "persona_name": persona_name,
+                    },
+                )
         user_prompt = f"**Summary:** {summary_truncated}\n\n" + user_prompt
 
     # Initialize OpenAI client
@@ -149,6 +199,10 @@ def review_proposal(
         temperature_override=settings.review_temperature,
     )
 
+    # Add truncation info to metadata if truncation occurred
+    if truncation_occurred:
+        metadata["truncated_fields"] = truncation_details
+
     # Log success without sensitive data
     logger.info(
         f"Proposal review completed successfully with persona={persona_name}",
@@ -161,6 +215,7 @@ def review_proposal(
             "elapsed_time": metadata.get("elapsed_time"),
             "latency": metadata.get("latency"),
             "status": "success",
+            "truncated_fields": truncation_details if truncation_occurred else None,
         },
     )
 
