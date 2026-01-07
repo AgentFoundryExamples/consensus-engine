@@ -157,6 +157,146 @@ mypy src/
 
 ## API Endpoints
 
+### Review Idea (POST /v1/review-idea)
+
+Orchestrates idea expansion, review, and decision aggregation in a single synchronous request. This endpoint expands a brief idea into a detailed proposal, reviews it with a GenericReviewer persona, and aggregates a draft decision.
+
+**Request:**
+```bash
+POST /v1/review-idea
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "idea": "Build a REST API for user management with authentication.",
+  "extra_context": {
+    "language": "Python",
+    "version": "3.11+",
+    "features": ["auth", "CRUD"]
+  }
+}
+```
+
+**Parameters:**
+- `idea` (required, string): The core idea to expand and review (1-10 sentences)
+- `extra_context` (optional, dict or string): Additional context or constraints
+
+**Success Response (200):**
+```json
+{
+  "expanded_proposal": {
+    "problem_statement": "Clear articulation of the problem to be solved",
+    "proposed_solution": "Detailed description of the solution approach",
+    "assumptions": ["Assumption 1", "Assumption 2"],
+    "scope_non_goals": ["Out of scope item 1"],
+    "raw_expanded_proposal": "Complete proposal text...",
+    "metadata": {
+      "request_id": "expand-550e8400-e29b-41d4-a716-446655440000",
+      "model": "gpt-5.1",
+      "temperature": 0.7,
+      "elapsed_time": 2.5
+    }
+  },
+  "reviews": [
+    {
+      "persona_name": "GenericReviewer",
+      "confidence_score": 0.85,
+      "strengths": ["Good architecture", "Clear scope"],
+      "concerns": [
+        {
+          "text": "Missing error handling",
+          "is_blocking": false
+        }
+      ],
+      "recommendations": ["Add error handling", "Include monitoring"],
+      "blocking_issues": [],
+      "estimated_effort": "2-3 weeks",
+      "dependency_risks": ["Database setup"]
+    }
+  ],
+  "draft_decision": {
+    "overall_weighted_confidence": 0.85,
+    "decision": "approve",
+    "score_breakdown": {
+      "GenericReviewer": {
+        "weight": 1.0,
+        "notes": "Single persona review with confidence 0.85"
+      }
+    },
+    "minority_report": null
+  },
+  "run_id": "run-550e8400-e29b-41d4-a716-446655440000",
+  "elapsed_time": 5.2
+}
+```
+
+**Response Fields:**
+- `expanded_proposal`: The expanded proposal with problem statement, solution, assumptions, scope, and metadata
+- `reviews`: Array containing exactly one PersonaReview from GenericReviewer
+- `draft_decision`: Aggregated decision with weighted confidence and score breakdown
+  - For a single persona, `overall_weighted_confidence` equals the reviewer's confidence score
+  - `decision` is "approve" (confidence ≥ 0.7, no blocking issues), "revise" (confidence < 0.7, no blocking issues), or "reject" (has blocking issues)
+  - `score_breakdown` shows the persona's weight (1.0 for single persona) and notes
+  - `minority_report` is always null for single-persona reviews
+- `run_id`: Unique identifier for this orchestration run (different from individual request_ids)
+- `elapsed_time`: Total wall time for the entire orchestration (expand + review + aggregate) in seconds
+
+**Error Responses:**
+
+All error responses include structured information about which step failed and any partial results:
+
+```json
+{
+  "code": "LLM_SERVICE_ERROR",
+  "message": "Failed to process request",
+  "failed_step": "expand",
+  "run_id": "run-550e8400-e29b-41d4-a716-446655440000",
+  "partial_results": null,
+  "details": {}
+}
+```
+
+**Error Fields:**
+- `code`: Machine-readable error code (see Error Handling section)
+- `message`: Human-readable error message
+- `failed_step`: Which step failed: "validation", "expand", "review", or "aggregate"
+- `run_id`: Unique identifier for this orchestration run
+- `partial_results`: Partial results if available (e.g., `{"expanded_proposal": {...}}` if review failed)
+- `details`: Additional error details (e.g., `{"retryable": true}`)
+
+**Status Codes:**
+- **200 OK**: Successfully completed all steps (expand, review, aggregate)
+- **422 Unprocessable Entity**: Validation error (empty idea, too many sentences, etc.)
+- **401 Unauthorized**: Invalid API key
+- **503 Service Unavailable**: Rate limit exceeded or timeout
+- **500 Internal Server Error**: Service error during expansion, review, or aggregation
+
+**Error Scenarios:**
+- **Expansion failure**: `failed_step="expand"`, `partial_results=null`
+- **Review failure**: `failed_step="review"`, `partial_results` includes the expanded proposal
+- **Aggregation failure**: `failed_step="aggregate"`, `partial_results` includes expanded proposal and reviews
+
+**Example with curl:**
+```bash
+curl -X POST http://localhost:8000/v1/review-idea \
+  -H "Content-Type: application/json" \
+  -d '{"idea": "Build a REST API for user management with authentication."}'
+```
+
+**Orchestration Flow:**
+1. **Expand**: Transforms the brief idea into a comprehensive proposal (uses `EXPAND_MODEL` and `EXPAND_TEMPERATURE`)
+2. **Review**: Evaluates the proposal with GenericReviewer persona (uses `REVIEW_MODEL` and `REVIEW_TEMPERATURE`)
+3. **Aggregate**: Computes draft decision from the single review
+
+**Important Notes:**
+- Model and temperature settings are controlled server-side and cannot be overridden by clients
+- Each request generates a unique `run_id` for tracking the orchestration
+- Logging emits per-request records with `run_id`, elapsed time, and step statuses
+- Sequential orchestration means total `elapsed_time` is the sum of expand + review + aggregate times
+- No background jobs or persistent storage—all operations are synchronous
+
 ### Expand Idea (POST /v1/expand-idea)
 
 Expands a brief idea (1-10 sentences) into a comprehensive, structured proposal using LLM.
