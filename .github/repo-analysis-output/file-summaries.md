@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 22
+Total files: 29
 
 ## src/consensus_engine/__init__.py
 **Language:** Python  
@@ -24,13 +24,49 @@ Total files: 22
 **LOC:** 1  
 **TODOs/FIXMEs:** 0  
 
+## src/consensus_engine/api/dependencies.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 2.03 KB  
+**LOC:** 34  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/api/routes/__init__.py
+**Language:** Python  
+**Role:** module-init  
+**Role Justification:** module initialization file '__init__'  
+**Summary:** Python module initialization (role: module-init)  
+**Size:** 0.59 KB  
+**LOC:** 1  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/api/routes/expand.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 8.98 KB  
+**LOC:** 221  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/api/routes/health.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 3.79 KB  
+**LOC:** 80  
+**TODOs/FIXMEs:** 0  
+
 ## src/consensus_engine/app.py
 **Language:** Python  
 **Role:** entry-point  
 **Role Justification:** common entry point name 'app'  
 **Summary:** Python main entry point (role: entry-point)  
-**Size:** 2.89 KB  
-**LOC:** 64  
+**Size:** 9.52 KB  
+**LOC:** 239  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/__init__.py
@@ -105,6 +141,15 @@ Total files: 22
 **LOC:** 56  
 **TODOs/FIXMEs:** 0  
 
+## src/consensus_engine/schemas/requests.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 5.78 KB  
+**LOC:** 121  
+**TODOs/FIXMEs:** 0  
+
 ## src/consensus_engine/services/__init__.py
 **Language:** Python  
 **Role:** module-init  
@@ -148,6 +193,15 @@ Total files: 22
 **Summary:** Python test file (role: test)  
 **Size:** 4.08 KB  
 **LOC:** 70  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_expand_endpoint.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 14.34 KB  
+**LOC:** 289  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py
@@ -202,4 +256,13 @@ Total files: 22
 **Summary:** Python test file (role: test)  
 **Size:** 6.02 KB  
 **LOC:** 111  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_request_schemas.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 9.98 KB  
+**LOC:** 206  
 **TODOs/FIXMEs:** 0  

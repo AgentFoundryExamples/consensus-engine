@@ -18,7 +18,12 @@
 ├── src
   └── consensus_engine
     ├── api
-      └── __init__.py
+      ├── routes
+        ├── __init__.py
+        ├── expand.py
+        └── health.py
+      ├── __init__.py
+      └── dependencies.py
     ├── clients
       ├── __init__.py
       └── openai_client.py
@@ -28,7 +33,8 @@
       └── settings.py
     ├── schemas
       ├── __init__.py
-      └── proposal.py
+      ├── proposal.py
+      └── requests.py
     ├── services
       ├── __init__.py
       └── expand.py
@@ -38,14 +44,16 @@
 ├── tests
   ├── integration
     ├── __init__.py
-    └── test_app.py
+    ├── test_app.py
+    └── test_expand_endpoint.py
   ├── unit
     ├── __init__.py
     ├── test_config.py
     ├── test_exceptions.py
     ├── test_expand_service.py
     ├── test_openai_client.py
-    └── test_proposal_schemas.py
+    ├── test_proposal_schemas.py
+    └── test_request_schemas.py
   └── __init__.py
 ├── .env.example
 ├── .gitignore

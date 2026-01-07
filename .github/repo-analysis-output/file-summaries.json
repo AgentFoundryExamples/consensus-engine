@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 22,
+  "total_files": 29,
   "files": [
     {
       "schema_version": "2.0",
@@ -32,6 +32,62 @@
     },
     {
       "schema_version": "2.0",
+      "path": "src/consensus_engine/api/dependencies.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 2076,
+        "loc": 34,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/api/routes/__init__.py",
+      "language": "Python",
+      "role": "module-init",
+      "role_justification": "module initialization file '__init__'",
+      "summary": "Python module initialization (role: module-init)",
+      "summary_text": "Python module initialization (role: module-init)",
+      "metrics": {
+        "size_bytes": 604,
+        "loc": 1,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/api/routes/expand.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 9197,
+        "loc": 221,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/api/routes/health.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 3879,
+        "loc": 80,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "src/consensus_engine/app.py",
       "language": "Python",
       "role": "entry-point",
@@ -39,8 +95,8 @@
       "summary": "Python main entry point (role: entry-point)",
       "summary_text": "Python main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 2960,
-        "loc": 64,
+        "size_bytes": 9747,
+        "loc": 239,
         "todo_count": 0
       }
     },
@@ -158,6 +214,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "src/consensus_engine/schemas/requests.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 5919,
+        "loc": 121,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "src/consensus_engine/services/__init__.py",
       "language": "Python",
       "role": "module-init",
@@ -223,6 +293,20 @@
       "metrics": {
         "size_bytes": 4178,
         "loc": 70,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_expand_endpoint.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 14688,
+        "loc": 289,
         "todo_count": 0
       }
     },
@@ -307,6 +391,20 @@
       "metrics": {
         "size_bytes": 6164,
         "loc": 111,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_request_schemas.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 10218,
+        "loc": 206,
         "todo_count": 0
       }
     }

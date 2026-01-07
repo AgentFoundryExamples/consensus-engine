@@ -19,17 +19,82 @@
       }
     },
     {
+      "id": "src/consensus_engine/api/dependencies.py",
+      "path": "src/consensus_engine/api/dependencies.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Callable",
+          "typing.Any"
+        ],
+        "third-party": [
+          "fastapi.Depends"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/api/routes/__init__.py",
+      "path": "src/consensus_engine/api/routes/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/api/routes/expand.py",
+      "path": "src/consensus_engine/api/routes/expand.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Callable",
+          "json",
+          "typing.Any"
+        ],
+        "third-party": [
+          "fastapi.APIRouter",
+          "fastapi.Depends",
+          "fastapi.HTTPException",
+          "fastapi.status"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/api/routes/health.py",
+      "path": "src/consensus_engine/api/routes/health.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "time"
+        ],
+        "third-party": [
+          "fastapi.APIRouter",
+          "fastapi.Depends",
+          "fastapi.Request"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/app.py",
       "path": "src/consensus_engine/app.py",
       "type": "file",
       "external_dependencies": {
         "stdlib": [
           "collections.abc.AsyncGenerator",
-          "contextlib.asynccontextmanager"
+          "collections.abc.Awaitable",
+          "collections.abc.Callable",
+          "contextlib.asynccontextmanager",
+          "time",
+          "uuid"
         ],
         "third-party": [
-          "fastapi.Depends",
-          "fastapi.FastAPI"
+          "fastapi.FastAPI",
+          "fastapi.Request",
+          "fastapi.Response",
+          "fastapi.exceptions.RequestValidationError",
+          "fastapi.responses.JSONResponse",
+          "fastapi.status",
+          "pydantic.ValidationError"
         ]
       }
     },
@@ -133,6 +198,22 @@
       }
     },
     {
+      "id": "src/consensus_engine/schemas/requests.py",
+      "path": "src/consensus_engine/schemas/requests.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "re",
+          "typing.Any"
+        ],
+        "third-party": [
+          "pydantic.BaseModel",
+          "pydantic.Field",
+          "pydantic.field_validator"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/services/__init__.py",
       "path": "src/consensus_engine/services/__init__.py",
       "type": "file",
@@ -179,6 +260,23 @@
         "third-party": [
           "fastapi.testclient.TestClient",
           "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/integration/test_expand_endpoint.py",
+      "path": "tests/integration/test_expand_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator",
+          "time",
+          "unittest.mock.MagicMock",
+          "unittest.mock.patch"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
           "pytest"
         ]
       }
@@ -262,9 +360,73 @@
           "pytest"
         ]
       }
+    },
+    {
+      "id": "tests/unit/test_request_schemas.py",
+      "path": "tests/unit/test_request_schemas.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
     }
   ],
   "edges": [
+    {
+      "source": "src/consensus_engine/api/dependencies.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/dependencies.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/api/dependencies.py",
+      "target": "src/consensus_engine/services/expand.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/api/dependencies.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/health.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/health.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/health.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/api/routes/expand.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/api/routes/health.py"
+    },
     {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/config/__init__.py"
@@ -272,6 +434,10 @@
     {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/exceptions.py"
     },
     {
       "source": "src/consensus_engine/clients/openai_client.py",
@@ -326,6 +492,22 @@
       "target": "src/consensus_engine/config/__init__.py"
     },
     {
+      "source": "tests/integration/test_expand_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_expand_endpoint.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "tests/integration/test_expand_endpoint.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/integration/test_expand_endpoint.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
       "source": "tests/unit/test_config.py",
       "target": "src/consensus_engine/config/__init__.py"
     },
@@ -364,15 +546,24 @@
     {
       "source": "tests/unit/test_proposal_schemas.py",
       "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/unit/test_request_schemas.py",
+      "target": "src/consensus_engine/schemas/requests.py"
     }
   ],
   "external_dependencies_summary": {
     "stdlib": [
       "collections.abc.AsyncGenerator",
+      "collections.abc.Awaitable",
+      "collections.abc.Callable",
+      "collections.abc.Generator",
       "contextlib.asynccontextmanager",
       "enum.Enum",
       "functools.lru_cache",
+      "json",
       "logging",
+      "re",
       "sys",
       "time",
       "typing.Any",
@@ -384,8 +575,15 @@
       "uuid"
     ],
     "third-party": [
+      "fastapi.APIRouter",
       "fastapi.Depends",
       "fastapi.FastAPI",
+      "fastapi.HTTPException",
+      "fastapi.Request",
+      "fastapi.Response",
+      "fastapi.exceptions.RequestValidationError",
+      "fastapi.responses.JSONResponse",
+      "fastapi.status",
       "fastapi.testclient.TestClient",
       "openai.",
       "openai.APIConnectionError",
@@ -401,7 +599,7 @@
       "pydantic_settings.SettingsConfigDict",
       "pytest"
     ],
-    "stdlib_count": 14,
-    "third-party_count": 16
+    "stdlib_count": 19,
+    "third-party_count": 23
   }
 }

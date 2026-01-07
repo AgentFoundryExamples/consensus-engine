@@ -83,8 +83,30 @@
               "name": "api",
               "children": [
                 {
+                  "type": "directory",
+                  "name": "routes",
+                  "children": [
+                    {
+                      "type": "file",
+                      "name": "__init__.py"
+                    },
+                    {
+                      "type": "file",
+                      "name": "expand.py"
+                    },
+                    {
+                      "type": "file",
+                      "name": "health.py"
+                    }
+                  ]
+                },
+                {
                   "type": "file",
                   "name": "__init__.py"
+                },
+                {
+                  "type": "file",
+                  "name": "dependencies.py"
                 }
               ]
             },
@@ -131,6 +153,10 @@
                 {
                   "type": "file",
                   "name": "proposal.py"
+                },
+                {
+                  "type": "file",
+                  "name": "requests.py"
                 }
               ]
             },
@@ -179,6 +205,10 @@
             {
               "type": "file",
               "name": "test_app.py"
+            },
+            {
+              "type": "file",
+              "name": "test_expand_endpoint.py"
             }
           ]
         },
@@ -209,6 +239,10 @@
             {
               "type": "file",
               "name": "test_proposal_schemas.py"
+            },
+            {
+              "type": "file",
+              "name": "test_request_schemas.py"
             }
           ]
         },
