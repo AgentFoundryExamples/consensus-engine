@@ -17,7 +17,6 @@ This module defines the persona templates, weights, and thresholds used
 in the multi-persona pipeline for deterministic consensus aggregation.
 """
 
-
 from pydantic import BaseModel, Field, field_validator
 
 

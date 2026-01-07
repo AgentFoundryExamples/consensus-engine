@@ -312,6 +312,7 @@ class TestDatabaseModels:
 
     def test_base_metadata(self, clean_database, test_engine):
         """Test Base metadata operations."""
+
         # Create a test model
         class TestModel(Base):
             __tablename__ = "test_metadata_model"
