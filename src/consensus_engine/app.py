@@ -19,20 +19,19 @@ dependency injection, middleware, database connections, and routes.
 
 import time
 import uuid
-from collections.abc import AsyncGenerator, Awaitable, Callable, Generator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker
 
 from consensus_engine.api.routes import expand, full_review, health, review
 from consensus_engine.config import get_settings
 from consensus_engine.config.logging import get_logger, setup_logging
 from consensus_engine.db import create_engine_from_settings, create_session_factory
+from consensus_engine.db.dependencies import cleanup, set_engine, set_session_factory
 from consensus_engine.exceptions import (
     ConsensusEngineError,
     LLMAuthenticationError,
@@ -41,10 +40,6 @@ from consensus_engine.exceptions import (
 )
 
 logger = get_logger(__name__)
-
-# Global state for database engine and session factory
-_engine: Engine | None = None
-_session_factory: sessionmaker[Session] | None = None
 
 
 @asynccontextmanager
@@ -57,8 +52,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Yields:
         Control back to the application during its lifecycle
     """
-    global _engine, _session_factory
-
     # Startup
     settings = get_settings()
     setup_logging(settings)
@@ -71,8 +64,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize database engine and session factory
     try:
         logger.info("Initializing database connection")
-        _engine = create_engine_from_settings(settings)
-        _session_factory = create_session_factory(_engine)
+        engine = create_engine_from_settings(settings)
+        session_factory = create_session_factory(engine)
+        set_engine(engine)
+        set_session_factory(session_factory)
         logger.info("Database connection initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database connection: {e}", exc_info=True)
@@ -83,37 +78,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     logger.info("Shutting down Consensus Engine API")
-    if _engine:
-        logger.info("Disposing database engine")
-        _engine.dispose()
-        _engine = None
-        _session_factory = None
-
-
-def get_db_session() -> Generator[Session, None, None]:
-    """Dependency function to get a database session.
-
-    This function is used with FastAPI's dependency injection system
-    to provide database sessions to route handlers.
-
-    Yields:
-        Database session
-
-    Raises:
-        RuntimeError: If database session factory is not initialized
-    """
-    if _session_factory is None:
-        raise RuntimeError("Database session factory not initialized")
-
-    session = _session_factory()
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+    logger.info("Disposing database engine")
+    cleanup()
 
 
 def create_app() -> FastAPI:
