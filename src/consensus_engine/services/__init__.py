@@ -13,7 +13,14 @@
 # limitations under the License.
 """Services package for business logic."""
 
+from consensus_engine.services.aggregator import aggregate_persona_reviews
 from consensus_engine.services.expand import expand_idea
+from consensus_engine.services.orchestrator import review_with_all_personas
 from consensus_engine.services.review import review_proposal
 
-__all__ = ["expand_idea", "review_proposal"]
+__all__ = [
+    "expand_idea",
+    "review_proposal",
+    "review_with_all_personas",
+    "aggregate_persona_reviews",
+]
