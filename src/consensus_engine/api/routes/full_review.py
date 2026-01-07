@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
-from consensus_engine.db.dependencies import get_db_session
+from consensus_engine.db.dependencies import get_db_session, get_session_factory
 from consensus_engine.db.models import RunStatus, RunType
 from consensus_engine.db.repositories import (
     DecisionRepository,
@@ -291,14 +291,12 @@ async def full_review_endpoint(
         # Try to create a FAILED run record in a new transaction for auditing
         try:
             # Get a new session for the audit record
-            from consensus_engine.db.dependencies import get_session_factory
-            
             session_factory = get_session_factory()
             if session_factory:
                 audit_session = session_factory()
                 try:
                     # Create a failed run for audit trail
-                    failed_run = RunRepository.create_run(
+                    RunRepository.create_run(
                         session=audit_session,
                         run_id=run_id,
                         input_idea=review_request.idea,
