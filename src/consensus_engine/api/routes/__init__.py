@@ -12,3 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """API routes package."""
+
+from consensus_engine.api.routes import expand, health, review
+
+__all__ = ["expand", "health", "review"]
