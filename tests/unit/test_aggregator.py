@@ -48,19 +48,29 @@ class TestAggregatePersonaReviews:
 
     def test_aggregator_computes_weighted_average(self) -> None:
         """Test that aggregator correctly computes weighted confidence."""
+        from consensus_engine.config.personas import get_persona_weights
+
+        persona_weights = get_persona_weights()
+
         reviews = [
-            create_persona_review("architect", "Architect", 0.80),  # weight 0.25
-            create_persona_review("critic", "Critic", 0.70),  # weight 0.25
-            create_persona_review("optimist", "Optimist", 0.90),  # weight 0.15
-            create_persona_review("security_guardian", "SecurityGuardian", 0.75),  # weight 0.20
-            create_persona_review("user_advocate", "UserAdvocate", 0.85),  # weight 0.15
+            create_persona_review("architect", "Architect", 0.80),
+            create_persona_review("critic", "Critic", 0.70),
+            create_persona_review("optimist", "Optimist", 0.90),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.75),
+            create_persona_review("user_advocate", "UserAdvocate", 0.85),
         ]
 
         result = aggregate_persona_reviews(reviews)
 
-        # Expected: 0.25*0.80 + 0.25*0.70 + 0.15*0.90 + 0.20*0.75 + 0.15*0.85
-        #         = 0.20 + 0.175 + 0.135 + 0.15 + 0.1275 = 0.7875
-        assert result.weighted_confidence == pytest.approx(0.7875, abs=0.0001)
+        # Expected: weighted sum of confidence scores
+        expected = (
+            persona_weights["architect"] * 0.80
+            + persona_weights["critic"] * 0.70
+            + persona_weights["optimist"] * 0.90
+            + persona_weights["security_guardian"] * 0.75
+            + persona_weights["user_advocate"] * 0.85
+        )
+        assert result.weighted_confidence == pytest.approx(expected, abs=0.0001)
         assert result.overall_weighted_confidence == result.weighted_confidence
 
     def test_aggregator_applies_approve_threshold(self) -> None:
@@ -326,3 +336,180 @@ class TestAggregatePersonaReviews:
         persona_ids = {report.persona_id for report in result.minority_reports}
         assert "critic" in persona_ids
         assert "security_guardian" in persona_ids
+
+    def test_aggregator_boundary_approve_threshold_exactly_080(self) -> None:
+        """Test decision at exact approve threshold boundary (0.80)."""
+        # Create reviews that result in exactly 0.80 weighted confidence
+        # Using: 0.80*0.25 + 0.80*0.25 + 0.80*0.15 + 0.80*0.20 + 0.80*0.15 = 0.80
+        reviews = [
+            create_persona_review("architect", "Architect", 0.80),
+            create_persona_review("critic", "Critic", 0.80),
+            create_persona_review("optimist", "Optimist", 0.80),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.80),
+            create_persona_review("user_advocate", "UserAdvocate", 0.80),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # At exactly 0.80, should use >= comparison and result in APPROVE
+        assert result.weighted_confidence == pytest.approx(0.80, abs=0.0001)
+        assert result.decision == DecisionEnum.APPROVE
+
+    def test_aggregator_boundary_revise_threshold_exactly_060(self) -> None:
+        """Test decision at exact revise threshold boundary (0.60)."""
+        # Create reviews that result in exactly 0.60 weighted confidence
+        # Using: 0.60*0.25 + 0.60*0.25 + 0.60*0.15 + 0.60*0.20 + 0.60*0.15 = 0.60
+        reviews = [
+            create_persona_review("architect", "Architect", 0.60),
+            create_persona_review("critic", "Critic", 0.60),
+            create_persona_review("optimist", "Optimist", 0.60),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.60),
+            create_persona_review("user_advocate", "UserAdvocate", 0.60),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # At exactly 0.60, should use >= comparison and result in REVISE
+        assert result.weighted_confidence == pytest.approx(0.60, abs=0.0001)
+        assert result.decision == DecisionEnum.REVISE
+
+    def test_aggregator_boundary_just_below_approve_threshold(self) -> None:
+        """Test decision just below approve threshold (0.7999)."""
+        # Create reviews that result in just below 0.80
+        # Target: 0.7999
+        # Using weighted average to get close to but below 0.80
+        reviews = [
+            create_persona_review("architect", "Architect", 0.7996),
+            create_persona_review("critic", "Critic", 0.7996),
+            create_persona_review("optimist", "Optimist", 0.7996),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.7996),
+            create_persona_review("user_advocate", "UserAdvocate", 0.7996),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # Just below 0.80 should result in REVISE
+        assert result.weighted_confidence < 0.80
+        assert result.weighted_confidence >= 0.60
+        assert result.decision == DecisionEnum.REVISE
+
+    def test_aggregator_boundary_just_below_revise_threshold(self) -> None:
+        """Test decision just below revise threshold (0.5999)."""
+        # Create reviews that result in just below 0.60
+        reviews = [
+            create_persona_review("architect", "Architect", 0.5996),
+            create_persona_review("critic", "Critic", 0.5996),
+            create_persona_review("optimist", "Optimist", 0.5996),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.5996),
+            create_persona_review("user_advocate", "UserAdvocate", 0.5996),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # Just below 0.60 should result in REJECT
+        assert result.weighted_confidence < 0.60
+        assert result.decision == DecisionEnum.REJECT
+
+    def test_aggregator_floating_point_precision_near_threshold(self) -> None:
+        """Test that floating point arithmetic doesn't cause incorrect decisions."""
+        # Use confidence scores that could cause floating point drift
+        # but should still be above 0.80
+        reviews = [
+            create_persona_review("architect", "Architect", 0.80000001),
+            create_persona_review("critic", "Critic", 0.79999999),
+            create_persona_review("optimist", "Optimist", 0.80000002),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.79999998),
+            create_persona_review("user_advocate", "UserAdvocate", 0.80000001),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # Should handle floating point precision and result in APPROVE
+        # Weighted: ~0.80 (within floating point tolerance)
+        assert result.weighted_confidence >= 0.799
+        assert result.decision == DecisionEnum.APPROVE
+
+    def test_aggregator_security_guardian_veto_with_null_security_critical(self) -> None:
+        """Test SecurityGuardian with security_critical=None doesn't trigger veto."""
+        reviews = [
+            create_persona_review("architect", "Architect", 0.90),
+            create_persona_review("critic", "Critic", 0.85),
+            create_persona_review("optimist", "Optimist", 0.95),
+            create_persona_review(
+                "security_guardian",
+                "SecurityGuardian",
+                0.80,
+                blocking_issues=[BlockingIssue(text="Issue", security_critical=None)],
+            ),
+            create_persona_review("user_advocate", "UserAdvocate", 0.90),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # security_critical=None should not trigger veto
+        assert result.weighted_confidence >= 0.80
+        assert result.decision == DecisionEnum.APPROVE
+
+    def test_aggregator_security_guardian_veto_forces_reject_when_below_revise(self) -> None:
+        """Test SecurityGuardian veto doesn't upgrade a REJECT to REVISE."""
+        reviews = [
+            create_persona_review("architect", "Architect", 0.50),
+            create_persona_review("critic", "Critic", 0.45),
+            create_persona_review("optimist", "Optimist", 0.60),
+            create_persona_review(
+                "security_guardian",
+                "SecurityGuardian",
+                0.40,
+                blocking_issues=[
+                    BlockingIssue(text="Critical vuln", security_critical=True)
+                ],
+            ),
+            create_persona_review("user_advocate", "UserAdvocate", 0.50),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # Weighted confidence below 0.60 with security veto should still be REJECT
+        # Veto only downgrades APPROVE to REVISE, doesn't change REJECT
+        assert result.weighted_confidence < 0.60
+        assert result.decision == DecisionEnum.REJECT
+
+    def test_aggregator_minority_report_includes_concerns_and_strengths(self) -> None:
+        """Test minority report includes concerns and strengths from review."""
+        from consensus_engine.schemas.review import Concern
+
+        concern1 = Concern(text="Major concern", is_blocking=True)
+        concern2 = Concern(text="Minor concern", is_blocking=False)
+
+        review_with_concerns = PersonaReview(
+            persona_name="Critic",
+            persona_id="critic",
+            confidence_score=0.55,  # Low confidence
+            strengths=["Good idea", "Clear goals"],
+            concerns=[concern1, concern2],
+            recommendations=["Fix the concerns"],
+            blocking_issues=[],
+            estimated_effort="2 weeks",
+            dependency_risks=[],
+        )
+
+        reviews = [
+            create_persona_review("architect", "Architect", 0.95),
+            review_with_concerns,
+            create_persona_review("optimist", "Optimist", 0.98),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.90),
+            create_persona_review("user_advocate", "UserAdvocate", 0.95),
+        ]
+
+        result = aggregate_persona_reviews(reviews)
+
+        # Should be APPROVE but with minority report for Critic
+        assert result.decision == DecisionEnum.APPROVE
+        assert result.minority_reports is not None
+        assert len(result.minority_reports) > 0
+
+        minority = result.minority_reports[0]
+        assert minority.persona_id == "critic"
+        assert minority.strengths == ["Good idea", "Clear goals"]
+        assert minority.concerns == ["Major concern", "Minor concern"]
+        assert "Fix the concerns" in minority.mitigation_recommendation

@@ -401,3 +401,104 @@ class TestPersonaInstructions:
             keyword in instructions_lower or keyword in prompt_lower
             for keyword in ["usability", "user", "experience", "accessibility"]
         )
+
+
+class TestPersonaConfigMapping:
+    """Test suite for persona configuration mapping to developer instructions."""
+
+    def test_persona_config_produces_correct_developer_instructions(self) -> None:
+        """Test each persona config maps to correct developer instructions."""
+        for persona_id, persona_config in PERSONAS.items():
+            # Each persona should have non-empty developer instructions
+            assert len(persona_config.developer_instructions) > 0
+            # Instructions should mention the persona's focus
+            assert (persona_id in persona_config.developer_instructions.lower() or
+                    persona_config.display_name.lower() in persona_config.developer_instructions.lower())
+
+    def test_all_personas_use_consistent_temperature(self) -> None:
+        """Test all personas use the same temperature value for consistency."""
+        temperatures = [persona.temperature for persona in PERSONAS.values()]
+        # All temperatures should be equal
+        assert len(set(temperatures)) == 1
+        # And equal to PERSONA_TEMPERATURE constant
+        assert all(t == PERSONA_TEMPERATURE for t in temperatures)
+
+    def test_persona_config_temperature_matches_constant(self) -> None:
+        """Test each persona's temperature matches PERSONA_TEMPERATURE constant."""
+        for persona_id, persona_config in PERSONAS.items():
+            assert persona_config.temperature == PERSONA_TEMPERATURE, \
+                f"Persona {persona_id} temperature {persona_config.temperature} != {PERSONA_TEMPERATURE}"
+
+    def test_developer_instructions_describe_persona_role(self) -> None:
+        """Test developer instructions clearly describe each persona's role."""
+        expected_keywords = {
+            "architect": ["architect", "design", "scalability", "maintainability"],
+            "critic": ["critic", "risk", "edge case", "failure"],
+            "optimist": ["optimist", "strength", "opportunity", "positive"],
+            "security_guardian": ["security", "vulnerabilit", "authentication", "veto"],
+            "user_advocate": ["user", "usability", "experience", "accessibility"],
+        }
+
+        for persona_id, keywords in expected_keywords.items():
+            persona = PERSONAS[persona_id]
+            instructions_lower = persona.developer_instructions.lower()
+            # At least one keyword should be present
+            has_expected_keyword = any(kw in instructions_lower for kw in keywords)
+            assert has_expected_keyword, \
+                f"Persona {persona_id} instructions missing expected keywords: {keywords}"
+
+    def test_system_prompt_provides_clear_guidance(self) -> None:
+        """Test system prompts provide clear guidance for LLM."""
+        for persona_id, persona_config in PERSONAS.items():
+            prompt = persona_config.system_prompt
+            # System prompt should be substantial
+            assert len(prompt) > 100, (
+                f"Persona {persona_id} system prompt too short"
+            )
+            # Should mention reviewing/evaluation
+            assert any(word in prompt.lower() for word in ["review", "evaluat", "assess", "analyz"])
+
+    def test_persona_weights_are_normalized(self) -> None:
+        """Test persona weights are properly normalized to sum to 1.0."""
+        total_weight = sum(p.default_weight for p in PERSONAS.values())
+        assert abs(total_weight - 1.0) < 0.0001, (
+            f"Persona weights sum to {total_weight}, expected 1.0"
+        )
+
+    def test_each_persona_has_non_zero_weight(self) -> None:
+        """Test each persona has a non-zero weight for meaningful contribution."""
+        for persona_id, persona_config in PERSONAS.items():
+            assert persona_config.default_weight > 0.0, (
+                f"Persona {persona_id} has zero weight, which would make it ineffective"
+            )
+
+    def test_persona_id_matches_dict_key(self) -> None:
+        """Test persona config ID matches its dictionary key."""
+        for key, persona_config in PERSONAS.items():
+            assert persona_config.id == key, (
+                f"Persona config ID '{persona_config.id}' doesn't match key '{key}'"
+            )
+
+    def test_display_name_is_pascal_case_or_similar(self) -> None:
+        """Test display names follow consistent naming convention."""
+        for persona_id, persona_config in PERSONAS.items():
+            display_name = persona_config.display_name
+            # Display name should not be empty and should start with capital
+            assert len(display_name) > 0
+            assert display_name[0].isupper(), (
+                f"Persona {persona_id} display name '{display_name}' should start with uppercase"
+            )
+
+    def test_persona_temperature_in_deterministic_range(self) -> None:
+        """Test PERSONA_TEMPERATURE is low enough for deterministic output."""
+        # Temperature threshold for deterministic responses
+        DETERMINISTIC_TEMP_THRESHOLD = 0.3
+        
+        # Temperature should be at or below the threshold for deterministic responses
+        assert PERSONA_TEMPERATURE <= DETERMINISTIC_TEMP_THRESHOLD, (
+            f"PERSONA_TEMPERATURE {PERSONA_TEMPERATURE} too high for deterministic responses "
+            f"(>{DETERMINISTIC_TEMP_THRESHOLD})"
+        )
+        assert PERSONA_TEMPERATURE >= 0.0, (
+            f"PERSONA_TEMPERATURE {PERSONA_TEMPERATURE} must be non-negative"
+        )
