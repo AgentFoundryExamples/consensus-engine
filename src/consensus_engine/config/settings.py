@@ -5,6 +5,7 @@ It handles environment variable loading, validation, and provides sensible defau
 """
 
 from enum import Enum
+from functools import lru_cache
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -66,7 +67,7 @@ class Settings(BaseSettings):
     @field_validator("openai_api_key")
     @classmethod
     def validate_api_key(cls, v: str) -> str:
-        """Validate that API key is not empty and doesn't contain placeholder text.
+        """Validate that API key is not a placeholder and strip whitespace.
 
         Args:
             v: The API key value to validate
@@ -77,8 +78,8 @@ class Settings(BaseSettings):
         Raises:
             ValueError: If API key is invalid or contains placeholder text
         """
-        if not v or not v.strip():
-            raise ValueError("OPENAI_API_KEY cannot be empty")
+        if not v.strip():
+            raise ValueError("OPENAI_API_KEY cannot be empty or contain only whitespace")
 
         if "your_api_key" in v.lower() or "placeholder" in v.lower():
             raise ValueError(
@@ -90,10 +91,7 @@ class Settings(BaseSettings):
     @field_validator("temperature")
     @classmethod
     def validate_temperature(cls, v: float) -> float:
-        """Validate and warn if temperature is outside recommended range.
-
-        The recommended temperature range is 0.5-0.7 for balanced responses.
-        Values outside this range are allowed but may produce less optimal results.
+        """Validate temperature is within the allowed range [0.0, 1.0].
 
         Args:
             v: The temperature value to validate
@@ -101,14 +99,8 @@ class Settings(BaseSettings):
         Returns:
             The validated temperature value
         """
-        if not (0.5 <= v <= 0.7):
-            # Log warning but don't reject - allow flexibility
-            import logging
-
-            logging.getLogger(__name__).warning(
-                f"Temperature {v} is outside recommended range [0.5, 0.7]. "
-                f"This may produce less optimal results."
-            )
+        # The range is already enforced by `ge=0.0` and `le=1.0` on the Field,
+        # but this validator can be kept for clarity or future complex validation.
         return v
 
     @property
@@ -147,23 +139,16 @@ class Settings(BaseSettings):
         return data
 
 
-# Singleton instance
-_settings: Settings | None = None
-
-
+@lru_cache
 def get_settings() -> Settings:
     """Get the application settings instance.
 
-    This function implements a singleton pattern to ensure only one
-    Settings instance is created and reused throughout the application.
+    This function is cached to ensure only one Settings instance is created.
 
     Returns:
         Settings instance with loaded and validated configuration
 
     Raises:
-        ValueError: If OPENAI_API_KEY is missing or invalid
+        pydantic.ValidationError: If any environment variables are invalid.
     """
-    global _settings
-    if _settings is None:
-        _settings = Settings()
-    return _settings
+    return Settings()

@@ -1,7 +1,5 @@
 """Unit tests for configuration module."""
 
-import logging
-
 import pytest
 from pydantic import ValidationError
 
@@ -11,10 +9,8 @@ from consensus_engine.config import Environment, Settings, get_settings
 @pytest.fixture
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Clean environment variables before each test."""
-    # Reset singleton before cleaning environment
-    import consensus_engine.config.settings as settings_module
-
-    settings_module._settings = None
+    # Clear the lru_cache for get_settings
+    get_settings.cache_clear()
 
     env_vars = [
         "OPENAI_API_KEY",
@@ -144,19 +140,6 @@ class TestSettings:
         settings_max = Settings()
         assert settings_max.temperature == 1.0
 
-    def test_temperature_outside_recommended_range_warning(
-        self, clean_env: None, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        """Test temperature warns when outside recommended range [0.5, 0.7]."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
-        monkeypatch.setenv("TEMPERATURE", "0.3")
-
-        with caplog.at_level(logging.WARNING):
-            settings = Settings()
-
-        assert settings.temperature == 0.3
-        assert "outside recommended range" in caplog.text
-
     def test_environment_enum_values(
         self, clean_env: None, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -222,27 +205,17 @@ class TestSettings:
 
 
 class TestGetSettings:
-    """Test suite for get_settings singleton function."""
+    """Test suite for get_settings cached function."""
 
     def test_get_settings_returns_instance(
         self, clean_env: None, valid_env: dict[str, str]
     ) -> None:
         """Test get_settings returns a Settings instance."""
-        # Reset singleton
-        import consensus_engine.config.settings as settings_module
-
-        settings_module._settings = None
-
         settings = get_settings()
         assert isinstance(settings, Settings)
 
-    def test_get_settings_singleton(self, clean_env: None, valid_env: dict[str, str]) -> None:
-        """Test get_settings returns the same instance on multiple calls."""
-        # Reset singleton
-        import consensus_engine.config.settings as settings_module
-
-        settings_module._settings = None
-
+    def test_get_settings_cached(self, clean_env: None, valid_env: dict[str, str]) -> None:
+        """Test get_settings returns the same instance on multiple calls (cached)."""
         settings1 = get_settings()
         settings2 = get_settings()
         assert settings1 is settings2
@@ -251,11 +224,6 @@ class TestGetSettings:
         self, clean_env: None, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test get_settings raises error when API key is missing."""
-        # Reset singleton
-        import consensus_engine.config.settings as settings_module
-
-        settings_module._settings = None
-
         with pytest.raises(ValidationError):
             get_settings()
 

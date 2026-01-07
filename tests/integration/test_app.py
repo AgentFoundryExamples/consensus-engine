@@ -18,10 +18,10 @@ def valid_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def client(valid_test_env: None) -> TestClient:
     """Create test client with valid environment."""
-    # Reset settings singleton before creating app
-    import consensus_engine.config.settings as settings_module
+    # Clear the lru_cache for get_settings before creating app
+    from consensus_engine.config import get_settings
 
-    settings_module._settings = None
+    get_settings.cache_clear()
 
     app = create_app()
     return TestClient(app)
@@ -70,10 +70,10 @@ class TestAppStartupFailure:
 
     def test_app_fails_without_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test application fails to start without API key."""
-        # Reset settings singleton
-        import consensus_engine.config.settings as settings_module
+        # Clear the lru_cache for get_settings
+        from consensus_engine.config import get_settings
 
-        settings_module._settings = None
+        get_settings.cache_clear()
 
         # Clear API key
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -82,10 +82,8 @@ class TestAppStartupFailure:
         from pydantic import ValidationError
 
         # The error will be raised when the app tries to get_settings during lifespan
-        # We test this by trying to create settings directly
+        # We test this by trying to get settings directly
         with pytest.raises(ValidationError):
-            from consensus_engine.config import get_settings
-
             get_settings()
 
 
