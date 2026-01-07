@@ -314,5 +314,10 @@ class TestMultiPersonaIntegration:
         assert len(decision.minority_reports) == 1
         assert decision.minority_reports[0].persona_id == "critic"
         assert decision.minority_reports[0].confidence_score == 0.55
-        assert "Too many unknowns" in decision.minority_reports[0].blocking_summary or \
-               "Too many unknowns" in str(decision.minority_reports[0].concerns)
+        
+        # Check that dissent details are captured
+        minority = decision.minority_reports[0]
+        assert (
+            "Too many unknowns" in minority.blocking_summary
+            or (minority.concerns and "Too many unknowns" in minority.concerns)
+        )

@@ -116,24 +116,22 @@ def review_with_all_personas(
         )
 
         # Construct developer instruction with persona context
-        developer_instruction = f"""Review this proposal from the perspective of: \
-{persona_config.display_name}
-
-Persona instructions: {persona_config.developer_instructions}
-
-Provide your review using the PersonaReview schema with the following fields:
-- persona_name: Your assigned persona name ({persona_config.display_name})
-- persona_id: Your assigned persona ID ({persona_id})
-- confidence_score: Float between 0.0 and 1.0 indicating confidence in the proposal
-- strengths: List of identified strengths
-- concerns: List of Concern objects with text and is_blocking flag
-- recommendations: List of actionable recommendations
-- blocking_issues: List of BlockingIssue objects with optional security_critical \
-flags (can be empty)
-- estimated_effort: Effort estimation as string or structured data
-- dependency_risks: List of identified dependency risks (can be empty)
-
-Be thorough, specific, and constructive in your feedback."""
+        developer_instruction = (
+            f"Review this proposal from the perspective of: {persona_config.display_name}\n\n"
+            f"Persona instructions: {persona_config.developer_instructions}\n\n"
+            "Provide your review using the PersonaReview schema with the following fields:\n"
+            f"- persona_name: Your assigned persona name ({persona_config.display_name})\n"
+            f"- persona_id: Your assigned persona ID ({persona_id})\n"
+            "- confidence_score: Float between 0.0 and 1.0 indicating confidence in the proposal\n"
+            "- strengths: List of identified strengths\n"
+            "- concerns: List of Concern objects with text and is_blocking flag\n"
+            "- recommendations: List of actionable recommendations\n"
+            "- blocking_issues: List of BlockingIssue objects with optional "
+            "security_critical flags (can be empty)\n"
+            "- estimated_effort: Effort estimation as string or structured data\n"
+            "- dependency_risks: List of identified dependency risks (can be empty)\n\n"
+            "Be thorough, specific, and constructive in your feedback."
+        )
 
         try:
             # Call OpenAI with structured output for this persona

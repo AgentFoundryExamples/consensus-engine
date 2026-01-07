@@ -21,6 +21,9 @@ from consensus_engine.schemas.review import (
 
 logger = get_logger(__name__)
 
+# Persona ID for SecurityGuardian (used for veto logic)
+SECURITY_GUARDIAN_PERSONA_ID = "security_guardian"
+
 
 def aggregate_persona_reviews(
     persona_reviews: list[PersonaReview],
@@ -93,7 +96,7 @@ def aggregate_persona_reviews(
     has_security_critical = any(
         issue.security_critical is True
         for review in persona_reviews
-        if review.persona_id == "security_guardian"
+        if review.persona_id == SECURITY_GUARDIAN_PERSONA_ID
         for issue in review.blocking_issues
     )
 
