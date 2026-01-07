@@ -108,6 +108,125 @@ The Consensus Engine uses PostgreSQL to persist run lifecycle data with SQLAlche
 - **Local Development**: Docker Compose with PostgreSQL 16
 - **Production**: Cloud SQL for PostgreSQL with IAM authentication
 
+### Database Schema
+
+The versioned run tables capture the complete lifecycle of proposal evaluation:
+
+#### `runs` Table
+Tracks each proposal evaluation run (initial or revision):
+- **id**: UUID primary key
+- **created_at**, **updated_at**: Timestamps with timezone
+- **user_id**: Optional UUID of initiating user
+- **status**: Enum (`running`, `completed`, `failed`)
+- **input_idea**: Original idea text
+- **extra_context**: Optional JSONB for additional context
+- **run_type**: Enum (`initial`, `revision`)
+- **parent_run_id**: Optional FK to parent run for revisions
+- **model**: LLM model identifier (e.g., `gpt-5.1`)
+- **temperature**: Numeric temperature parameter (0.0-2.0)
+- **parameters_json**: JSONB for additional LLM parameters
+- **overall_weighted_confidence**: Final confidence score (nullable until decision)
+- **decision_label**: Final decision label (nullable until decision)
+
+**Indexes**: `status`, `parent_run_id`, `created_at`
+
+#### `proposal_versions` Table
+Stores expanded proposals from the expansion step:
+- **id**: UUID primary key
+- **run_id**: UUID FK to runs (unique - one proposal per run)
+- **expanded_proposal_json**: JSONB containing structured proposal (problem_statement, proposed_solution, assumptions, scope_non_goals)
+- **proposal_diff_json**: Optional JSONB diff from parent proposal
+- **persona_template_version**: Version identifier for persona templates
+- **edit_notes**: Optional notes about manual edits
+
+#### `persona_reviews` Table
+Captures individual persona reviews with derived metrics:
+- **id**: UUID primary key
+- **run_id**: UUID FK to runs
+- **persona_id**: Stable persona identifier (e.g., `architect`)
+- **persona_name**: Display name
+- **review_json**: JSONB containing complete PersonaReview schema
+- **confidence_score**: Numeric confidence [0.0, 1.0] (denormalized for queries)
+- **blocking_issues_present**: Boolean flag
+- **security_concerns_present**: Boolean flag
+- **prompt_parameters_json**: JSONB with model, temperature, version, retries
+- **created_at**: Timestamp with timezone
+
+**Unique Constraint**: `(run_id, persona_id)` prevents duplicate reviews
+
+#### `decisions` Table
+Stores final aggregated decisions:
+- **id**: UUID primary key
+- **run_id**: UUID FK to runs (unique - one decision per run)
+- **decision_json**: JSONB containing complete DecisionAggregation schema
+- **overall_weighted_confidence**: Numeric confidence (denormalized for queries)
+- **decision_notes**: Optional notes about decision or overrides
+- **created_at**: Timestamp with timezone
+
+**Index**: `overall_weighted_confidence`
+
+### Schema Relationships
+
+```mermaid
+erDiagram
+    runs ||--o| proposal_versions : "has one"
+    runs ||--o{ persona_reviews : "has many"
+    runs ||--o| decisions : "has one"
+    runs ||--o{ runs : "parent_run_id (self-reference)"
+    
+    runs {
+        uuid id PK
+        timestamptz created_at
+        timestamptz updated_at
+        uuid user_id
+        enum status
+        text input_idea
+        jsonb extra_context
+        enum run_type
+        uuid parent_run_id FK
+        text model
+        numeric temperature
+        jsonb parameters_json
+        numeric overall_weighted_confidence
+        text decision_label
+    }
+    
+    proposal_versions {
+        uuid id PK
+        uuid run_id FK
+        jsonb expanded_proposal_json
+        jsonb proposal_diff_json
+        text persona_template_version
+        text edit_notes
+    }
+    
+    persona_reviews {
+        uuid id PK
+        uuid run_id FK
+        string persona_id
+        text persona_name
+        jsonb review_json
+        numeric confidence_score
+        boolean blocking_issues_present
+        boolean security_concerns_present
+        jsonb prompt_parameters_json
+        timestamptz created_at
+    }
+    
+    decisions {
+        uuid id PK
+        uuid run_id FK
+        jsonb decision_json
+        numeric overall_weighted_confidence
+        text decision_notes
+        timestamptz created_at
+    }
+```
+
+### Cascade Behavior
+
+Deleting a run cascades to all dependent records (proposal, reviews, decision). This is configured for test cleanup but should be handled carefully in production.
+
 ### Connection Modes
 
 **Local Development:**
@@ -180,6 +299,51 @@ alembic upgrade head
 alembic downgrade -1
 
 # Migrations are idempotent and safe to run multiple times
+```
+
+### Using the Models
+
+```python
+from consensus_engine.db import (
+    Run, 
+    ProposalVersion, 
+    PersonaReview, 
+    Decision,
+    RunStatus,
+    RunType,
+    create_session_factory,
+    get_session
+)
+import uuid
+
+# Create a run
+for session in get_session(session_factory):
+    run = Run(
+        status=RunStatus.RUNNING,
+        input_idea="Build a scalable API",
+        run_type=RunType.INITIAL,
+        model="gpt-5.1",
+        temperature=0.7,
+        parameters_json={"max_tokens": 1000}
+    )
+    session.add(run)
+    session.commit()
+    run_id = run.id
+
+# Add proposal version
+for session in get_session(session_factory):
+    proposal = ProposalVersion(
+        run_id=run_id,
+        expanded_proposal_json={
+            "problem_statement": "...",
+            "proposed_solution": "...",
+            "assumptions": [...],
+            "scope_non_goals": [...]
+        },
+        persona_template_version="v1.0"
+    )
+    session.add(proposal)
+    session.commit()
 ```
 
 See full documentation in the repository for complete details.
