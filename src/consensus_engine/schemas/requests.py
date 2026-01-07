@@ -592,35 +592,11 @@ class CreateRevisionRequest(BaseModel):
         Returns:
             The validated field value
 
-        Raises:
-            ValueError: If neither edited_proposal nor edit_notes is provided
+        Note:
+            This validator runs per-field. Use the class-level validation in the
+            endpoint to ensure at least one edit field is provided.
         """
-        # This validator runs per-field, so we need to check model state
-        # Use model_validator instead for cross-field validation
         return v
-
-    @classmethod
-    def model_validator_check_edits(cls, values: dict[str, Any]) -> dict[str, Any]:
-        """Validate that at least one edit input is provided.
-
-        Args:
-            values: Dictionary of field values
-
-        Returns:
-            The validated values dictionary
-
-        Raises:
-            ValueError: If no edit inputs provided
-        """
-        edited_proposal = values.get("edited_proposal")
-        edit_notes = values.get("edit_notes")
-
-        if edited_proposal is None and edit_notes is None:
-            raise ValueError(
-                "At least one of 'edited_proposal' or 'edit_notes' must be provided"
-            )
-
-        return values
 
 
 class CreateRevisionResponse(BaseModel):

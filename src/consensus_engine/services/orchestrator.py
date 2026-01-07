@@ -125,10 +125,12 @@ def determine_personas_to_rerun(
             )
         else:
             logger.info(
-                f"Persona '{persona_id}' will reuse parent review",
+                f"Persona '{persona_id}' will reuse parent review "
+                f"(confidence: {confidence_score:.2f}, no blocking issues)",
                 extra={
                     "persona_id": persona_id,
                     "confidence_score": confidence_score,
+                    "will_reuse": True,
                 },
             )
 
