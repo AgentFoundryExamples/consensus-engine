@@ -24,7 +24,9 @@ from fastapi import Depends
 
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
+from consensus_engine.schemas.review import PersonaReview
 from consensus_engine.services.expand import expand_idea
+from consensus_engine.services.review import review_proposal
 
 
 def get_expand_idea_service() -> (
@@ -60,3 +62,45 @@ def get_expand_service_with_settings(
         return expand_idea(idea_input, settings)
 
     return expand_with_settings
+
+
+def get_review_proposal_service() -> (
+    Callable[
+        [ExpandedProposal, Settings, str | None, str | None],
+        tuple[PersonaReview, dict[str, Any]],
+    ]
+):
+    """Get the review_proposal service function.
+
+    This dependency provides the review_proposal service function for
+    injection into route handlers.
+
+    Returns:
+        The review_proposal service function
+    """
+    return review_proposal
+
+
+def get_review_service_with_settings(
+    settings: Settings = Depends(get_settings),
+) -> Callable[[ExpandedProposal, str | None, str | None], tuple[PersonaReview, dict[str, Any]]]:
+    """Get a partially-applied review_proposal service with settings injected.
+
+    This dependency provides a version of review_proposal that already has
+    settings injected, so routes only need to pass the proposal and optional persona params.
+
+    Args:
+        settings: Application settings injected via dependency
+
+    Returns:
+        Partially-applied review_proposal function
+    """
+
+    def review_with_settings(
+        expanded_proposal: ExpandedProposal,
+        persona_name: str | None = None,
+        persona_instructions: str | None = None,
+    ) -> tuple[PersonaReview, dict[str, Any]]:
+        return review_proposal(expanded_proposal, settings, persona_name, persona_instructions)
+
+    return review_with_settings
