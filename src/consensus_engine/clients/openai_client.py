@@ -7,10 +7,9 @@ and logging.
 
 import time
 import uuid
-from typing import Any
+from typing import Any, TypeVar, cast
 
-from openai import OpenAI
-from openai import APIConnectionError, APITimeoutError, AuthenticationError, RateLimitError
+from openai import APIConnectionError, APITimeoutError, AuthenticationError, OpenAI, RateLimitError
 from pydantic import BaseModel
 
 from consensus_engine.config.logging import get_logger
@@ -24,6 +23,9 @@ from consensus_engine.exceptions import (
 )
 
 logger = get_logger(__name__)
+
+# Type variable for generic response model
+T = TypeVar("T", bound=BaseModel)
 
 
 class OpenAIClientWrapper:
@@ -53,9 +55,9 @@ class OpenAIClientWrapper:
         self,
         system_instruction: str,
         user_prompt: str,
-        response_model: type[BaseModel],
+        response_model: type[T],
         developer_instruction: str | None = None,
-    ) -> tuple[BaseModel, dict[str, Any]]:
+    ) -> tuple[T, dict[str, Any]]:
         """Create a structured response using OpenAI Responses API.
 
         This method calls the OpenAI API with structured outputs to ensure
@@ -81,7 +83,7 @@ class OpenAIClientWrapper:
         start_time = time.time()
 
         logger.info(
-            f"Starting OpenAI request",
+            "Starting OpenAI request",
             extra={
                 "request_id": request_id,
                 "model": self.model,
@@ -90,8 +92,9 @@ class OpenAIClientWrapper:
         )
 
         try:
-            # Build messages list
-            messages: list[dict[str, Any]] = [
+            # Build messages list - use type: ignore to bypass strict type checking
+            # The OpenAI SDK accepts dict format which is converted internally
+            messages: list[dict[str, str]] = [
                 {"role": "system", "content": system_instruction},
             ]
 
@@ -105,7 +108,7 @@ class OpenAIClientWrapper:
             # Make API call with structured output
             response = self.client.beta.chat.completions.parse(
                 model=self.model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 response_format=response_model,
                 temperature=self.temperature,
             )
@@ -119,7 +122,7 @@ class OpenAIClientWrapper:
                     details={"request_id": request_id},
                 )
 
-            parsed_response = response.choices[0].message.parsed
+            parsed_response = cast(T, response.choices[0].message.parsed)
 
             # Build metadata
             metadata = {
@@ -132,7 +135,7 @@ class OpenAIClientWrapper:
             }
 
             logger.info(
-                f"OpenAI request completed successfully",
+                "OpenAI request completed successfully",
                 extra={
                     "request_id": request_id,
                     "elapsed_time": f"{elapsed_time:.2f}s",
@@ -144,7 +147,7 @@ class OpenAIClientWrapper:
 
         except AuthenticationError as e:
             logger.error(
-                f"OpenAI authentication failed",
+                "OpenAI authentication failed",
                 extra={"request_id": request_id, "error": str(e)},
             )
             raise LLMAuthenticationError(
@@ -154,7 +157,7 @@ class OpenAIClientWrapper:
 
         except RateLimitError as e:
             logger.warning(
-                f"OpenAI rate limit exceeded",
+                "OpenAI rate limit exceeded",
                 extra={"request_id": request_id, "error": str(e)},
             )
             raise LLMRateLimitError(
@@ -164,7 +167,7 @@ class OpenAIClientWrapper:
 
         except APITimeoutError as e:
             logger.warning(
-                f"OpenAI request timed out",
+                "OpenAI request timed out",
                 extra={"request_id": request_id, "error": str(e)},
             )
             raise LLMTimeoutError(
@@ -174,7 +177,7 @@ class OpenAIClientWrapper:
 
         except APIConnectionError as e:
             logger.error(
-                f"OpenAI connection error",
+                "OpenAI connection error",
                 extra={"request_id": request_id, "error": str(e)},
             )
             raise LLMServiceError(
@@ -183,9 +186,13 @@ class OpenAIClientWrapper:
                 details={"request_id": request_id, "retryable": True},
             ) from e
 
+        except SchemaValidationError:
+            # Re-raise SchemaValidationError as-is (don't wrap it)
+            raise
+
         except Exception as e:
             logger.error(
-                f"Unexpected error in OpenAI request",
+                "Unexpected error in OpenAI request",
                 extra={"request_id": request_id, "error": str(e)},
                 exc_info=True,
             )
