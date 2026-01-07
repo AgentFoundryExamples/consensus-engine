@@ -363,7 +363,8 @@ async def review_idea_endpoint(
         )
 
         persona_review, review_metadata = review_proposal(
-            expanded_proposal, settings
+            expanded_proposal,
+            settings,
             # Uses default persona from settings (GenericReviewer)
         )
 

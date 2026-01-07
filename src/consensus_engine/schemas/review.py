@@ -19,7 +19,6 @@ including structured outputs for multi-persona consensus building.
 
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -63,6 +62,46 @@ class Concern(BaseModel):
         return v
 
 
+class BlockingIssue(BaseModel):
+    """A blocking issue identified during persona review.
+
+    Attributes:
+        text: The blocking issue description
+        security_critical: Optional flag indicating if this is a security-critical issue
+            that gives SecurityGuardian veto power
+    """
+
+    text: str = Field(
+        ...,
+        min_length=1,
+        description="The blocking issue description",
+    )
+    security_critical: bool | None = Field(
+        default=None,
+        description="Whether this is a security-critical issue (SecurityGuardian veto power)",
+    )
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def trim_text(cls, v: Any) -> Any:
+        """Trim whitespace from text field.
+
+        Args:
+            v: The field value to validate
+
+        Returns:
+            The trimmed string value
+
+        Raises:
+            ValueError: If the trimmed string is empty
+        """
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                raise ValueError("Blocking issue text cannot be empty or whitespace-only")
+        return v
+
+
 class PersonaReview(BaseModel):
     """Review from a specific persona evaluating a proposal.
 
@@ -71,14 +110,16 @@ class PersonaReview(BaseModel):
 
     Attributes:
         persona_name: Name of the reviewing persona (required)
-        persona_id: Optional UUID for tracking persona identity
+        persona_id: Stable identifier for the persona (required, e.g., 'architect')
         confidence_score: Confidence in the proposal, range [0.0, 1.0] (required)
         strengths: List of identified strengths in the proposal (required)
         concerns: List of concerns with blocking flags (required)
         recommendations: List of actionable recommendations (required)
-        blocking_issues: List of critical blocking issues (required, can be empty)
+        blocking_issues: List of critical blocking issues with optional security flags
+            (required, can be empty)
         estimated_effort: Effort estimation as string or structured data (required)
         dependency_risks: List of identified dependency risks (required, can be empty)
+        internal_metadata: Optional metadata for tracking (e.g., model, duration)
     """
 
     persona_name: str = Field(
@@ -86,9 +127,10 @@ class PersonaReview(BaseModel):
         min_length=1,
         description="Name of the reviewing persona",
     )
-    persona_id: UUID | None = Field(
-        default=None,
-        description="Optional UUID for tracking persona identity",
+    persona_id: str = Field(
+        ...,
+        min_length=1,
+        description="Stable identifier for the persona (e.g., 'architect', 'security_guardian')",
     )
     confidence_score: float = Field(
         ...,
@@ -108,9 +150,12 @@ class PersonaReview(BaseModel):
         ...,
         description="List of actionable recommendations",
     )
-    blocking_issues: list[str] = Field(
+    blocking_issues: list[BlockingIssue] = Field(
         ...,
-        description="List of critical blocking issues (can be empty)",
+        description=(
+            "List of critical blocking issues with optional security_critical flags "
+            "(can be empty)"
+        ),
     )
     estimated_effort: str | dict[str, Any] = Field(
         ...,
@@ -120,11 +165,15 @@ class PersonaReview(BaseModel):
         ...,
         description="List of identified dependency risks (can be empty)",
     )
+    internal_metadata: dict[str, Any] | None = Field(
+        default=None,
+        description="Optional internal metadata (e.g., model, duration, timestamps)",
+    )
 
-    @field_validator("persona_name", mode="before")
+    @field_validator("persona_name", "persona_id", mode="before")
     @classmethod
-    def trim_persona_name(cls, v: Any) -> Any:
-        """Trim whitespace from persona_name.
+    def trim_persona_fields(cls, v: Any) -> Any:
+        """Trim whitespace from persona fields.
 
         Args:
             v: The field value to validate
@@ -138,10 +187,10 @@ class PersonaReview(BaseModel):
         if isinstance(v, str):
             v = v.strip()
             if not v:
-                raise ValueError("Persona name cannot be empty or whitespace-only")
+                raise ValueError("Persona field cannot be empty or whitespace-only")
         return v
 
-    @field_validator("strengths", "recommendations", "blocking_issues", mode="before")
+    @field_validator("strengths", "recommendations", mode="before")
     @classmethod
     def validate_string_lists(cls, v: Any) -> Any:
         """Validate and trim string lists, ensuring non-empty strings.
@@ -228,29 +277,56 @@ class MinorityReport(BaseModel):
     """Minority opinion in a decision aggregation.
 
     Attributes:
+        persona_id: Stable identifier of the dissenting persona
         persona_name: Name of the dissenting persona
-        strengths: Identified strengths from minority view
-        concerns: Concerns from minority view
+        confidence_score: The confidence score of the dissenting persona
+        blocking_summary: Summary of blocking issues from dissenting persona
+        mitigation_recommendation: Recommended mitigation for blocking issues
+        strengths: Identified strengths from minority view (optional for backward compatibility)
+        concerns: Concerns from minority view (optional for backward compatibility)
     """
 
+    persona_id: str = Field(
+        ...,
+        min_length=1,
+        description="Stable identifier of the dissenting persona",
+    )
     persona_name: str = Field(
         ...,
         min_length=1,
         description="Name of the dissenting persona",
     )
-    strengths: list[str] = Field(
+    confidence_score: float = Field(
         ...,
-        description="Identified strengths from minority view",
+        ge=0.0,
+        le=1.0,
+        description="The confidence score of the dissenting persona",
     )
-    concerns: list[str] = Field(
+    blocking_summary: str = Field(
         ...,
-        description="Concerns from minority view",
+        min_length=1,
+        description="Summary of blocking issues from dissenting persona",
+    )
+    mitigation_recommendation: str = Field(
+        ...,
+        min_length=1,
+        description="Recommended mitigation for blocking issues",
+    )
+    strengths: list[str] | None = Field(
+        default=None,
+        description="Identified strengths from minority view (optional for backward compatibility)",
+    )
+    concerns: list[str] | None = Field(
+        default=None,
+        description="Concerns from minority view (optional for backward compatibility)",
     )
 
-    @field_validator("persona_name", mode="before")
+    @field_validator(
+        "persona_id", "persona_name", "blocking_summary", "mitigation_recommendation", mode="before"
+    )
     @classmethod
-    def trim_persona_name(cls, v: Any) -> Any:
-        """Trim whitespace from persona_name.
+    def trim_string_fields(cls, v: Any) -> Any:
+        """Trim whitespace from string fields.
 
         Args:
             v: The field value to validate
@@ -264,7 +340,7 @@ class MinorityReport(BaseModel):
         if isinstance(v, str):
             v = v.strip()
             if not v:
-                raise ValueError("Persona name cannot be empty or whitespace-only")
+                raise ValueError("Field cannot be empty or whitespace-only")
         return v
 
     @field_validator("strengths", "concerns", mode="before")
@@ -276,11 +352,13 @@ class MinorityReport(BaseModel):
             v: The field value to validate
 
         Returns:
-            List of trimmed, non-empty strings
+            List of trimmed, non-empty strings or None
 
         Raises:
             ValueError: If any list item is empty or whitespace-only after trimming
         """
+        if v is None:
+            return None
         if isinstance(v, list):
             validated_list = []
             for item in v:
@@ -297,6 +375,9 @@ class MinorityReport(BaseModel):
 
 class PersonaScoreBreakdown(BaseModel):
     """Score breakdown for a single persona in decision aggregation.
+
+    This is the legacy schema maintained for backward compatibility.
+    New implementations should use DetailedScoreBreakdown.
 
     Attributes:
         weight: Weight assigned to this persona's review
@@ -334,6 +415,61 @@ class PersonaScoreBreakdown(BaseModel):
         return v
 
 
+class DetailedScoreBreakdown(BaseModel):
+    """Detailed score breakdown for decision aggregation.
+
+    Provides comprehensive scoring information including weights,
+    individual scores, weighted contributions, and formula used.
+
+    Attributes:
+        weights: Dictionary mapping persona IDs to their weights
+        individual_scores: Dictionary mapping persona IDs to their confidence scores
+        weighted_contributions: Dictionary mapping persona IDs to their weighted contribution
+        formula: Description of the aggregation formula used
+    """
+
+    weights: dict[str, float] = Field(
+        ...,
+        description="Dictionary mapping persona IDs to their weights",
+    )
+    individual_scores: dict[str, float] = Field(
+        ...,
+        description="Dictionary mapping persona IDs to their confidence scores",
+    )
+    weighted_contributions: dict[str, float] = Field(
+        ...,
+        description=(
+            "Dictionary mapping persona IDs to their weighted contribution "
+            "(weight * score)"
+        ),
+    )
+    formula: str = Field(
+        ...,
+        min_length=1,
+        description="Description of the aggregation formula used",
+    )
+
+    @field_validator("formula", mode="before")
+    @classmethod
+    def trim_formula(cls, v: Any) -> Any:
+        """Trim whitespace from formula field.
+
+        Args:
+            v: The field value to validate
+
+        Returns:
+            The trimmed string value
+
+        Raises:
+            ValueError: If the trimmed string is empty
+        """
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                raise ValueError("Formula cannot be empty or whitespace-only")
+        return v
+
+
 class DecisionAggregation(BaseModel):
     """Aggregated decision from multiple persona reviews.
 
@@ -342,27 +478,54 @@ class DecisionAggregation(BaseModel):
     minority opinions.
 
     Attributes:
-        overall_weighted_confidence: Weighted confidence score across all personas
+        overall_weighted_confidence: Weighted confidence score across all personas (legacy field)
+        weighted_confidence: Weighted confidence score across all personas (new field)
         decision: Final decision outcome (approve/revise/reject)
-        score_breakdown: Per-persona scoring details with weights and notes
+        score_breakdown: Per-persona scoring details with weights and notes (legacy, optional)
+        detailed_score_breakdown: Detailed scoring breakdown with formula (new field, optional)
         minority_report: Optional dissenting opinion from minority persona
+            (supports multiple dissenters)
+        minority_reports: Optional list of dissenting opinions from multiple personas (new field)
     """
 
     overall_weighted_confidence: float = Field(
         ...,
         ge=0.0,
         le=1.0,
-        description="Weighted confidence score across all personas",
+        description="Weighted confidence score across all personas (legacy field)",
+    )
+    weighted_confidence: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Weighted confidence score across all personas (new field, mirrors "
+            "overall_weighted_confidence)"
+        ),
     )
     decision: DecisionEnum = Field(
         ...,
         description="Final decision outcome (approve/revise/reject)",
     )
-    score_breakdown: dict[str, PersonaScoreBreakdown] = Field(
-        ...,
-        description="Per-persona scoring details with weights and notes",
+    score_breakdown: dict[str, PersonaScoreBreakdown] | None = Field(
+        default=None,
+        description="Per-persona scoring details with weights and notes (legacy format)",
+    )
+    detailed_score_breakdown: DetailedScoreBreakdown | None = Field(
+        default=None,
+        description=(
+            "Detailed score breakdown with weights, individual scores, "
+            "contributions, and formula"
+        ),
     )
     minority_report: MinorityReport | None = Field(
         default=None,
-        description="Optional dissenting opinion from minority persona",
+        description=(
+            "Optional dissenting opinion from minority persona "
+            "(single dissenter, legacy field)"
+        ),
+    )
+    minority_reports: list[MinorityReport] | None = Field(
+        default=None,
+        description="Optional list of dissenting opinions from multiple personas (new field)",
     )

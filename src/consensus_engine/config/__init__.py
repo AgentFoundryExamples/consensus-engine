@@ -13,6 +13,30 @@
 # limitations under the License.
 """Config package for consensus engine."""
 
+from consensus_engine.config.personas import (
+    APPROVE_THRESHOLD,
+    PERSONA_TEMPERATURE,
+    PERSONAS,
+    REVISE_THRESHOLD,
+    PersonaConfig,
+    get_all_personas,
+    get_persona,
+    get_persona_weights,
+    validate_persona_weights,
+)
 from consensus_engine.config.settings import Environment, Settings, get_settings
 
-__all__ = ["Settings", "Environment", "get_settings"]
+__all__ = [
+    "Settings",
+    "Environment",
+    "get_settings",
+    "PersonaConfig",
+    "PERSONAS",
+    "PERSONA_TEMPERATURE",
+    "APPROVE_THRESHOLD",
+    "REVISE_THRESHOLD",
+    "validate_persona_weights",
+    "get_persona",
+    "get_all_personas",
+    "get_persona_weights",
+]
