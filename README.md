@@ -165,6 +165,81 @@ GET /
 ```
 Returns API information and links to documentation.
 
+## Services
+
+### Expand Idea Service
+
+The `expand_idea` service transforms brief ideas into comprehensive, structured proposals using OpenAI's GPT-5.1 with structured outputs.
+
+#### Usage
+
+```python
+from consensus_engine.config import get_settings
+from consensus_engine.schemas import IdeaInput
+from consensus_engine.services import expand_idea
+
+# Create input
+idea_input = IdeaInput(
+    idea="Build a REST API for user management",
+    extra_context="Must support Python 3.11+ and include authentication"
+)
+
+# Get settings
+settings = get_settings()
+
+# Expand the idea
+proposal, metadata = expand_idea(idea_input, settings)
+
+# Access the structured proposal
+print(proposal.problem_statement)
+print(proposal.proposed_solution)
+print(proposal.assumptions)
+print(proposal.scope_non_goals)
+```
+
+#### Input Schema
+
+- **idea** (required): The core idea or problem to expand
+- **extra_context** (optional): Additional context or constraints
+
+#### Output Schema
+
+The service returns a tuple of `(ExpandedProposal, metadata)`:
+
+**ExpandedProposal fields:**
+- `problem_statement`: Clear articulation of the problem
+- `proposed_solution`: Detailed description of the solution approach
+- `assumptions`: List of underlying assumptions
+- `scope_non_goals`: List of what is explicitly out of scope
+- `raw_expanded_proposal`: Complete expanded proposal text or notes
+
+**Metadata fields:**
+- `request_id`: Unique identifier for the request
+- `model`: Model used (e.g., "gpt-5.1")
+- `temperature`: Temperature setting used
+- `elapsed_time`: Time taken in seconds
+- `finish_reason`: Completion reason from OpenAI
+- `usage`: Token usage information
+
+#### Error Handling
+
+The service uses domain exceptions with machine-readable error codes:
+
+- `LLMAuthenticationError` (code: `LLM_AUTH_ERROR`): Invalid API key
+- `LLMRateLimitError` (code: `LLM_RATE_LIMIT`): Rate limit exceeded (retryable)
+- `LLMTimeoutError` (code: `LLM_TIMEOUT`): Request timed out (retryable)
+- `LLMServiceError` (code: `LLM_SERVICE_ERROR` or `LLM_CONNECTION_ERROR`): Other API errors
+- `SchemaValidationError` (code: `SCHEMA_VALIDATION_ERROR`): Response doesn't match expected schema
+
+All exceptions include a `details` dict with additional context like `request_id` and `retryable` flags.
+
+#### Logging
+
+The service logs the following without exposing sensitive data:
+- Request start with request_id, model, and temperature
+- Request completion with elapsed time and status
+- All errors with request_id and error details (no sensitive payloads)
+
 ## Development
 
 ### Adding New Endpoints
@@ -204,6 +279,47 @@ logger.info("Info message")
 logger.warning("Warning message")
 logger.error("Error message")
 ```
+
+## Architecture
+
+### Components
+
+The application follows a clean architecture with clear separation of concerns:
+
+```
+src/consensus_engine/
+├── api/              # FastAPI route handlers and HTTP layer
+├── clients/          # External service wrappers (OpenAI, etc.)
+├── config/           # Configuration and settings management
+├── schemas/          # Pydantic models for validation
+├── services/         # Business logic layer
+└── exceptions.py     # Domain exception definitions
+```
+
+### OpenAI Integration
+
+The OpenAI client wrapper (`clients/openai_client.py`) provides:
+
+- **Structured Outputs**: Uses OpenAI's Responses API with schema validation
+- **Error Handling**: Maps OpenAI errors to domain exceptions
+- **Logging**: Structured logging without sensitive data exposure
+- **Type Safety**: Generic type support for response models
+
+### Exception Hierarchy
+
+```
+ConsensusEngineError (base)
+├── LLMServiceError
+│   ├── LLMAuthenticationError
+│   ├── LLMRateLimitError
+│   └── LLMTimeoutError
+└── SchemaValidationError
+```
+
+All exceptions include:
+- Machine-readable error codes for HTTP translation
+- Human-readable messages
+- Optional details dictionary with context
 
 ## Error Handling
 
