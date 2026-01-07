@@ -277,6 +277,10 @@ def check_database_health(engine: Engine) -> bool:
         return False
 
 
+# Import models to ensure they are registered with Base.metadata
+# This import must come after Base is defined
+from consensus_engine.db.models import Decision, PersonaReview, ProposalVersion, Run  # noqa: E402
+
 __all__ = [
     "Base",
     "create_engine_from_settings",
@@ -285,4 +289,8 @@ __all__ = [
     "check_database_health",
     "get_connector",
     "close_connector",
+    "Run",
+    "ProposalVersion",
+    "PersonaReview",
+    "Decision",
 ]
