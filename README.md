@@ -144,6 +144,23 @@ ENV=development
 | `DEFAULT_PERSONA_INSTRUCTIONS` | No | See settings.py | Default persona instructions for reviews |
 | `ENV` | No | `development` | Environment mode: development, production, testing |
 
+**Database Configuration:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `USE_CLOUD_SQL_CONNECTOR` | No | `false` | Use Cloud SQL Python Connector for IAM authentication |
+| `DB_INSTANCE_CONNECTION_NAME` | Cloud SQL | - | Cloud SQL instance (format: project:region:instance) |
+| `DB_NAME` | No | `consensus_engine` | Database name |
+| `DB_USER` | No | `postgres` | Database user |
+| `DB_PASSWORD` | Local | - | Database password (not used with IAM auth) |
+| `DB_HOST` | No | `localhost` | Database host for local connections |
+| `DB_PORT` | No | `5432` | Database port for local connections |
+| `DB_IAM_AUTH` | No | `false` | Use IAM authentication with Cloud SQL |
+| `DB_POOL_SIZE` | No | `5` | Database connection pool size (1-100) |
+| `DB_MAX_OVERFLOW` | No | `10` | Maximum overflow connections (0-100) |
+| `DB_POOL_TIMEOUT` | No | `30` | Connection pool timeout in seconds (1-300) |
+| `DB_POOL_RECYCLE` | No | `3600` | Connection pool recycle time in seconds (60-7200) |
+
 **Temperature Guidelines:**
 - Range: 0.0 to 1.0
 - **Expansion (0.7)**: Balanced creativity for generating comprehensive proposals
@@ -157,6 +174,133 @@ The Consensus Engine supports separate model and temperature settings for differ
 - **Review**: Evaluates proposals with persona-based analysis
 
 This allows you to use different models or settings optimized for each task.
+
+### Database Setup
+
+The Consensus Engine uses PostgreSQL for durable storage with support for both local development and Cloud SQL deployments.
+
+#### Local Development with Docker Compose
+
+The easiest way to run PostgreSQL locally is using Docker Compose:
+
+1. Start the database and admin tools:
+```bash
+docker-compose up -d
+```
+
+This starts:
+- PostgreSQL 16 on port 5432
+- pgAdmin 4 on port 5050 (http://localhost:5050)
+  - Default email: `admin@consensus-engine.local`
+  - Default password: `admin`
+
+2. Run database migrations:
+```bash
+alembic upgrade head
+```
+
+3. Verify the database connection:
+```bash
+# Connect with psql
+docker-compose exec postgres psql -U postgres -d consensus_engine
+
+# Or use pgAdmin at http://localhost:5050
+```
+
+To stop the services:
+```bash
+docker-compose down
+```
+
+To reset the database:
+```bash
+docker-compose down -v  # Remove volumes
+docker-compose up -d
+alembic upgrade head
+```
+
+#### Manual PostgreSQL Installation
+
+If you prefer to install PostgreSQL manually:
+
+1. Install PostgreSQL 16+ on your system
+2. Create the database:
+```bash
+createdb consensus_engine
+```
+3. Update `.env` with your database credentials:
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=consensus_engine
+```
+4. Run migrations:
+```bash
+alembic upgrade head
+```
+
+#### Cloud SQL (Production)
+
+For Cloud Run deployments with Cloud SQL:
+
+1. Create a Cloud SQL PostgreSQL instance
+2. Create a database named `consensus_engine`
+3. Configure service account with `cloudsql.client` role
+4. Set environment variables in Cloud Run:
+
+```bash
+USE_CLOUD_SQL_CONNECTOR=true
+DB_INSTANCE_CONNECTION_NAME=project:region:instance
+DB_NAME=consensus_engine
+DB_USER=your-db-user
+DB_IAM_AUTH=true  # Recommended for IAM authentication
+# Or use password authentication:
+# DB_IAM_AUTH=false
+# DB_PASSWORD=your-password
+```
+
+5. Run migrations using Cloud SQL proxy or from a connection with access:
+```bash
+# With Cloud SQL proxy
+cloud_sql_proxy -instances=project:region:instance=tcp:5432 &
+alembic upgrade head
+```
+
+**IAM Authentication:**
+- Requires service account with `cloudsql.client` role
+- No password needed
+- More secure than password authentication
+- Recommended for production
+
+**Connection Pooling:**
+- Configured via `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_TIMEOUT`, `DB_POOL_RECYCLE`
+- Cloud SQL Connector manages its own connection pool
+- Local connections use SQLAlchemy's QueuePool
+
+#### Database Migrations
+
+The project uses Alembic for database migrations:
+
+```bash
+# Run all pending migrations
+alembic upgrade head
+
+# Rollback one migration
+alembic downgrade -1
+
+# Show current migration version
+alembic current
+
+# Show migration history
+alembic history
+
+# Create a new migration (after modifying models)
+alembic revision --autogenerate -m "description"
+```
+
+All migrations are idempotent and can be run multiple times safely.
 
 ### Running the Server
 
