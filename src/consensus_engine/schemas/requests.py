@@ -124,9 +124,7 @@ class ExpandIdeaResponse(BaseModel):
         description="List of what is explicitly out of scope or non-goals",
     )
     title: str | None = Field(default=None, description="Optional short title for the proposal")
-    summary: str | None = Field(
-        default=None, description="Optional brief summary of the proposal"
-    )
+    summary: str | None = Field(default=None, description="Optional brief summary of the proposal")
     raw_idea: str | None = Field(
         default=None, description="Optional original idea text before expansion"
     )

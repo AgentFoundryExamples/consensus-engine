@@ -176,6 +176,9 @@ Content-Type: application/json
   "proposed_solution": "Detailed description of the solution approach",
   "assumptions": ["Assumption 1", "Assumption 2"],
   "scope_non_goals": ["Out of scope item 1"],
+  "title": "Optional proposal title",
+  "summary": "Optional brief summary",
+  "raw_idea": "Original user idea",
   "raw_expanded_proposal": "Complete proposal text...",
   "metadata": {
     "request_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -298,11 +301,15 @@ print(proposal.scope_non_goals)
 The service returns a tuple of `(ExpandedProposal, metadata)`:
 
 **ExpandedProposal fields:**
-- `problem_statement`: Clear articulation of the problem
-- `proposed_solution`: Detailed description of the solution approach
-- `assumptions`: List of underlying assumptions
-- `scope_non_goals`: List of what is explicitly out of scope
-- `raw_expanded_proposal`: Complete expanded proposal text or notes
+- `problem_statement`: Clear articulation of the problem (required, trimmed)
+- `proposed_solution`: Detailed description of the solution approach (required, trimmed)
+- `assumptions`: List of underlying assumptions (required, can be empty)
+- `scope_non_goals`: List of what is explicitly out of scope (required, can be empty)
+- `title`: Optional short title for the proposal
+- `summary`: Optional brief summary of the proposal
+- `raw_idea`: Optional original idea text before expansion
+- `metadata`: Optional metadata dictionary for tracking
+- `raw_expanded_proposal`: Optional complete proposal text or notes
 
 **Metadata fields:**
 - `request_id`: Unique identifier for the request
@@ -428,6 +435,139 @@ logger.debug("Debug message")
 logger.info("Info message")
 logger.warning("Warning message")
 logger.error("Error message")
+```
+
+## Schemas
+
+The application uses Pydantic models for data validation and serialization. All schemas include automatic whitespace trimming and validation for required fields.
+
+### Core Schemas
+
+#### ExpandedProposal
+
+Represents a detailed proposal expanded from a brief idea. All strings are automatically trimmed and validated.
+
+**Required Fields:**
+- `problem_statement` (str): Clear articulation of the problem to be solved
+- `proposed_solution` (str): Detailed description of the solution approach
+- `assumptions` (list[str]): List of underlying assumptions (can be empty)
+- `scope_non_goals` (list[str]): List of what is explicitly out of scope (can be empty)
+
+**Optional Fields:**
+- `title` (str | None): Short title for the proposal
+- `summary` (str | None): Brief summary of the proposal
+- `raw_idea` (str | None): Original idea text before expansion
+- `metadata` (dict[str, Any] | None): Metadata for tracking and processing
+- `raw_expanded_proposal` (str | None): Complete proposal text or additional notes
+
+**Validation:**
+- Required string fields reject empty or whitespace-only values
+- List items must be non-empty strings after trimming
+- Optional fields that are empty/whitespace become `None`
+
+#### PersonaReview
+
+Represents a review from a specific persona evaluating a proposal.
+
+**Required Fields:**
+- `persona_name` (str): Name of the reviewing persona
+- `confidence_score` (float): Confidence in the proposal, range [0.0, 1.0]
+- `strengths` (list[str]): Identified strengths in the proposal
+- `concerns` (list[Concern]): Concerns with blocking flags
+- `recommendations` (list[str]): Actionable recommendations
+- `blocking_issues` (list[str]): Critical blocking issues (can be empty)
+- `estimated_effort` (str | dict[str, Any]): Effort estimation
+- `dependency_risks` (list[str | dict[str, Any]]): Identified dependency risks (can be empty)
+
+**Optional Fields:**
+- `persona_id` (UUID | None): UUID for tracking persona identity
+
+**Concern Schema:**
+- `text` (str): The concern description
+- `is_blocking` (bool): Whether this concern blocks approval
+
+**Validation:**
+- `confidence_score` must be between 0.0 and 1.0
+- String list items must be non-empty after trimming
+- `dependency_risks` accepts both strings and structured dicts
+- Empty strings in `dependency_risks` are filtered out
+
+#### DecisionAggregation
+
+Represents aggregated decision from multiple persona reviews.
+
+**Required Fields:**
+- `overall_weighted_confidence` (float): Weighted confidence across all personas [0.0, 1.0]
+- `decision` (DecisionEnum): Final decision outcome (approve/revise/reject)
+- `score_breakdown` (dict[str, PersonaScoreBreakdown]): Per-persona scoring details
+
+**Optional Fields:**
+- `minority_report` (MinorityReport | None): Dissenting opinion from minority persona
+
+**DecisionEnum Values:**
+- `APPROVE`: "approve"
+- `REVISE`: "revise"
+- `REJECT`: "reject"
+
+**PersonaScoreBreakdown:**
+- `weight` (float): Weight assigned to persona's review (>= 0.0)
+- `notes` (str | None): Optional notes about persona's contribution
+
+**MinorityReport:**
+- `persona_name` (str): Name of dissenting persona
+- `strengths` (list[str]): Identified strengths from minority view
+- `concerns` (list[str]): Concerns from minority view
+
+**Validation:**
+- `overall_weighted_confidence` must be between 0.0 and 1.0
+- When only one persona exists, confidence matches that reviewer's score
+- Weights must be non-negative
+
+### Usage Examples
+
+```python
+from consensus_engine.schemas import (
+    ExpandedProposal,
+    PersonaReview,
+    Concern,
+    DecisionAggregation,
+    DecisionEnum,
+    PersonaScoreBreakdown,
+)
+
+# Create an expanded proposal
+proposal = ExpandedProposal(
+    problem_statement="Need to improve API performance",
+    proposed_solution="Implement caching layer with Redis",
+    assumptions=["Redis available", "Load < 10k req/sec"],
+    scope_non_goals=["Mobile app changes"],
+    title="API Performance Improvement",
+)
+
+# Create a persona review
+review = PersonaReview(
+    persona_name="Performance Engineer",
+    confidence_score=0.85,
+    strengths=["Good caching strategy", "Realistic assumptions"],
+    concerns=[
+        Concern(text="No cache invalidation strategy", is_blocking=True),
+        Concern(text="Redis cluster sizing unclear", is_blocking=False),
+    ],
+    recommendations=["Define invalidation rules", "Size Redis cluster"],
+    blocking_issues=["No cache invalidation strategy"],
+    estimated_effort="2 weeks",
+    dependency_risks=["Redis cluster setup", "Cache key design"],
+)
+
+# Create a decision aggregation
+decision = DecisionAggregation(
+    overall_weighted_confidence=0.75,
+    decision=DecisionEnum.REVISE,
+    score_breakdown={
+        "Performance": PersonaScoreBreakdown(weight=0.6, notes="Major concerns"),
+        "Security": PersonaScoreBreakdown(weight=0.4, notes="Minor issues"),
+    },
+)
 ```
 
 ## Architecture

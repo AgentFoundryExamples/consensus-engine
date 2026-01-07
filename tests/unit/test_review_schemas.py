@@ -87,7 +87,10 @@ class TestPersonaReview:
             recommendations=["Add rate limiting", "Improve logging"],
             blocking_issues=["No rate limiting"],
             estimated_effort="2 weeks",
-            dependency_risks=["OpenAI API changes", {"risk": "Database migration", "severity": "high"}],
+            dependency_risks=[
+                "OpenAI API changes",
+                {"risk": "Database migration", "severity": "high"},
+            ],
         )
 
         assert review.persona_name == "Security Reviewer"

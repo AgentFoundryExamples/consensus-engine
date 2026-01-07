@@ -48,10 +48,14 @@ class ExpandedProposal(BaseModel):
     to ensure validated JSON-only responses.
 
     Attributes:
-        problem_statement: Clear articulation of the problem to be solved (required, trimmed)
-        proposed_solution: Detailed description of the proposed solution approach (required, trimmed)
-        assumptions: List of underlying assumptions made in the proposal (required, non-empty strings)
-        scope_non_goals: List of what is explicitly out of scope or non-goals (required, non-empty strings)
+        problem_statement: Clear articulation of the problem to be solved
+            (required, trimmed)
+        proposed_solution: Detailed description of the proposed solution approach
+            (required, trimmed)
+        assumptions: List of underlying assumptions made in the proposal
+            (required, non-empty strings)
+        scope_non_goals: List of what is explicitly out of scope or non-goals
+            (required, non-empty strings)
         title: Optional short title for the proposal
         summary: Optional brief summary of the proposal
         raw_idea: Optional original idea text before expansion
