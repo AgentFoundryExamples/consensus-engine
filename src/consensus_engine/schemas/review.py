@@ -144,7 +144,7 @@ class PersonaReview(BaseModel):
     @field_validator("strengths", "recommendations", "blocking_issues", mode="before")
     @classmethod
     def validate_string_lists(cls, v: Any) -> Any:
-        """Validate and trim string lists, ensuring non-empty strings when present.
+        """Validate and trim string lists, ensuring non-empty strings.
 
         Args:
             v: The field value to validate
@@ -153,19 +153,19 @@ class PersonaReview(BaseModel):
             List of trimmed, non-empty strings
 
         Raises:
-            ValueError: If any list item is whitespace-only after trimming
+            ValueError: If any list item is empty or whitespace-only after trimming
         """
         if isinstance(v, list):
-            trimmed = []
+            validated_list = []
             for item in v:
                 if isinstance(item, str):
                     trimmed_item = item.strip()
-                    if not trimmed_item:  # Empty after trim
-                        raise ValueError("List items cannot be whitespace-only")
-                    trimmed.append(trimmed_item)
+                    if not trimmed_item:
+                        raise ValueError("List items cannot be empty or whitespace-only")
+                    validated_list.append(trimmed_item)
                 else:
-                    trimmed.append(item)
-            return trimmed
+                    validated_list.append(item)
+            return validated_list
         return v
 
     @field_validator("dependency_risks", mode="before")
@@ -180,18 +180,19 @@ class PersonaReview(BaseModel):
             List of trimmed strings and/or dicts
 
         Raises:
-            None - allows empty items to be filtered
+            ValueError: If any string item is empty or whitespace-only after trimming
         """
         if isinstance(v, list):
-            trimmed = []
+            validated_list = []
             for item in v:
                 if isinstance(item, str):
                     trimmed_item = item.strip()
-                    if trimmed_item:  # Only add non-empty strings
-                        trimmed.append(trimmed_item)
+                    if not trimmed_item:
+                        raise ValueError("List items cannot be empty or whitespace-only")
+                    validated_list.append(trimmed_item)
                 else:
-                    trimmed.append(item)  # Keep dicts as-is
-            return trimmed
+                    validated_list.append(item)  # Keep dicts as-is
+            return validated_list
         return v
 
     @field_validator("estimated_effort", mode="before")
@@ -278,20 +279,19 @@ class MinorityReport(BaseModel):
             List of trimmed, non-empty strings
 
         Raises:
-            ValueError: If any non-empty list item is whitespace-only after trimming
+            ValueError: If any list item is empty or whitespace-only after trimming
         """
         if isinstance(v, list):
-            trimmed = []
+            validated_list = []
             for item in v:
                 if isinstance(item, str):
                     trimmed_item = item.strip()
-                    if trimmed_item:
-                        trimmed.append(trimmed_item)
-                    elif item:
-                        raise ValueError("List items cannot be whitespace-only")
+                    if not trimmed_item:
+                        raise ValueError("List items cannot be empty or whitespace-only")
+                    validated_list.append(trimmed_item)
                 else:
-                    trimmed.append(item)
-            return trimmed
+                    validated_list.append(item)
+            return validated_list
         return v
 
 

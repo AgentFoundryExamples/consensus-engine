@@ -256,21 +256,23 @@ class TestPersonaReview:
 
         assert review.estimated_effort == {"hours": 40, "days": 5}
 
-    def test_persona_review_filters_empty_strings_in_dependency_risks(self) -> None:
-        """Test PersonaReview filters out empty strings from dependency_risks after trimming."""
-        review = PersonaReview(
-            persona_name="Reviewer",
-            confidence_score=0.5,
-            strengths=["Valid"],
-            concerns=[],
-            recommendations=["Rec"],
-            blocking_issues=["Issue"],
-            estimated_effort="Unknown",
-            dependency_risks=["Valid risk", "  ", "Another risk"],
-        )
+    def test_persona_review_rejects_whitespace_in_dependency_risks(self) -> None:
+        """Test PersonaReview rejects whitespace-only items in dependency_risks."""
+        with pytest.raises(ValidationError) as exc_info:
+            PersonaReview(
+                persona_name="Reviewer",
+                confidence_score=0.5,
+                strengths=["Valid"],
+                concerns=[],
+                recommendations=["Rec"],
+                blocking_issues=["Issue"],
+                estimated_effort="Unknown",
+                dependency_risks=["Valid risk", "  ", "Another risk"],
+            )
 
-        # Empty strings after trimming should be filtered out in dependency_risks only
-        assert review.dependency_risks == ["Valid risk", "Another risk"]
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("dependency_risks",) for e in errors)
+        assert any("whitespace-only" in str(e).lower() for e in errors)
 
     def test_persona_review_rejects_whitespace_in_required_lists(self) -> None:
         """Test PersonaReview rejects whitespace-only items in required string lists."""
@@ -288,7 +290,7 @@ class TestPersonaReview:
 
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("strengths",) for e in errors)
-        assert any("whitespace-only" in str(e) for e in errors)
+        assert any("whitespace-only" in str(e).lower() for e in errors)
 
 
 class TestDecisionEnum:
@@ -469,8 +471,13 @@ class TestDecisionAggregation:
         assert any(e["loc"] == ("overall_weighted_confidence",) for e in errors)
 
     def test_decision_aggregation_single_persona(self) -> None:
-        """Test DecisionAggregation with single persona matches reviewer confidence."""
-        # When only one persona exists, overall_weighted_confidence should match
+        """Test DecisionAggregation with single persona.
+
+        When only one persona exists with weight=1.0, the overall_weighted_confidence
+        should match that reviewer's confidence score (though this is enforced by
+        the calling code, not the schema itself).
+        """
+        # Simulate a single persona scenario where overall confidence matches the reviewer
         aggregation = DecisionAggregation(
             overall_weighted_confidence=0.85,
             decision=DecisionEnum.APPROVE,
@@ -482,6 +489,13 @@ class TestDecisionAggregation:
         assert aggregation.overall_weighted_confidence == 0.85
         assert len(aggregation.score_breakdown) == 1
         assert aggregation.score_breakdown["SingleReviewer"].weight == 1.0
+
+        # Verify that with single persona at weight 1.0, the confidence should match
+        # (This documents the expected behavior for callers creating DecisionAggregation)
+        single_reviewer_weight = aggregation.score_breakdown["SingleReviewer"].weight
+        assert single_reviewer_weight == 1.0
+        # When weight is 1.0, overall_weighted_confidence should equal reviewer's score
+        assert aggregation.overall_weighted_confidence == 0.85
 
     def test_decision_aggregation_empty_score_breakdown_rejected(self) -> None:
         """Test DecisionAggregation requires at least one score in breakdown."""
