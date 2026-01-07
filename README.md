@@ -81,15 +81,29 @@ ENV=development
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `OPENAI_API_KEY` | Yes | - | Your OpenAI API key for authentication |
-| `OPENAI_MODEL` | No | `gpt-5.1` | OpenAI model to use |
-| `TEMPERATURE` | No | `0.7` | Temperature for model responses (0.0-1.0) |
+| `OPENAI_MODEL` | No | `gpt-5.1` | Default OpenAI model to use |
+| `TEMPERATURE` | No | `0.7` | Default temperature for model responses (0.0-1.0) |
+| `EXPAND_MODEL` | No | `gpt-5.1` | Model for expansion step |
+| `EXPAND_TEMPERATURE` | No | `0.7` | Temperature for expansion (0.0-1.0) |
+| `REVIEW_MODEL` | No | `gpt-5.1` | Model for review step |
+| `REVIEW_TEMPERATURE` | No | `0.2` | Temperature for review (0.0-1.0, lower for deterministic reviews) |
+| `DEFAULT_PERSONA_NAME` | No | `GenericReviewer` | Default persona name for reviews |
+| `DEFAULT_PERSONA_INSTRUCTIONS` | No | See settings.py | Default persona instructions for reviews |
 | `ENV` | No | `development` | Environment mode: development, production, testing |
 
 **Temperature Guidelines:**
 - Range: 0.0 to 1.0
-- Recommended: 0.5 to 0.7 for balanced responses
+- **Expansion (0.7)**: Balanced creativity for generating comprehensive proposals
+- **Review (0.2)**: Deterministic and focused for consistent, reliable reviews
 - Lower values (0.0-0.3): More deterministic, focused
 - Higher values (0.8-1.0): More creative, varied
+
+**Step-Specific Configuration:**
+The Consensus Engine supports separate model and temperature settings for different steps:
+- **Expansion**: Generates detailed proposals from brief ideas
+- **Review**: Evaluates proposals with persona-based analysis
+
+This allows you to use different models or settings optimized for each task.
 
 ### Running the Server
 
@@ -265,6 +279,84 @@ Interactive API documentation is available at:
 
 The `expand_idea` service transforms brief ideas into comprehensive, structured proposals using OpenAI's GPT-5.1 with structured outputs.
 
+**Key Features:**
+- Accepts 1-10 sentence ideas with optional context
+- Uses expansion-specific model and temperature settings
+- Returns validated `ExpandedProposal` with problem statement, solution, assumptions, and scope
+- Includes detailed telemetry (request_id, step_name='expand', model, temperature, latency)
+- Structured error handling with proper exception types
+
+**Usage:**
+```python
+from consensus_engine.services import expand_idea
+from consensus_engine.schemas.proposal import IdeaInput
+from consensus_engine.config import get_settings
+
+settings = get_settings()
+idea_input = IdeaInput(idea="Build a scalable API")
+proposal, metadata = expand_idea(idea_input, settings)
+
+print(f"Request ID: {metadata['request_id']}")
+print(f"Step: {metadata['step_name']}")  # 'expand'
+print(f"Latency: {metadata['latency']}s")
+print(f"Problem: {proposal.problem_statement}")
+```
+
+### Review Proposal Service
+
+The `review_proposal` service evaluates expanded proposals using persona-based analysis with OpenAI's structured outputs.
+
+**Key Features:**
+- Accepts `ExpandedProposal` objects with optional persona customization
+- Uses review-specific model and temperature (default: 0.2 for deterministic reviews)
+- Returns validated `PersonaReview` with confidence score, strengths, concerns, and recommendations
+- Supports custom personas with specific instructions and perspectives
+- Includes detailed telemetry (request_id, step_name='review', persona_name, model, temperature, latency)
+- Automatically truncates long proposal fields to avoid token limits
+
+**Usage:**
+```python
+from consensus_engine.services import review_proposal
+from consensus_engine.config import get_settings
+
+settings = get_settings()
+
+# Use default persona (GenericReviewer)
+review, metadata = review_proposal(proposal, settings)
+
+print(f"Persona: {review.persona_name}")
+print(f"Confidence: {review.confidence_score}")
+print(f"Strengths: {review.strengths}")
+print(f"Concerns: {review.concerns}")
+print(f"Blocking Issues: {review.blocking_issues}")
+print(f"Latency: {metadata['latency']}s")
+
+# Use custom persona
+review, metadata = review_proposal(
+    proposal,
+    settings,
+    persona_name="SecurityExpert",
+    persona_instructions="Focus on security vulnerabilities and data protection"
+)
+```
+
+**PersonaReview Schema:**
+```python
+{
+    "persona_name": "GenericReviewer",
+    "confidence_score": 0.75,  # 0.0 to 1.0
+    "strengths": ["Clear problem statement", "Good architecture"],
+    "concerns": [
+        {"text": "Missing error handling", "is_blocking": False},
+        {"text": "No security design", "is_blocking": True}
+    ],
+    "recommendations": ["Add authentication", "Implement rate limiting"],
+    "blocking_issues": ["Missing security audit plan"],
+    "estimated_effort": "3-4 weeks for MVP",
+    "dependency_risks": ["PostgreSQL cluster setup"]
+}
+```
+
 #### Usage
 
 ```python
@@ -313,11 +405,42 @@ The service returns a tuple of `(ExpandedProposal, metadata)`:
 
 **Metadata fields:**
 - `request_id`: Unique identifier for the request
+- `step_name`: Name of the step ('expand' or 'review')
 - `model`: Model used (e.g., "gpt-5.1")
 - `temperature`: Temperature setting used
 - `elapsed_time`: Time taken in seconds
+- `latency`: Same as elapsed_time (for consistency)
 - `finish_reason`: Completion reason from OpenAI
 - `usage`: Token usage information
+- `status`: Request status ('success', 'error', etc.)
+- `persona_name`: (review only) Name of the reviewing persona
+
+#### Telemetry and Logging
+
+The Consensus Engine provides comprehensive telemetry for all OpenAI API calls:
+
+**Logged Fields:**
+- `run_id` / `request_id`: Unique identifier for tracking
+- `step_name`: Operation type ('expand', 'review', 'llm_call')
+- `model`: Model used for the request
+- `temperature`: Temperature setting used
+- `latency`: Request duration in seconds
+- `status`: Request outcome ('success', 'error', 'timeout', 'rate_limited', etc.)
+- `persona_name`: (review only) Persona used for review
+
+**Example Log Output:**
+```
+2024-01-07 10:15:23 - consensus_engine.clients.openai_client - INFO - Starting OpenAI request for step=expand
+  extra={'request_id': '123abc', 'step_name': 'expand', 'model': 'gpt-5.1', 'temperature': 0.7}
+
+2024-01-07 10:15:25 - consensus_engine.clients.openai_client - INFO - OpenAI request completed successfully for step=expand
+  extra={'request_id': '123abc', 'step_name': 'expand', 'latency': '2.1s', 'status': 'success'}
+```
+
+**Privacy:**
+- Logs do NOT include user-provided content (ideas, proposals)
+- Only metadata and performance metrics are logged
+- Request IDs allow correlation without exposing sensitive data
 
 #### Error Handling
 
