@@ -143,27 +143,118 @@ mypy src/
 
 ## API Endpoints
 
-### Health Check
-```bash
-GET /health
-```
-Returns the health status and configuration information.
+### Expand Idea (POST /v1/expand-idea)
 
-**Response:**
+Expands a brief idea (1-10 sentences) into a comprehensive, structured proposal using LLM.
+
+**Request:**
+```bash
+POST /v1/expand-idea
+Content-Type: application/json
+```
+
+**Request Body:**
 ```json
 {
-  "status": "healthy",
-  "environment": "development",
-  "debug": true,
-  "model": "gpt-5.1"
+  "idea": "Build a REST API for user management with authentication.",
+  "extra_context": {
+    "language": "Python",
+    "version": "3.11+",
+    "features": ["auth", "CRUD"]
+  }
 }
 ```
 
-### Root
+**Parameters:**
+- `idea` (required, string): The core idea to expand (1-10 sentences)
+- `extra_context` (optional, dict or string): Additional context or constraints
+
+**Success Response (200):**
+```json
+{
+  "problem_statement": "Clear articulation of the problem to be solved",
+  "proposed_solution": "Detailed description of the solution approach",
+  "assumptions": ["Assumption 1", "Assumption 2"],
+  "scope_non_goals": ["Out of scope item 1"],
+  "raw_expanded_proposal": "Complete proposal text...",
+  "metadata": {
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "model": "gpt-5.1",
+    "temperature": 0.7,
+    "elapsed_time": 2.5
+  }
+}
+```
+
+**Error Responses:**
+- **422 Unprocessable Entity**: Validation error (empty idea, too many sentences, etc.)
+- **401 Unauthorized**: Invalid API key
+- **503 Service Unavailable**: Rate limit exceeded or timeout
+- **500 Internal Server Error**: Service error
+
+**Example with curl:**
+```bash
+curl -X POST http://localhost:8000/v1/expand-idea \
+  -H "Content-Type: application/json" \
+  -d '{"idea": "Build a REST API for user management."}'
+```
+
+### Health Check (GET /health)
+
+Returns service health status, configuration metadata, and uptime.
+
+**Request:**
+```bash
+GET /health
+```
+
+**Response (200):**
+```json
+{
+  "status": "healthy",
+  "environment": "production",
+  "debug": false,
+  "model": "gpt-5.1",
+  "temperature": 0.7,
+  "uptime_seconds": 3600.5,
+  "config_status": "ok"
+}
+```
+
+**Status Values:**
+- `healthy`: Service is fully operational
+- `degraded`: Service is operational but configuration has warnings
+- `unhealthy`: Service has critical issues
+
+**Config Status Values:**
+- `ok`: Configuration is valid
+- `warning`: Configuration has non-critical issues
+- `error`: Configuration has critical issues
+
+### Root (GET /)
+
+Returns API information and links to documentation.
+
+**Request:**
 ```bash
 GET /
 ```
-Returns API information and links to documentation.
+
+**Response (200):**
+```json
+{
+  "message": "Consensus Engine API",
+  "version": "0.1.0",
+  "docs": "/docs"
+}
+```
+
+### OpenAPI Documentation
+
+Interactive API documentation is available at:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **OpenAPI JSON**: http://localhost:8000/openapi.json
 
 ## Services
 
@@ -239,6 +330,65 @@ The service logs the following without exposing sensitive data:
 - Request start with request_id, model, and temperature
 - Request completion with elapsed time and status
 - All errors with request_id and error details (no sensitive payloads)
+
+## Error Handling
+
+The API uses a consistent error response format across all endpoints:
+
+```json
+{
+  "code": "ERROR_CODE",
+  "message": "Human-readable error message",
+  "details": {},
+  "request_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Error Codes
+
+**Validation Errors (422):**
+- `VALIDATION_ERROR`: Request validation failed (e.g., empty idea, too many sentences)
+
+**Authentication Errors (401):**
+- `LLM_AUTH_ERROR`: OpenAI API authentication failed
+
+**Service Errors (503):**
+- `LLM_RATE_LIMIT`: OpenAI rate limit exceeded (retryable)
+- `LLM_TIMEOUT`: Request timed out (retryable)
+
+**Server Errors (500):**
+- `LLM_SERVICE_ERROR`: OpenAI API error
+- `LLM_CONNECTION_ERROR`: Connection to OpenAI failed
+- `SCHEMA_VALIDATION_ERROR`: Response schema validation failed
+- `INTERNAL_ERROR`: Unexpected server error
+
+### Request Tracking
+
+All requests include a unique `X-Request-ID` header in the response for tracing and debugging:
+
+```bash
+curl -v http://localhost:8000/health
+# Response headers include:
+# X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
+```
+
+Request IDs are also included in error responses and logged for all operations.
+
+### Middleware
+
+The application includes the following middleware:
+
+**Logging Middleware:**
+- Generates unique request IDs for each request
+- Logs request/response information without storing full payloads
+- Adds `X-Request-ID` header to all responses
+- Tracks request duration
+
+**Exception Handlers:**
+- Global validation error handler for 422 responses
+- Domain exception handler for application errors
+- Generic exception handler for unexpected errors
+- All handlers return structured JSON with error codes
 
 ## Development
 
