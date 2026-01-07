@@ -85,6 +85,7 @@ class TestAppStartupFailure:
         # We test this by trying to create settings directly
         with pytest.raises(ValidationError):
             from consensus_engine.config import get_settings
+
             get_settings()
 
 

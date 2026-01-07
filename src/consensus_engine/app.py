@@ -4,8 +4,8 @@ This module creates and configures the FastAPI application with
 dependency injection, middleware, and routes.
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import Depends, FastAPI
 

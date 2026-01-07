@@ -1,8 +1,6 @@
 """Unit tests for configuration module."""
 
 import logging
-import os
-from typing import Any, Dict
 
 import pytest
 from pydantic import ValidationError
@@ -29,7 +27,7 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def valid_env(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
+def valid_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     """Set up valid environment variables."""
     env_vars = {
         "OPENAI_API_KEY": "sk-test-key-123456789",
@@ -45,7 +43,7 @@ def valid_env(monkeypatch: pytest.MonkeyPatch) -> Dict[str, str]:
 class TestSettings:
     """Test suite for Settings class."""
 
-    def test_settings_with_valid_config(self, clean_env: None, valid_env: Dict[str, str]) -> None:
+    def test_settings_with_valid_config(self, clean_env: None, valid_env: dict[str, str]) -> None:
         """Test Settings loads correctly with valid configuration."""
         settings = Settings()
 
@@ -54,7 +52,9 @@ class TestSettings:
         assert settings.temperature == 0.7
         assert settings.env == Environment.DEVELOPMENT
 
-    def test_settings_missing_api_key(self, clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_settings_missing_api_key(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test Settings raises error when OPENAI_API_KEY is missing."""
         with pytest.raises(ValidationError) as exc_info:
             Settings()
@@ -72,7 +72,9 @@ class TestSettings:
         errors = exc_info.value.errors()
         # Check for validation error on openai_api_key field
         # Empty string fails min_length validation
-        assert any(e["loc"] == ("openai_api_key",) and e["type"] == "string_too_short" for e in errors)
+        assert any(
+            e["loc"] == ("openai_api_key",) and e["type"] == "string_too_short" for e in errors
+        )
 
     def test_settings_placeholder_api_key(
         self, clean_env: None, monkeypatch: pytest.MonkeyPatch
@@ -85,7 +87,10 @@ class TestSettings:
 
         errors = exc_info.value.errors()
         # Check for validation error on openai_api_key field with placeholder message
-        assert any(e["loc"] == ("openai_api_key",) and "placeholder" in str(e["msg"]).lower() for e in errors)
+        assert any(
+            e["loc"] == ("openai_api_key",) and "placeholder" in str(e["msg"]).lower()
+            for e in errors
+        )
 
     def test_settings_default_values(
         self, clean_env: None, monkeypatch: pytest.MonkeyPatch
@@ -125,9 +130,7 @@ class TestSettings:
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("temperature",) for e in errors)
 
-    def test_temperature_edge_cases(
-        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_temperature_edge_cases(self, clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test temperature accepts boundary values 0.0 and 1.0."""
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
 
@@ -198,9 +201,7 @@ class TestSettings:
         settings_prod = Settings()
         assert settings_prod.debug is False
 
-    def test_get_safe_dict_masks_api_key(
-        self, clean_env: None, valid_env: Dict[str, str]
-    ) -> None:
+    def test_get_safe_dict_masks_api_key(self, clean_env: None, valid_env: dict[str, str]) -> None:
         """Test get_safe_dict masks the API key for safe logging."""
         settings = Settings()
         safe_dict = settings.get_safe_dict()
@@ -224,7 +225,7 @@ class TestGetSettings:
     """Test suite for get_settings singleton function."""
 
     def test_get_settings_returns_instance(
-        self, clean_env: None, valid_env: Dict[str, str]
+        self, clean_env: None, valid_env: dict[str, str]
     ) -> None:
         """Test get_settings returns a Settings instance."""
         # Reset singleton
@@ -235,9 +236,7 @@ class TestGetSettings:
         settings = get_settings()
         assert isinstance(settings, Settings)
 
-    def test_get_settings_singleton(
-        self, clean_env: None, valid_env: Dict[str, str]
-    ) -> None:
+    def test_get_settings_singleton(self, clean_env: None, valid_env: dict[str, str]) -> None:
         """Test get_settings returns the same instance on multiple calls."""
         # Reset singleton
         import consensus_engine.config.settings as settings_module

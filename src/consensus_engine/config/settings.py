@@ -5,7 +5,6 @@ It handles environment variable loading, validation, and provides sensible defau
 """
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -83,8 +82,7 @@ class Settings(BaseSettings):
 
         if "your_api_key" in v.lower() or "placeholder" in v.lower():
             raise ValueError(
-                "OPENAI_API_KEY appears to be a placeholder. "
-                "Please provide a valid API key."
+                "OPENAI_API_KEY appears to be a placeholder. " "Please provide a valid API key."
             )
 
         return v.strip()
@@ -150,7 +148,7 @@ class Settings(BaseSettings):
 
 
 # Singleton instance
-_settings: Optional[Settings] = None
+_settings: Settings | None = None
 
 
 def get_settings() -> Settings:
