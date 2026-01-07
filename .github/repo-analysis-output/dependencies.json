@@ -959,6 +959,10 @@
     },
     {
       "source": "tests/conftest.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "tests/conftest.py",
       "target": "src/consensus_engine/config/settings.py"
     },
     {
@@ -1046,6 +1050,10 @@
       "target": "src/consensus_engine/config/__init__.py"
     },
     {
+      "source": "tests/integration/test_full_review_endpoint.py",
+      "target": "src/consensus_engine/config/personas.py"
+    },
+    {
       "source": "tests/integration/test_multi_persona.py",
       "target": "src/consensus_engine/config/settings.py"
     },
@@ -1112,6 +1120,10 @@
     {
       "source": "tests/unit/test_aggregator.py",
       "target": "src/consensus_engine/services/aggregator.py"
+    },
+    {
+      "source": "tests/unit/test_aggregator.py",
+      "target": "src/consensus_engine/config/personas.py"
     },
     {
       "source": "tests/unit/test_config.py",

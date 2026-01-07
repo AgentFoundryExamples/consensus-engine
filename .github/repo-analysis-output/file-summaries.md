@@ -254,8 +254,8 @@ Total files: 50
 **Role:** test  
 **Role Justification:** located in 'tests' directory  
 **Summary:** Python test implementation (role: test)  
-**Size:** 5.88 KB  
-**LOC:** 135  
+**Size:** 17.90 KB  
+**LOC:** 449  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/__init__.py
@@ -308,8 +308,8 @@ Total files: 50
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 15.46 KB  
-**LOC:** 331  
+**Size:** 35.36 KB  
+**LOC:** 773  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_multi_persona.py
@@ -353,8 +353,8 @@ Total files: 50
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 14.05 KB  
-**LOC:** 236  
+**Size:** 22.39 KB  
+**LOC:** 374  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_config.py
@@ -407,8 +407,8 @@ Total files: 50
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 14.90 KB  
-**LOC:** 316  
+**Size:** 20.19 KB  
+**LOC:** 393  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_proposal_schemas.py
