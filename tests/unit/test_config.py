@@ -13,6 +13,11 @@ from consensus_engine.config import Environment, Settings, get_settings
 @pytest.fixture
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Clean environment variables before each test."""
+    # Reset singleton before cleaning environment
+    import consensus_engine.config.settings as settings_module
+
+    settings_module._settings = None
+
     env_vars = [
         "OPENAI_API_KEY",
         "OPENAI_MODEL",

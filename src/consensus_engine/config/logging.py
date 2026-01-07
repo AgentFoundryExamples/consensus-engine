@@ -6,9 +6,8 @@ based on the application environment.
 
 import logging
 import sys
-from typing import Any
 
-from consensus_engine.config import Settings
+from consensus_engine.config.settings import Settings
 
 
 def setup_logging(settings: Settings) -> None:
