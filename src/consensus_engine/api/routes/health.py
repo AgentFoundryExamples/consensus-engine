@@ -19,7 +19,7 @@ status, configuration metadata, and uptime without exposing secrets.
 
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
@@ -28,9 +28,6 @@ from consensus_engine.schemas.requests import HealthResponse
 logger = get_logger(__name__)
 
 router = APIRouter(tags=["health"])
-
-# Track application start time
-_start_time = time.time()
 
 
 @router.get(
@@ -61,20 +58,24 @@ _start_time = time.time()
         }
     },
 )
-async def health_check(settings: Settings = Depends(get_settings)) -> HealthResponse:
+async def health_check(
+    request: Request, settings: Settings = Depends(get_settings)
+) -> HealthResponse:
     """Health check endpoint with configuration metadata.
 
     Performs sanity checks on configuration and reports service status.
     Degrades gracefully if OpenAI configuration has issues.
 
     Args:
+        request: The incoming request (to access app state)
         settings: Application settings injected via dependency
 
     Returns:
         HealthResponse with status, config metadata, and uptime
     """
-    # Calculate uptime
-    uptime_seconds = time.time() - _start_time
+    # Calculate uptime from app state
+    start_time = getattr(request.app.state, "start_time", time.time())
+    uptime_seconds = time.time() - start_time
 
     # Perform configuration sanity checks
     config_status = "ok"

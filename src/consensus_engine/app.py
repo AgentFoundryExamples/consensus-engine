@@ -19,10 +19,10 @@ dependency injection, middleware, and routes.
 
 import time
 import uuid
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -30,7 +30,12 @@ from pydantic import ValidationError
 from consensus_engine.api.routes import expand, health
 from consensus_engine.config import get_settings
 from consensus_engine.config.logging import get_logger, setup_logging
-from consensus_engine.exceptions import ConsensusEngineError
+from consensus_engine.exceptions import (
+    ConsensusEngineError,
+    LLMAuthenticationError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+)
 
 logger = get_logger(__name__)
 
@@ -48,6 +53,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     settings = get_settings()
     setup_logging(settings)
+    app.state.start_time = time.time()
     logger.info("Starting Consensus Engine API")
     logger.info(f"Environment: {settings.env.value}")
     logger.info(f"Debug mode: {settings.debug}")
@@ -74,7 +80,9 @@ def create_app() -> FastAPI:
 
     # Register middleware
     @app.middleware("http")
-    async def logging_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+    async def logging_middleware(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """Middleware to log requests with request IDs.
 
         Adds a unique request_id to each request and logs request/response
@@ -228,9 +236,16 @@ def create_app() -> FastAPI:
         request_id = getattr(request.state, "request_id", "unknown")
 
         # Determine status code based on error type
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        if isinstance(exc, LLMAuthenticationError):
+            status_code = status.HTTP_401_UNAUTHORIZED
+        elif isinstance(exc, LLMRateLimitError | LLMTimeoutError):
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        else:
+            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-        logger.error(
+        # Use appropriate log level based on status code
+        log_level = "warning" if status_code < 500 else "error"
+        getattr(logger, log_level)(
             "Domain exception",
             extra={
                 "request_id": request_id,

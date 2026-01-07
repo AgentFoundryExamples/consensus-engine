@@ -13,6 +13,7 @@
 # limitations under the License.
 """Integration tests for expand-idea endpoint."""
 
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -38,14 +39,15 @@ def valid_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def client(valid_test_env: None) -> TestClient:
+def client(valid_test_env: None) -> Generator[TestClient, None, None]:
     """Create test client with valid environment."""
     from consensus_engine.config import get_settings
 
     get_settings.cache_clear()
 
     app = create_app()
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 class TestExpandIdeaEndpoint:
