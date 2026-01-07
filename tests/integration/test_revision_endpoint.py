@@ -13,16 +13,20 @@
 # limitations under the License.
 """Integration tests for revision endpoint."""
 
+import os
+import uuid
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from consensus_engine.app import create_app
+from consensus_engine.db import Base
 from consensus_engine.db.dependencies import get_db_session
-from consensus_engine.db.models import Run, RunStatus, RunType
+from consensus_engine.db.models import RunStatus, RunType
 from consensus_engine.db.repositories import (
     DecisionRepository,
     PersonaReviewRepository,
@@ -31,8 +35,6 @@ from consensus_engine.db.repositories import (
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.review import (
-    BlockingIssue,
-    Concern,
     DecisionAggregation,
     DecisionEnum,
     DetailedScoreBreakdown,
@@ -40,32 +42,85 @@ from consensus_engine.schemas.review import (
 )
 
 
+def is_database_available() -> bool:
+    """Check if a test database is available."""
+    try:
+        from sqlalchemy import text
+
+        test_url = os.getenv(
+            "TEST_DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
+        )
+        engine = create_engine(test_url, pool_pre_ping=True)
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        engine.dispose()
+        return True
+    except Exception:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not is_database_available(), reason="Database not available for integration tests"
+)
+
+
+@pytest.fixture(scope="module")
+def test_engine():  # type: ignore
+    """Create a test database engine."""
+    test_url = os.getenv(
+        "TEST_DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
+    )
+    engine = create_engine(test_url, pool_pre_ping=True, echo=False)
+    yield engine
+    engine.dispose()
+
+
 @pytest.fixture
-def valid_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Set up valid test environment."""
+def clean_database(test_engine):  # type: ignore
+    """Clean database before each test."""
+    Base.metadata.drop_all(test_engine)
+    Base.metadata.create_all(test_engine)
+    yield
+    Base.metadata.drop_all(test_engine)
+
+
+@pytest.fixture
+def test_session_factory(test_engine):  # type: ignore
+    """Create a session factory for tests."""
+    return sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+
+@pytest.fixture
+def client(test_session_factory, clean_database, monkeypatch: pytest.MonkeyPatch):  # type: ignore
+    """Create a test client with database override."""
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-for-revision-endpoint")
     monkeypatch.setenv("OPENAI_MODEL", "gpt-5.1")
     monkeypatch.setenv("TEMPERATURE", "0.7")
     monkeypatch.setenv("ENV", "testing")
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-
-
-@pytest.fixture
-def client(valid_test_env: None) -> Generator[TestClient, None, None]:
-    """Create test client with valid environment."""
-    from consensus_engine.config import get_settings
-
-    get_settings.cache_clear()
 
     app = create_app()
+
+    def override_get_db_session() -> Generator[Session, None, None]:
+        session = test_session_factory()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
     with TestClient(app) as test_client:
         yield test_client
 
 
 @pytest.fixture
-def db_session(client: TestClient) -> Session:
-    """Get database session from client."""
-    return next(get_db_session())
+def db_session(test_session_factory) -> Session:  # type: ignore
+    """Get database session for direct use in tests."""
+    session = test_session_factory()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 def create_sample_completed_run(db_session: Session) -> str:
