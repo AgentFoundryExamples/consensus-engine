@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 58,
+  "total_files": 60,
   "files": [
     {
       "schema_version": "2.0",
@@ -137,8 +137,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 19220,
-        "loc": 436,
+        "size_bytes": 14418,
+        "loc": 297,
         "todo_count": 0
       }
     },
@@ -179,8 +179,8 @@
       "summary": "Python main entry point (role: entry-point)",
       "summary_text": "Python main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 9849,
-        "loc": 241,
+        "size_bytes": 10742,
+        "loc": 255,
         "todo_count": 0
       }
     },
@@ -207,8 +207,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 10956,
-        "loc": 224,
+        "size_bytes": 15821,
+        "loc": 307,
         "todo_count": 0
       }
     },
@@ -263,8 +263,8 @@
       "summary": "Python configuration file (role: configuration)",
       "summary_text": "Python configuration file (role: configuration)",
       "metrics": {
-        "size_bytes": 10618,
-        "loc": 257,
+        "size_bytes": 11389,
+        "loc": 280,
         "todo_count": 0
       }
     },
@@ -284,6 +284,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "src/consensus_engine/db/dependencies.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 2732,
+        "loc": 60,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "src/consensus_engine/db/models.py",
       "language": "Python",
       "role": "model",
@@ -293,6 +307,20 @@
       "metrics": {
         "size_bytes": 12009,
         "loc": 238,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/db/repositories.py",
+      "language": "Python",
+      "role": "data-access",
+      "role_justification": "data access name 'repositories'",
+      "summary": "Python data access layer (role: data-access)",
+      "summary_text": "Python data access layer (role: data-access)",
+      "metrics": {
+        "size_bytes": 12261,
+        "loc": 289,
         "todo_count": 0
       }
     },

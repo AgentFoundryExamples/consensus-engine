@@ -134,7 +134,9 @@
           "fastapi.Depends",
           "fastapi.Request",
           "fastapi.responses.JSONResponse",
-          "fastapi.status"
+          "fastapi.status",
+          "sqlalchemy.exc.SQLAlchemyError",
+          "sqlalchemy.orm.Session"
         ]
       }
     },
@@ -307,6 +309,21 @@
       }
     },
     {
+      "id": "src/consensus_engine/db/dependencies.py",
+      "path": "src/consensus_engine/db/dependencies.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator"
+        ],
+        "third-party": [
+          "sqlalchemy.engine.Engine",
+          "sqlalchemy.orm.Session",
+          "sqlalchemy.orm.sessionmaker"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/db/models.py",
       "path": "src/consensus_engine/db/models.py",
       "type": "file",
@@ -335,6 +352,25 @@
           "sqlalchemy.orm.Mapped",
           "sqlalchemy.orm.mapped_column",
           "sqlalchemy.orm.relationship"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/db/repositories.py",
+      "path": "src/consensus_engine/db/repositories.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "json",
+          "typing.Any",
+          "uuid"
+        ],
+        "third-party": [
+          "sqlalchemy.exc.IntegrityError",
+          "sqlalchemy.exc.SQLAlchemyError",
+          "sqlalchemy.orm.Session"
         ]
       }
     },
@@ -905,6 +941,18 @@
     },
     {
       "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
       "target": "src/consensus_engine/exceptions.py"
     },
     {
@@ -993,6 +1041,14 @@
     },
     {
       "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/exceptions.py"
     },
     {
@@ -1030,6 +1086,22 @@
     {
       "source": "src/consensus_engine/db/models.py",
       "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/db/repositories.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/db/repositories.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "src/consensus_engine/db/repositories.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/db/repositories.py",
+      "target": "src/consensus_engine/schemas/review.py"
     },
     {
       "source": "src/consensus_engine/schemas/__init__.py",
@@ -1519,6 +1591,7 @@
       "sqlalchemy.exc.DBAPIError",
       "sqlalchemy.exc.IntegrityError",
       "sqlalchemy.exc.OperationalError",
+      "sqlalchemy.exc.SQLAlchemyError",
       "sqlalchemy.orm.Mapped",
       "sqlalchemy.orm.Session",
       "sqlalchemy.orm.declarative_base",
@@ -1530,6 +1603,6 @@
       "sqlalchemy.text"
     ],
     "stdlib_count": 30,
-    "third-party_count": 62
+    "third-party_count": 63
   }
 }

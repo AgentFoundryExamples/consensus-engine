@@ -33,6 +33,7 @@
         ├── __init__.py
         ├── expand.py
         ├── full_review.py
+        ├── full_review.py.backup
         ├── health.py
         └── review.py
       ├── __init__.py
@@ -47,7 +48,9 @@
       └── settings.py
     ├── db
       ├── __init__.py
-      └── models.py
+      ├── dependencies.py
+      ├── models.py
+      └── repositories.py
     ├── schemas
       ├── __init__.py
       ├── proposal.py
@@ -97,6 +100,7 @@
 ├── alembic.ini
 ├── docker-compose.yml
 ├── IMPLEMENTATION_SUMMARY.md
+├── IMPLEMENTATION_SUMMARY_full_review_persistence.md
 ├── LICENSE
 ├── LLMs.md
 ├── pyproject.toml

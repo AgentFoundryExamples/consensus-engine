@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 58
+Total files: 60
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -92,8 +92,8 @@ Total files: 58
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 18.77 KB  
-**LOC:** 436  
+**Size:** 14.08 KB  
+**LOC:** 297  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/health.py
@@ -119,8 +119,8 @@ Total files: 58
 **Role:** entry-point  
 **Role Justification:** common entry point name 'app'  
 **Summary:** Python main entry point (role: entry-point)  
-**Size:** 9.62 KB  
-**LOC:** 241  
+**Size:** 10.49 KB  
+**LOC:** 255  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/__init__.py
@@ -137,8 +137,8 @@ Total files: 58
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 10.70 KB  
-**LOC:** 224  
+**Size:** 15.45 KB  
+**LOC:** 307  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/config/__init__.py
@@ -173,8 +173,8 @@ Total files: 58
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 10.37 KB  
-**LOC:** 257  
+**Size:** 11.12 KB  
+**LOC:** 280  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -186,6 +186,15 @@ Total files: 58
 **LOC:** 217  
 **TODOs/FIXMEs:** 0  
 
+## src/consensus_engine/db/dependencies.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 2.67 KB  
+**LOC:** 60  
+**TODOs/FIXMEs:** 0  
+
 ## src/consensus_engine/db/models.py
 **Language:** Python  
 **Role:** model  
@@ -193,6 +202,15 @@ Total files: 58
 **Summary:** Python data models (role: model)  
 **Size:** 11.73 KB  
 **LOC:** 238  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/db/repositories.py
+**Language:** Python  
+**Role:** data-access  
+**Role Justification:** data access name 'repositories'  
+**Summary:** Python data access layer (role: data-access)  
+**Size:** 11.97 KB  
+**LOC:** 289  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py

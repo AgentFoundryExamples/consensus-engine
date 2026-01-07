@@ -8,10 +8,10 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 58
-- **Intra-repo dependencies**: 150
+- **Total files**: 60
+- **Intra-repo dependencies**: 159
 - **External stdlib dependencies**: 30
-- **External third-party dependencies**: 62
+- **External third-party dependencies**: 63
 
 ## External Dependencies
 
@@ -43,7 +43,7 @@ Total: 30 unique modules
 
 ### Third-Party Packages
 
-Total: 62 unique packages
+Total: 63 unique packages
 
 - `alembic.command`
 - `alembic.config.Config`
@@ -65,26 +65,26 @@ Total: 62 unique packages
 - `openai.APIConnectionError`
 - `openai.APITimeoutError`
 - `openai.AuthenticationError`
-- ... and 42 more (see JSON for full list)
+- ... and 43 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 
-- `src/consensus_engine/schemas/proposal.py` (21 dependents)
-- `src/consensus_engine/schemas/review.py` (18 dependents)
+- `src/consensus_engine/schemas/proposal.py` (22 dependents)
+- `src/consensus_engine/schemas/review.py` (19 dependents)
 - `src/consensus_engine/exceptions.py` (16 dependents)
 - `src/consensus_engine/config/settings.py` (15 dependents)
 - `src/consensus_engine/config/__init__.py` (13 dependents)
-- `src/consensus_engine/config/logging.py` (10 dependents)
+- `src/consensus_engine/config/logging.py` (11 dependents)
 - `src/consensus_engine/schemas/requests.py` (6 dependents)
 - `src/consensus_engine/config/personas.py` (6 dependents)
+- `src/consensus_engine/db/__init__.py` (5 dependents)
 - `src/consensus_engine/services/review.py` (5 dependents)
-- `src/consensus_engine/clients/openai_client.py` (5 dependents)
 
 ## Files with Most Dependencies (Intra-Repo)
 
-- `src/consensus_engine/api/routes/full_review.py` (8 dependencies)
+- `src/consensus_engine/api/routes/full_review.py` (11 dependencies)
+- `src/consensus_engine/app.py` (9 dependencies)
 - `src/consensus_engine/api/routes/review.py` (7 dependencies)
-- `src/consensus_engine/app.py` (7 dependencies)
 - `src/consensus_engine/services/orchestrator.py` (6 dependencies)
 - `tests/integration/test_acceptance_criteria.py` (6 dependencies)
 - `tests/integration/test_full_review_endpoint.py` (6 dependencies)
