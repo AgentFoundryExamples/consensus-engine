@@ -143,7 +143,7 @@ def valid_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
     This fixture configures environment variables and clears caches
     to ensure a clean test environment for integration tests.
     """
-    from consensus_engine.config import get_settings
+    from consensus_engine.config.settings import get_settings
 
     get_settings.cache_clear()
 
@@ -164,7 +164,7 @@ def test_client(valid_test_env: None) -> Generator[TestClient, None, None]:
         TestClient instance for making test requests
     """
     from consensus_engine.app import create_app
-    from consensus_engine.config import get_settings
+    from consensus_engine.config.settings import get_settings
 
     get_settings.cache_clear()
 
@@ -180,7 +180,7 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     This fixture removes all application environment variables
     and clears the settings cache to ensure test isolation.
     """
-    from consensus_engine.config import get_settings
+    from consensus_engine.config.settings import get_settings
 
     get_settings.cache_clear()
 

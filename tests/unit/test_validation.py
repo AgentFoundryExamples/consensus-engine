@@ -29,12 +29,12 @@ class TestSentenceCountingEdgeCases:
 
     def test_count_sentences_with_abbreviations(self) -> None:
         """Test sentence counting with common abbreviations."""
-        # Abbreviations with periods should not be counted as separate sentences
+        # Abbreviations with periods are counted as separate sentences
+        # due to simple period splitting - this is a known limitation
         text = "Dr. Smith works at U.S. headquarters. This is the second sentence."
-        # This will count as 3 sentences due to simple period splitting
-        # This is a known limitation of the simple regex approach
         count = count_sentences(text)
-        assert count >= 2  # At least 2 sentences
+        # The regex splits on periods, so "Dr." "U.S." and the two actual sentences = 4
+        assert count == 4
 
     def test_count_sentences_with_multiple_spaces(self) -> None:
         """Test sentence counting with multiple spaces between sentences."""
@@ -59,9 +59,9 @@ class TestSentenceCountingEdgeCases:
     def test_count_sentences_ellipsis(self) -> None:
         """Test sentence counting with ellipsis."""
         text = "This is incomplete... But this is complete."
-        # Ellipsis may be counted differently
+        # Ellipsis is treated as sentence ending punctuation
         count = count_sentences(text)
-        assert count >= 1
+        assert count == 2
 
     def test_count_sentences_no_ending_punctuation(self) -> None:
         """Test sentence counting with no ending punctuation."""
@@ -72,8 +72,8 @@ class TestSentenceCountingEdgeCases:
         """Test sentence counting with only punctuation."""
         text = "...!!!"
         count = count_sentences(text)
-        # Should not count as multiple sentences
-        assert count >= 0
+        # A string with only punctuation should not count as a sentence
+        assert count == 0
 
 
 class TestExpandIdeaRequestEdgeCases:
@@ -90,8 +90,10 @@ class TestExpandIdeaRequestEdgeCases:
     def test_accept_idea_with_leading_trailing_whitespace(self) -> None:
         """Test that ideas with leading/trailing whitespace are accepted."""
         request = ExpandIdeaRequest(idea="  Build a REST API.  ")
-        # Pydantic may strip whitespace
-        assert "Build a REST API" in request.idea
+        # Pydantic does not strip whitespace from string fields
+        assert request.idea == "  Build a REST API.  "
+        # The sentence counting validator operates on the stripped version
+        # so whitespace doesn't affect validation
 
     def test_reject_idea_with_11_sentences(self) -> None:
         """Test rejection of idea with exactly 11 sentences (boundary)."""
@@ -225,10 +227,6 @@ class TestConfigDefaultBehavior:
             idea="Build an API.", extra_context={"key": "value", "count": 42}
         )
         json_str = original.model_dump_json()
-        # Verify it's valid JSON
-        import json
-
-        parsed = json.loads(json_str)
-        assert parsed["idea"] == "Build an API."
-        assert parsed["extra_context"]["key"] == "value"
-        assert parsed["extra_context"]["count"] == 42
+        # Perform a full round-trip validation
+        rehydrated = ExpandIdeaRequest.model_validate_json(json_str)
+        assert rehydrated == original

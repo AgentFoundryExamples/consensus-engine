@@ -133,11 +133,18 @@ class TestExpandIdeaServiceIntegration:
         success_log_call = log_calls[-1]  # Last call should be success log
         assert "extra" in success_log_call.kwargs
         log_extra = success_log_call.kwargs["extra"]
+
+        # Explicitly verify each expected metadata field is present
         assert "request_id" in log_extra
+        assert log_extra["request_id"] == "test-log-123"
         assert "model" in log_extra
+        assert log_extra["model"] == "gpt-5.1"
         assert "temperature" in log_extra
+        assert log_extra["temperature"] == 0.7
         assert "elapsed_time" in log_extra
+        assert log_extra["elapsed_time"] == 1.5
         assert "status" in log_extra
+        assert log_extra["status"] == "success"
 
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_expand_idea_with_minimal_response(
