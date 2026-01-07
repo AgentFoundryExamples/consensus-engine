@@ -45,7 +45,7 @@ def upgrade() -> None:
             'overall_weighted_confidence >= 0.0 AND overall_weighted_confidence <= 1.0',
             name='ck_runs_confidence_range'
         ),
-        sa.ForeignKeyConstraint(['parent_run_id'], ['runs.id'], ),
+        sa.ForeignKeyConstraint(['parent_run_id'], ['runs.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_runs_created_at', 'runs', ['created_at'], unique=False)
@@ -63,7 +63,7 @@ def upgrade() -> None:
         sa.Column('proposal_diff_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column('persona_template_version', sa.Text(), nullable=False),
         sa.Column('edit_notes', sa.Text(), nullable=True),
-        sa.ForeignKeyConstraint(['run_id'], ['runs.id'], ),
+        sa.ForeignKeyConstraint(['run_id'], ['runs.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('run_id')
     )
@@ -87,7 +87,7 @@ def upgrade() -> None:
             'confidence_score >= 0.0 AND confidence_score <= 1.0',
             name='ck_persona_reviews_confidence_range'
         ),
-        sa.ForeignKeyConstraint(['run_id'], ['runs.id'], ),
+        sa.ForeignKeyConstraint(['run_id'], ['runs.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('run_id', 'persona_id', name='uq_persona_reviews_run_persona')
     )
@@ -105,7 +105,7 @@ def upgrade() -> None:
             'overall_weighted_confidence >= 0.0 AND overall_weighted_confidence <= 1.0',
             name='ck_decisions_confidence_range'
         ),
-        sa.ForeignKeyConstraint(['run_id'], ['runs.id'], ),
+        sa.ForeignKeyConstraint(['run_id'], ['runs.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('run_id')
     )

@@ -90,7 +90,7 @@ class Run(Base):
         Enum(RunType, native_enum=False, length=20), nullable=False
     )
     parent_run_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("runs.id"), nullable=True
+        UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"), nullable=True
     )
     model: Mapped[str] = mapped_column(Text, nullable=False)
     temperature: Mapped[float] = mapped_column(Numeric(precision=3, scale=2), nullable=False)
@@ -159,7 +159,7 @@ class ProposalVersion(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("runs.id"), unique=True, nullable=False
+        UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"), unique=True, nullable=False
     )
     expanded_proposal_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     proposal_diff_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
@@ -202,7 +202,7 @@ class PersonaReview(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("runs.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"), nullable=False
     )
     persona_id: Mapped[str] = mapped_column(String(100), nullable=False)
     persona_name: Mapped[str] = mapped_column(Text, nullable=False)
@@ -257,7 +257,7 @@ class Decision(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("runs.id"), unique=True, nullable=False
+        UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"), unique=True, nullable=False
     )
     decision_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     overall_weighted_confidence: Mapped[float] = mapped_column(
