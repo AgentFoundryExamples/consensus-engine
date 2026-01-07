@@ -71,6 +71,10 @@ class TestExpandedProposal:
             proposed_solution="Build a RESTful API",
             assumptions=["Users know REST", "Python 3.11+"],
             scope_non_goals=["Mobile apps", "Desktop clients"],
+            title="API Proposal",
+            summary="Build better APIs",
+            raw_idea="Original idea text",
+            metadata={"key": "value"},
             raw_expanded_proposal="Full detailed proposal text here",
         )
 
@@ -80,6 +84,10 @@ class TestExpandedProposal:
         assert "Users know REST" in proposal.assumptions
         assert len(proposal.scope_non_goals) == 2
         assert "Mobile apps" in proposal.scope_non_goals
+        assert proposal.title == "API Proposal"
+        assert proposal.summary == "Build better APIs"
+        assert proposal.raw_idea == "Original idea text"
+        assert proposal.metadata == {"key": "value"}
         assert proposal.raw_expanded_proposal == "Full detailed proposal text here"
 
     def test_expanded_proposal_minimal(self) -> None:
@@ -87,13 +95,19 @@ class TestExpandedProposal:
         proposal = ExpandedProposal(
             problem_statement="We need better APIs",
             proposed_solution="Build a RESTful API",
+            assumptions=[],
+            scope_non_goals=[],
         )
 
         assert proposal.problem_statement == "We need better APIs"
         assert proposal.proposed_solution == "Build a RESTful API"
         assert proposal.assumptions == []
         assert proposal.scope_non_goals == []
-        assert proposal.raw_expanded_proposal == ""
+        assert proposal.title is None
+        assert proposal.summary is None
+        assert proposal.raw_idea is None
+        assert proposal.metadata is None
+        assert proposal.raw_expanded_proposal is None
 
     def test_expanded_proposal_missing_required_fields(self) -> None:
         """Test ExpandedProposal rejects missing required fields."""
@@ -101,12 +115,14 @@ class TestExpandedProposal:
             ExpandedProposal()  # type: ignore
 
         errors = exc_info.value.errors()
-        # Should have errors for both required fields
+        # Should have errors for all required fields
         assert any(e["loc"] == ("problem_statement",) for e in errors)
         assert any(e["loc"] == ("proposed_solution",) for e in errors)
+        assert any(e["loc"] == ("assumptions",) for e in errors)
+        assert any(e["loc"] == ("scope_non_goals",) for e in errors)
 
     def test_expanded_proposal_empty_lists_accepted(self) -> None:
-        """Test ExpandedProposal accepts empty lists for optional fields."""
+        """Test ExpandedProposal accepts empty lists for required list fields."""
         proposal = ExpandedProposal(
             problem_statement="Problem",
             proposed_solution="Solution",
@@ -151,3 +167,63 @@ class TestExpandedProposal:
         assert data["assumptions"] == ["Assumption 1"]
         assert data["scope_non_goals"] == ["Non-goal 1"]
         assert data["raw_expanded_proposal"] == "Notes"
+
+    def test_expanded_proposal_trims_whitespace(self) -> None:
+        """Test ExpandedProposal trims whitespace from required string fields."""
+        proposal = ExpandedProposal(
+            problem_statement="  We need better APIs  ",
+            proposed_solution="  Build a RESTful API  ",
+            assumptions=["  Users know REST  ", "  Python 3.11+  "],
+            scope_non_goals=["  Mobile apps  "],
+        )
+
+        assert proposal.problem_statement == "We need better APIs"
+        assert proposal.proposed_solution == "Build a RESTful API"
+        assert proposal.assumptions == ["Users know REST", "Python 3.11+"]
+        assert proposal.scope_non_goals == ["Mobile apps"]
+
+    def test_expanded_proposal_rejects_empty_strings(self) -> None:
+        """Test ExpandedProposal rejects empty strings after trimming."""
+        with pytest.raises(ValidationError) as exc_info:
+            ExpandedProposal(
+                problem_statement="  ",
+                proposed_solution="Solution",
+                assumptions=[],
+                scope_non_goals=[],
+            )
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("problem_statement",) for e in errors)
+        assert any("empty or whitespace-only" in str(e) for e in errors)
+
+    def test_expanded_proposal_rejects_empty_list_items(self) -> None:
+        """Test ExpandedProposal rejects empty strings in lists."""
+        with pytest.raises(ValidationError) as exc_info:
+            ExpandedProposal(
+                problem_statement="Problem",
+                proposed_solution="Solution",
+                assumptions=["Valid", "  ", "Another"],
+                scope_non_goals=[],
+            )
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("assumptions",) for e in errors)
+        assert any("whitespace-only" in str(e) for e in errors)
+
+    def test_expanded_proposal_optional_fields_trim_to_none(self) -> None:
+        """Test optional string fields that are whitespace-only become None."""
+        proposal = ExpandedProposal(
+            problem_statement="Problem",
+            proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
+            title="  ",
+            summary="   ",
+            raw_idea="  ",
+            raw_expanded_proposal="   ",
+        )
+
+        assert proposal.title is None
+        assert proposal.summary is None
+        assert proposal.raw_idea is None
+        assert proposal.raw_expanded_proposal is None

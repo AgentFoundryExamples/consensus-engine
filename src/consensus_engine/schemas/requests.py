@@ -103,7 +103,10 @@ class ExpandIdeaResponse(BaseModel):
         proposed_solution: Detailed solution approach
         assumptions: List of underlying assumptions
         scope_non_goals: List of what is out of scope
-        raw_expanded_proposal: Complete proposal text
+        title: Optional short title for the proposal
+        summary: Optional brief summary of the proposal
+        raw_idea: Optional original idea text before expansion
+        raw_expanded_proposal: Optional complete proposal text
         metadata: Request metadata (request_id, model, timing, etc.)
     """
 
@@ -114,14 +117,19 @@ class ExpandIdeaResponse(BaseModel):
         ..., description="Detailed description of the proposed solution approach"
     )
     assumptions: list[str] = Field(
-        default_factory=list, description="List of underlying assumptions made in the proposal"
+        ..., description="List of underlying assumptions made in the proposal"
     )
     scope_non_goals: list[str] = Field(
-        default_factory=list,
+        ...,
         description="List of what is explicitly out of scope or non-goals",
     )
-    raw_expanded_proposal: str = Field(
-        default="", description="Complete expanded proposal text or additional notes"
+    title: str | None = Field(default=None, description="Optional short title for the proposal")
+    summary: str | None = Field(default=None, description="Optional brief summary of the proposal")
+    raw_idea: str | None = Field(
+        default=None, description="Optional original idea text before expansion"
+    )
+    raw_expanded_proposal: str | None = Field(
+        default=None, description="Optional complete expanded proposal text or additional notes"
     )
     metadata: dict[str, Any] = Field(
         ...,

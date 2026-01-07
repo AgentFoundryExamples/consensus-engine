@@ -100,6 +100,8 @@ class TestExpandIdeaEndpoint:
         mock_proposal = ExpandedProposal(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-request-456"}
 
@@ -125,6 +127,8 @@ class TestExpandIdeaEndpoint:
         mock_proposal = ExpandedProposal(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-request-789"}
 

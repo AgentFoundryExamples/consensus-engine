@@ -99,6 +99,8 @@ class TestExpandIdeaServiceIntegration:
         mock_proposal = ExpandedProposal(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {
             "request_id": "test-log-123",
@@ -155,7 +157,8 @@ class TestExpandIdeaServiceIntegration:
         mock_proposal = ExpandedProposal(
             problem_statement="Minimal problem",
             proposed_solution="Minimal solution",
-            # assumptions, scope_non_goals, raw_expanded_proposal use defaults
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-minimal-456"}
 
@@ -172,7 +175,7 @@ class TestExpandIdeaServiceIntegration:
         assert result.proposed_solution == "Minimal solution"
         assert result.assumptions == []
         assert result.scope_non_goals == []
-        assert result.raw_expanded_proposal == ""
+        assert result.raw_expanded_proposal is None
 
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_expand_idea_propagates_authentication_error(
@@ -283,6 +286,8 @@ class TestExpandIdeaServiceIntegration:
         mock_proposal = ExpandedProposal(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-prompt-789"}
 
@@ -323,6 +328,8 @@ class TestExpandIdeaServiceIntegration:
         mock_proposal = ExpandedProposal(
             problem_statement="Problem",
             proposed_solution="Solution",
+            assumptions=[],
+            scope_non_goals=[],
         )
         mock_metadata = {"request_id": "test-prompt-no-ctx"}
 

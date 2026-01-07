@@ -14,5 +14,22 @@
 """Pydantic schemas for request/response models."""
 
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
+from consensus_engine.schemas.review import (
+    Concern,
+    DecisionAggregation,
+    DecisionEnum,
+    MinorityReport,
+    PersonaReview,
+    PersonaScoreBreakdown,
+)
 
-__all__ = ["ExpandedProposal", "IdeaInput"]
+__all__ = [
+    "ExpandedProposal",
+    "IdeaInput",
+    "Concern",
+    "PersonaReview",
+    "DecisionAggregation",
+    "DecisionEnum",
+    "MinorityReport",
+    "PersonaScoreBreakdown",
+]
