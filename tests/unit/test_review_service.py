@@ -20,7 +20,7 @@ import pytest
 from consensus_engine.config.settings import Settings
 from consensus_engine.exceptions import LLMServiceError, SchemaValidationError
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import Concern, PersonaReview
+from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 from consensus_engine.services.review import review_proposal
 
 
@@ -62,6 +62,7 @@ class TestReviewProposal:
         # Setup mock response
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.8,
             strengths=["Clear problem statement", "Good architecture choice"],
             concerns=[
@@ -69,7 +70,7 @@ class TestReviewProposal:
                 Concern(text="No security considerations", is_blocking=True),
             ],
             recommendations=["Add authentication", "Implement rate limiting"],
-            blocking_issues=["No security design"],
+            blocking_issues=[BlockingIssue(text="No security design")],
             estimated_effort="2-3 weeks",
             dependency_risks=["External API availability"],
         )
@@ -123,11 +124,12 @@ class TestReviewProposal:
         """Test proposal review with custom persona."""
         mock_review = PersonaReview(
             persona_name="SecurityExpert",
+            persona_id="security_expert",
             confidence_score=0.6,
             strengths=["Good use of HTTPS"],
             concerns=[Concern(text="No input validation", is_blocking=True)],
             recommendations=["Add security audit"],
-            blocking_issues=["Missing security review"],
+            blocking_issues=[BlockingIssue(text="Missing security review")],
             estimated_effort="1 week",
             dependency_risks=[],
         )
@@ -162,6 +164,7 @@ class TestReviewProposal:
         """Test that review uses settings defaults when persona not provided."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],
@@ -194,6 +197,7 @@ class TestReviewProposal:
         """Test that system instruction is provided."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],
@@ -228,6 +232,7 @@ class TestReviewProposal:
         """Test that developer instruction is provided."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],
@@ -262,6 +267,7 @@ class TestReviewProposal:
         """Test that review uses review-specific model and temperature."""
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],
@@ -305,6 +311,7 @@ class TestReviewProposal:
 
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],
@@ -388,6 +395,7 @@ class TestReviewProposal:
 
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="generic_reviewer",
             confidence_score=0.7,
             strengths=["Good"],
             concerns=[],

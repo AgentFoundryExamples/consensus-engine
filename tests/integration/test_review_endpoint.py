@@ -27,7 +27,7 @@ from consensus_engine.exceptions import (
     SchemaValidationError,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import Concern, PersonaReview
+from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
 
 
 @pytest.fixture
@@ -88,6 +88,7 @@ class TestReviewIdeaEndpoint:
         # Setup review mock
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.85,
             strengths=["Good architecture", "Clear scope"],
             concerns=[
@@ -190,13 +191,14 @@ class TestReviewIdeaEndpoint:
         # Setup review mock with blocking issues
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.75,  # High confidence but has blocking issues
             strengths=["Good architecture"],
             concerns=[
                 Concern(text="Missing security audit", is_blocking=True),
             ],
             recommendations=["Add security audit"],
-            blocking_issues=["Missing security audit"],
+            blocking_issues=[BlockingIssue(text="Missing security audit")],
             estimated_effort="4 weeks",
             dependency_risks=[],
         )
@@ -261,6 +263,7 @@ class TestReviewIdeaEndpoint:
         # Setup review mock with low confidence
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.5,  # Low confidence, no blocking issues
             strengths=["Clear problem statement"],
             concerns=[
@@ -460,6 +463,7 @@ class TestReviewIdeaEndpoint:
 
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.8,
             strengths=["Good"],
             concerns=[],
@@ -580,6 +584,7 @@ class TestReviewIdeaEndpoint:
 
         mock_review = PersonaReview(
             persona_name="GenericReviewer",
+            persona_id="genericreviewer",
             confidence_score=0.8,
             strengths=["Good"],
             concerns=[],
