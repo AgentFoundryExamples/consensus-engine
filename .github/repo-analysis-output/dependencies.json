@@ -1,10 +1,198 @@
 {
-  "nodes": [],
-  "edges": [],
+  "nodes": [
+    {
+      "id": "src/consensus_engine/__init__.py",
+      "path": "src/consensus_engine/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/api/__init__.py",
+      "path": "src/consensus_engine/api/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/app.py",
+      "path": "src/consensus_engine/app.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.AsyncGenerator",
+          "contextlib.asynccontextmanager"
+        ],
+        "third-party": [
+          "fastapi.Depends",
+          "fastapi.FastAPI"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/config/__init__.py",
+      "path": "src/consensus_engine/config/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/config/logging.py",
+      "path": "src/consensus_engine/config/logging.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "logging",
+          "sys"
+        ],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/config/settings.py",
+      "path": "src/consensus_engine/config/settings.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "enum.Enum",
+          "functools.lru_cache"
+        ],
+        "third-party": [
+          "pydantic.Field",
+          "pydantic.field_validator",
+          "pydantic_settings.BaseSettings",
+          "pydantic_settings.SettingsConfigDict"
+        ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/schemas/__init__.py",
+      "path": "src/consensus_engine/schemas/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/services/__init__.py",
+      "path": "src/consensus_engine/services/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "tests/__init__.py",
+      "path": "tests/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "tests/integration/__init__.py",
+      "path": "tests/integration/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "tests/integration/test_app.py",
+      "path": "tests/integration/test_app.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/unit/__init__.py",
+      "path": "tests/unit/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "tests/unit/test_config.py",
+      "path": "tests/unit/test_config.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/config/__init__.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
+      "source": "src/consensus_engine/config/logging.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
+      "source": "tests/integration/test_app.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_app.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "tests/unit/test_config.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    }
+  ],
   "external_dependencies_summary": {
-    "stdlib": [],
-    "third-party": [],
-    "stdlib_count": 0,
-    "third-party_count": 0
+    "stdlib": [
+      "collections.abc.AsyncGenerator",
+      "contextlib.asynccontextmanager",
+      "enum.Enum",
+      "functools.lru_cache",
+      "logging",
+      "sys"
+    ],
+    "third-party": [
+      "fastapi.Depends",
+      "fastapi.FastAPI",
+      "fastapi.testclient.TestClient",
+      "pydantic.Field",
+      "pydantic.ValidationError",
+      "pydantic.field_validator",
+      "pydantic_settings.BaseSettings",
+      "pydantic_settings.SettingsConfigDict",
+      "pytest"
+    ],
+    "stdlib_count": 6,
+    "third-party_count": 9
   }
 }

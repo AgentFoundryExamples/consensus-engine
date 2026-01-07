@@ -13,6 +13,31 @@
     └── tree.md
   └── workflows
     └── af_maintenance.yml
+├── src
+  └── consensus_engine
+    ├── api
+      └── __init__.py
+    ├── config
+      ├── __init__.py
+      ├── logging.py
+      └── settings.py
+    ├── schemas
+      └── __init__.py
+    ├── services
+      └── __init__.py
+    ├── __init__.py
+    └── app.py
+├── tests
+  ├── integration
+    ├── __init__.py
+    └── test_app.py
+  ├── unit
+    ├── __init__.py
+    └── test_config.py
+  └── __init__.py
+├── .env.example
+├── .gitignore
 ├── LICENSE
 ├── LLMs.md
+├── pyproject.toml
 └── README.md
