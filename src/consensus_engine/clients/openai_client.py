@@ -162,10 +162,11 @@ class OpenAIClientWrapper:
                 elapsed_time = time.time() - start_time
                 attempt_elapsed = time.time() - attempt_start
 
-                # Extract the parsed response
-                if not hasattr(response, "text") or not response.text:
+                # Extract the parsed response from output_parsed property
+                parsed_response = response.output_parsed
+                if parsed_response is None:
                     raise SchemaValidationError(
-                        "No text content in response",
+                        "No parsed content in response",
                         details={
                             "request_id": request_id,
                             "step_name": step_name,
@@ -173,7 +174,8 @@ class OpenAIClientWrapper:
                         },
                     )
 
-                parsed_response = cast(T, response.text)
+                # Ensure it's the correct type
+                parsed_response = cast(T, parsed_response)
 
                 # Build metadata
                 metadata = {
