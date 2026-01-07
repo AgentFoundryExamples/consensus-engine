@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 38,
+  "total_files": 40,
   "files": [
     {
       "schema_version": "2.0",
@@ -53,8 +53,8 @@
       "summary": "Python module initialization (role: module-init)",
       "summary_text": "Python module initialization (role: module-init)",
       "metrics": {
-        "size_bytes": 604,
-        "loc": 1,
+        "size_bytes": 710,
+        "loc": 3,
         "todo_count": 0
       }
     },
@@ -88,6 +88,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "src/consensus_engine/api/routes/review.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 19734,
+        "loc": 454,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "src/consensus_engine/app.py",
       "language": "Python",
       "role": "entry-point",
@@ -95,8 +109,8 @@
       "summary": "Python main entry point (role: entry-point)",
       "summary_text": "Python main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 9747,
-        "loc": 239,
+        "size_bytes": 9793,
+        "loc": 240,
         "todo_count": 0
       }
     },
@@ -221,8 +235,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 6402,
-        "loc": 129,
+        "size_bytes": 10439,
+        "loc": 215,
         "todo_count": 0
       }
     },
@@ -377,6 +391,20 @@
       "metrics": {
         "size_bytes": 14388,
         "loc": 256,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_review_endpoint.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 22684,
+        "loc": 488,
         "todo_count": 0
       }
     },

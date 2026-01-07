@@ -97,6 +97,10 @@
                     {
                       "type": "file",
                       "name": "health.py"
+                    },
+                    {
+                      "type": "file",
+                      "name": "review.py"
                     }
                   ]
                 },
@@ -225,6 +229,10 @@
             {
               "type": "file",
               "name": "test_expand_service.py"
+            },
+            {
+              "type": "file",
+              "name": "test_review_endpoint.py"
             },
             {
               "type": "file",

@@ -75,6 +75,26 @@
       }
     },
     {
+      "id": "src/consensus_engine/api/routes/review.py",
+      "path": "src/consensus_engine/api/routes/review.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json",
+          "time",
+          "typing.Any",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.APIRouter",
+          "fastapi.Depends",
+          "fastapi.Request",
+          "fastapi.responses.JSONResponse",
+          "fastapi.status"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/app.py",
       "path": "src/consensus_engine/app.py",
       "type": "file",
@@ -357,6 +377,22 @@
       }
     },
     {
+      "id": "tests/integration/test_review_endpoint.py",
+      "path": "tests/integration/test_review_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator",
+          "unittest.mock.MagicMock",
+          "unittest.mock.patch"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/integration/test_review_service.py",
       "path": "tests/integration/test_review_service.py",
       "type": "file",
@@ -525,6 +561,18 @@
       "target": "src/consensus_engine/services/review.py"
     },
     {
+      "source": "src/consensus_engine/api/routes/__init__.py",
+      "target": "src/consensus_engine/api/routes/expand.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/__init__.py",
+      "target": "src/consensus_engine/api/routes/health.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/__init__.py",
+      "target": "src/consensus_engine/api/routes/review.py"
+    },
+    {
       "source": "src/consensus_engine/api/routes/expand.py",
       "target": "src/consensus_engine/api/dependencies.py"
     },
@@ -557,12 +605,44 @@
       "target": "src/consensus_engine/schemas/requests.py"
     },
     {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/services/__init__.py"
+    },
+    {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/api/routes/expand.py"
     },
     {
       "source": "src/consensus_engine/app.py",
       "target": "src/consensus_engine/api/routes/health.py"
+    },
+    {
+      "source": "src/consensus_engine/app.py",
+      "target": "src/consensus_engine/api/routes/review.py"
     },
     {
       "source": "src/consensus_engine/app.py",
@@ -605,6 +685,10 @@
       "target": "src/consensus_engine/schemas/review.py"
     },
     {
+      "source": "src/consensus_engine/schemas/requests.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
       "source": "src/consensus_engine/services/__init__.py",
       "target": "src/consensus_engine/services/expand.py"
     },
@@ -719,6 +803,26 @@
     {
       "source": "tests/integration/test_expand_service.py",
       "target": "src/consensus_engine/services/expand.py"
+    },
+    {
+      "source": "tests/integration/test_review_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_review_endpoint.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "tests/integration/test_review_endpoint.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/integration/test_review_endpoint.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "tests/integration/test_review_endpoint.py",
+      "target": "src/consensus_engine/config/__init__.py"
     },
     {
       "source": "tests/integration/test_review_service.py",

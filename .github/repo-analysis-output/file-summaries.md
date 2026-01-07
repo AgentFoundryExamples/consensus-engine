@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 38
+Total files: 40
 
 ## src/consensus_engine/__init__.py
 **Language:** Python  
@@ -38,8 +38,8 @@ Total files: 38
 **Role:** module-init  
 **Role Justification:** module initialization file '__init__'  
 **Summary:** Python module initialization (role: module-init)  
-**Size:** 0.59 KB  
-**LOC:** 1  
+**Size:** 0.69 KB  
+**LOC:** 3  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/expand.py
@@ -60,13 +60,22 @@ Total files: 38
 **LOC:** 80  
 **TODOs/FIXMEs:** 0  
 
+## src/consensus_engine/api/routes/review.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 19.27 KB  
+**LOC:** 454  
+**TODOs/FIXMEs:** 0  
+
 ## src/consensus_engine/app.py
 **Language:** Python  
 **Role:** entry-point  
 **Role Justification:** common entry point name 'app'  
 **Summary:** Python main entry point (role: entry-point)  
-**Size:** 9.52 KB  
-**LOC:** 239  
+**Size:** 9.56 KB  
+**LOC:** 240  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/__init__.py
@@ -146,8 +155,8 @@ Total files: 38
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 6.25 KB  
-**LOC:** 129  
+**Size:** 10.19 KB  
+**LOC:** 215  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -247,6 +256,15 @@ Total files: 38
 **Summary:** Python test file (role: test)  
 **Size:** 14.05 KB  
 **LOC:** 256  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_review_endpoint.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 22.15 KB  
+**LOC:** 488  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_review_service.py
