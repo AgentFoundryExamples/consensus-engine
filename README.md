@@ -350,6 +350,267 @@ curl -X POST http://localhost:8000/v1/review-idea \
 - Sequential orchestration means total `elapsed_time` is the sum of expand + review + aggregate times
 - No background jobs or persistent storage—all operations are synchronous
 
+### Full Review (POST /v1/full-review)
+
+Orchestrates idea expansion, multi-persona review, and decision aggregation in a single synchronous request. This endpoint expands a brief idea into a detailed proposal, reviews it with all five personas (Architect, Critic, Optimist, SecurityGuardian, UserAdvocate), and aggregates a final decision based on weighted consensus.
+
+**Request:**
+```bash
+POST /v1/full-review
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "idea": "Build a REST API for user management with authentication.",
+  "extra_context": {
+    "language": "Python",
+    "version": "3.11+",
+    "features": ["auth", "CRUD"]
+  }
+}
+```
+
+**Parameters:**
+- `idea` (required, string): The core idea to expand and review with all personas (1-10 sentences)
+- `extra_context` (optional, dict or string): Additional context or constraints
+
+**Success Response (200):**
+```json
+{
+  "expanded_proposal": {
+    "problem_statement": "Clear articulation of the problem to be solved",
+    "proposed_solution": "Detailed description of the solution approach",
+    "assumptions": ["Assumption 1", "Assumption 2"],
+    "scope_non_goals": ["Out of scope item 1"],
+    "raw_expanded_proposal": "Complete proposal text...",
+    "metadata": {
+      "request_id": "expand-550e8400-e29b-41d4-a716-446655440000",
+      "model": "gpt-5.1",
+      "temperature": 0.7,
+      "elapsed_time": 2.5
+    }
+  },
+  "persona_reviews": [
+    {
+      "persona_id": "architect",
+      "persona_name": "Architect",
+      "confidence_score": 0.85,
+      "strengths": ["Good architecture", "Scalable design"],
+      "concerns": [
+        {
+          "text": "Consider caching strategy",
+          "is_blocking": false
+        }
+      ],
+      "recommendations": ["Add Redis for caching"],
+      "blocking_issues": [],
+      "estimated_effort": "3-4 weeks",
+      "dependency_risks": []
+    },
+    {
+      "persona_id": "critic",
+      "persona_name": "Critic",
+      "confidence_score": 0.75,
+      "strengths": ["Clear scope"],
+      "concerns": [
+        {
+          "text": "Error handling not detailed",
+          "is_blocking": false
+        }
+      ],
+      "recommendations": ["Define error handling strategy"],
+      "blocking_issues": [],
+      "estimated_effort": "3-4 weeks",
+      "dependency_risks": ["Third-party API failures"]
+    },
+    {
+      "persona_id": "optimist",
+      "persona_name": "Optimist",
+      "confidence_score": 0.90,
+      "strengths": ["Practical approach", "Clear goals"],
+      "concerns": [],
+      "recommendations": ["Consider future extensibility"],
+      "blocking_issues": [],
+      "estimated_effort": "2-3 weeks",
+      "dependency_risks": []
+    },
+    {
+      "persona_id": "security_guardian",
+      "persona_name": "SecurityGuardian",
+      "confidence_score": 0.70,
+      "strengths": ["Authentication mentioned"],
+      "concerns": [
+        {
+          "text": "Input validation strategy unclear",
+          "is_blocking": false
+        }
+      ],
+      "recommendations": ["Define input validation and sanitization strategy"],
+      "blocking_issues": [],
+      "estimated_effort": "3-4 weeks",
+      "dependency_risks": []
+    },
+    {
+      "persona_id": "user_advocate",
+      "persona_name": "UserAdvocate",
+      "confidence_score": 0.82,
+      "strengths": ["User-centric", "Clear features"],
+      "concerns": [
+        {
+          "text": "Consider user onboarding flow",
+          "is_blocking": false
+        }
+      ],
+      "recommendations": ["Document API for users"],
+      "blocking_issues": [],
+      "estimated_effort": "3 weeks",
+      "dependency_risks": []
+    }
+  ],
+  "decision": {
+    "overall_weighted_confidence": 0.808,
+    "weighted_confidence": 0.808,
+    "decision": "approve",
+    "detailed_score_breakdown": {
+      "weights": {
+        "architect": 0.25,
+        "critic": 0.25,
+        "optimist": 0.15,
+        "security_guardian": 0.20,
+        "user_advocate": 0.15
+      },
+      "individual_scores": {
+        "architect": 0.85,
+        "critic": 0.75,
+        "optimist": 0.90,
+        "security_guardian": 0.70,
+        "user_advocate": 0.82
+      },
+      "weighted_contributions": {
+        "architect": 0.2125,
+        "critic": 0.1875,
+        "optimist": 0.135,
+        "security_guardian": 0.14,
+        "user_advocate": 0.123
+      },
+      "formula": "weighted_confidence = sum(weight_i * score_i for each persona i) = 0.808"
+    },
+    "minority_reports": null
+  },
+  "run_id": "run-550e8400-e29b-41d4-a716-446655440000",
+  "elapsed_time": 15.2
+}
+```
+
+**Response Fields:**
+- `expanded_proposal`: The expanded proposal with problem statement, solution, assumptions, scope, and metadata
+- `persona_reviews`: Array containing exactly five PersonaReview objects from all personas in configuration order:
+  - `architect`: System design and architecture (weight: 0.25)
+  - `critic`: Risks and edge cases (weight: 0.25)
+  - `optimist`: Strengths and opportunities (weight: 0.15)
+  - `security_guardian`: Security concerns with veto power (weight: 0.20)
+  - `user_advocate`: User experience and value (weight: 0.15)
+- `decision`: Aggregated decision with weighted confidence and detailed breakdown
+  - `overall_weighted_confidence`: Weighted average of persona confidence scores
+  - `decision`: "approve" (confidence ≥ 0.80, no critical issues), "revise" (0.60 ≤ confidence < 0.80), or "reject" (confidence < 0.60 or has blocking issues)
+  - `detailed_score_breakdown`: Complete breakdown showing weights, individual scores, weighted contributions, and formula
+  - `minority_reports`: Array of dissenting personas when decision is approve/revise but some personas have concerns (see Multi-Persona Consensus section)
+- `run_id`: Unique identifier for this orchestration run (different from individual request_ids)
+- `elapsed_time`: Total wall time for the entire orchestration (expand + all reviews + aggregate) in seconds
+
+**Decision Thresholds:**
+- **Approve**: `weighted_confidence >= 0.80` and no blocking issues
+- **Revise**: `0.60 <= weighted_confidence < 0.80` and no blocking issues
+- **Reject**: `weighted_confidence < 0.60` or has blocking issues
+
+**SecurityGuardian Veto Power:**
+- If SecurityGuardian marks a blocking issue with `security_critical: true`, the decision is downgraded from "approve" to at least "revise"
+- This ensures critical security concerns cannot be overlooked even with high overall confidence
+
+**Minority Reports:**
+Minority reports are generated for dissenting personas when:
+- Final decision is "approve" but a persona has confidence < 0.60
+- Final decision is "approve" or "revise" but a persona has blocking issues
+
+Each minority report includes:
+- Persona name and ID
+- Confidence score
+- Summary of blocking issues or concerns
+- Mitigation recommendations
+
+**Error Responses:**
+
+All error responses include structured information about which step failed and any partial results:
+
+```json
+{
+  "code": "LLM_SERVICE_ERROR",
+  "message": "Failed to process request",
+  "failed_step": "review",
+  "run_id": "run-550e8400-e29b-41d4-a716-446655440000",
+  "partial_results": {
+    "expanded_proposal": {
+      "problem_statement": "...",
+      "proposed_solution": "..."
+    }
+  },
+  "details": {}
+}
+```
+
+**Error Fields:**
+- `code`: Machine-readable error code (see Error Handling section)
+- `message`: Human-readable error message
+- `failed_step`: Which step failed: "validation", "expand", "review", or "aggregate"
+- `run_id`: Unique identifier for this orchestration run
+- `partial_results`: Partial results if available:
+  - `{"expanded_proposal": {...}}` if review or aggregate failed
+  - `{"expanded_proposal": {...}, "persona_reviews": [...]}` if only aggregate failed
+- `details`: Additional error details (e.g., `{"retryable": true}`)
+
+**Status Codes:**
+- **200 OK**: Successfully completed all steps (expand, all persona reviews, aggregate)
+- **422 Unprocessable Entity**: Validation error (empty idea, too many sentences, etc.)
+- **401 Unauthorized**: Invalid API key
+- **503 Service Unavailable**: Rate limit exceeded or timeout
+- **500 Internal Server Error**: Service error during expansion, review, or aggregation
+
+**Error Scenarios:**
+- **Expansion failure**: `failed_step="expand"`, `partial_results=null`
+- **Review failure**: `failed_step="review"`, `partial_results` includes the expanded proposal
+  - Note: If any single persona review fails, the entire review step fails (deterministic failure)
+- **Aggregation failure**: `failed_step="aggregate"`, `partial_results` includes expanded proposal and all persona reviews
+
+**Example with curl:**
+```bash
+curl -X POST http://localhost:8000/v1/full-review \
+  -H "Content-Type: application/json" \
+  -d '{"idea": "Build a REST API for user management with authentication."}'
+```
+
+**Orchestration Flow:**
+1. **Expand**: Transforms the brief idea into a comprehensive proposal (uses `EXPAND_MODEL` and `EXPAND_TEMPERATURE`)
+2. **Review**: Evaluates the proposal with all five personas sequentially (uses `REVIEW_MODEL` and `PERSONA_TEMPERATURE=0.2`)
+3. **Aggregate**: Computes final decision using weighted consensus algorithm with thresholds and veto rules
+
+**Important Notes:**
+- **Deterministic Failure**: All five persona reviews must succeed. If any single persona fails, the entire review step fails and returns an error with partial results.
+- **Persona Ordering**: Reviews are executed and returned in configuration order (architect, critic, optimist, security_guardian, user_advocate) for consistent behavior.
+- **No Partial Results**: The endpoint only returns success (200) when all personas complete successfully. No partial persona lists are exposed.
+- Model and temperature settings are controlled server-side and cannot be overridden by clients.
+- Each request generates a unique `run_id` for tracking the orchestration.
+- Logging emits per-request records with `run_id`, elapsed time, and step statuses.
+- Sequential orchestration means total `elapsed_time` includes expand time + all persona review times + aggregation time.
+- No background jobs or persistent storage—all operations are synchronous.
+
+**Performance Considerations:**
+- Full review takes longer than single-persona review since it runs 5 persona reviews sequentially
+- Typical elapsed time: 10-20 seconds depending on proposal complexity and API latency
+- Consider using single-persona `/v1/review-idea` for faster feedback during iterative development
+- Use `/v1/full-review` when comprehensive multi-perspective analysis is needed
+
 ### Expand Idea (POST /v1/expand-idea)
 
 Expands a brief idea (1-10 sentences) into a comprehensive, structured proposal using LLM.

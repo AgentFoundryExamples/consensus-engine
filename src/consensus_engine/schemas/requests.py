@@ -285,3 +285,110 @@ class ReviewIdeaErrorResponse(BaseModel):
     details: dict[str, Any] | None = Field(
         default=None, description="Optional additional error details"
     )
+
+
+class FullReviewRequest(BaseModel):
+    """Request model for POST /v1/full-review endpoint.
+
+    Attributes:
+        idea: The core idea to expand and review (1-10 sentences)
+        extra_context: Optional additional context as dict or string
+    """
+
+    idea: str = Field(
+        ...,
+        min_length=1,
+        description=(
+            "The core idea or problem to expand and review with all personas (1-10 sentences)"
+        ),
+        examples=["Build a REST API for user management with authentication support."],
+    )
+    extra_context: dict[str, Any] | str | None = Field(
+        default=None,
+        description="Optional additional context or constraints (dict or string)",
+        examples=[
+            "Must support Python 3.11+",
+            {"language": "Python", "version": "3.11+", "features": ["auth", "CRUD"]},
+        ],
+    )
+
+    @field_validator("idea")
+    @classmethod
+    def validate_sentence_count(cls, v: str) -> str:
+        """Validate that idea contains 1-10 sentences.
+
+        Args:
+            v: The idea text to validate
+
+        Returns:
+            The validated idea text
+
+        Raises:
+            ValueError: If sentence count is outside 1-10 range
+        """
+        sentence_count = count_sentences(v)
+
+        if sentence_count < 1:
+            raise ValueError("Idea must contain at least 1 sentence")
+
+        if sentence_count > 10:
+            raise ValueError(f"Idea must contain at most 10 sentences (found {sentence_count})")
+
+        return v
+
+
+class FullReviewResponse(BaseModel):
+    """Response model for POST /v1/full-review endpoint.
+
+    Attributes:
+        expanded_proposal: The expanded proposal data
+        persona_reviews: List of PersonaReview objects (exactly five for all personas)
+        decision: Aggregated decision with weighted confidence and breakdown
+        run_id: Unique identifier for this orchestration run
+        elapsed_time: Total wall time for the entire orchestration in seconds
+    """
+
+    expanded_proposal: ExpandIdeaResponse = Field(
+        ..., description="The expanded proposal with problem statement, solution, etc."
+    )
+    persona_reviews: list[PersonaReview] = Field(
+        ..., description="List of all five persona reviews in configuration order"
+    )
+    decision: DecisionAggregation = Field(
+        ..., description="Aggregated decision with weighted confidence and detailed breakdown"
+    )
+    run_id: str = Field(..., description="Unique identifier for this orchestration run")
+    elapsed_time: float = Field(
+        ..., description="Total wall time for the entire orchestration in seconds"
+    )
+
+
+class FullReviewErrorResponse(BaseModel):
+    """Error response model for POST /v1/full-review endpoint.
+
+    This structured error response includes information about which step failed,
+    a human-readable message, and any partial results that were successfully
+    computed before the failure.
+
+    Attributes:
+        code: Machine-readable error code
+        message: Human-readable error message
+        failed_step: Which step failed ('expand', 'review', or 'aggregate')
+        run_id: Unique identifier for this orchestration run
+        partial_results: Optional partial results (e.g., expanded proposal if review failed)
+        details: Optional additional error details
+    """
+
+    code: str = Field(..., description="Machine-readable error code")
+    message: str = Field(..., description="Human-readable error message")
+    failed_step: str = Field(
+        ..., description="Which step failed: 'expand', 'review', or 'aggregate'"
+    )
+    run_id: str = Field(..., description="Unique identifier for this orchestration run")
+    partial_results: dict[str, Any] | None = Field(
+        default=None,
+        description="Optional partial results (e.g., expanded_proposal if review failed)",
+    )
+    details: dict[str, Any] | None = Field(
+        default=None, description="Optional additional error details"
+    )

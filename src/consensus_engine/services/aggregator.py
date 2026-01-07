@@ -87,7 +87,7 @@ def aggregate_persona_reviews(
                 f"Unknown persona_id '{persona_id}' in review. "
                 f"Available persona IDs: {available_ids}"
             )
-        
+
         weight = persona_weights[persona_id]
 
         weights[persona_id] = weight
