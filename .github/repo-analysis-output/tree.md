@@ -8,6 +8,8 @@
   ├── repo-analysis-output
     ├── dependencies.json
     ├── dependencies.md
+    ├── file-summaries.json
+    ├── file-summaries.md
     ├── SUMMARY.md
     ├── tree.json
     └── tree.md
@@ -17,23 +19,33 @@
   └── consensus_engine
     ├── api
       └── __init__.py
+    ├── clients
+      ├── __init__.py
+      └── openai_client.py
     ├── config
       ├── __init__.py
       ├── logging.py
       └── settings.py
     ├── schemas
-      └── __init__.py
+      ├── __init__.py
+      └── proposal.py
     ├── services
-      └── __init__.py
+      ├── __init__.py
+      └── expand.py
     ├── __init__.py
-    └── app.py
+    ├── app.py
+    └── exceptions.py
 ├── tests
   ├── integration
     ├── __init__.py
     └── test_app.py
   ├── unit
     ├── __init__.py
-    └── test_config.py
+    ├── test_config.py
+    ├── test_exceptions.py
+    ├── test_expand_service.py
+    ├── test_openai_client.py
+    └── test_proposal_schemas.py
   └── __init__.py
 ├── .env.example
 ├── .gitignore

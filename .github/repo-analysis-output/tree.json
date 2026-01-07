@@ -38,6 +38,14 @@
             },
             {
               "type": "file",
+              "name": "file-summaries.json"
+            },
+            {
+              "type": "file",
+              "name": "file-summaries.md"
+            },
+            {
+              "type": "file",
               "name": "SUMMARY.md"
             },
             {
@@ -82,6 +90,20 @@
             },
             {
               "type": "directory",
+              "name": "clients",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py"
+                },
+                {
+                  "type": "file",
+                  "name": "openai_client.py"
+                }
+              ]
+            },
+            {
+              "type": "directory",
               "name": "config",
               "children": [
                 {
@@ -105,6 +127,10 @@
                 {
                   "type": "file",
                   "name": "__init__.py"
+                },
+                {
+                  "type": "file",
+                  "name": "proposal.py"
                 }
               ]
             },
@@ -115,6 +141,10 @@
                 {
                   "type": "file",
                   "name": "__init__.py"
+                },
+                {
+                  "type": "file",
+                  "name": "expand.py"
                 }
               ]
             },
@@ -125,6 +155,10 @@
             {
               "type": "file",
               "name": "app.py"
+            },
+            {
+              "type": "file",
+              "name": "exceptions.py"
             }
           ]
         }
@@ -159,6 +193,22 @@
             {
               "type": "file",
               "name": "test_config.py"
+            },
+            {
+              "type": "file",
+              "name": "test_exceptions.py"
+            },
+            {
+              "type": "file",
+              "name": "test_expand_service.py"
+            },
+            {
+              "type": "file",
+              "name": "test_openai_client.py"
+            },
+            {
+              "type": "file",
+              "name": "test_proposal_schemas.py"
             }
           ]
         },
