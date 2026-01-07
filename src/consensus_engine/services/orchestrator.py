@@ -72,9 +72,16 @@ def review_with_all_personas(
     client = OpenAIClientWrapper(settings)
 
     # Construct user prompt with proposal details (truncate for token limits)
-    max_field_length = 2000
-    max_list_item_length = 500
-    max_list_items = 10
+    # Truncation limits are chosen to:
+    # - Stay well within typical LLM context windows (8k-128k tokens)
+    # - Balance comprehensive context vs. token efficiency
+    # - Prevent excessive API costs from overly long proposals
+    # Note: Truncation is applied uniformly to all personas for consistency
+    # The proposal content is user-provided and passed to the LLM as-is within
+    # these limits. The OpenAI API handles any necessary escaping/sanitization.
+    max_field_length = 2000  # Max chars for problem_statement, proposed_solution fields
+    max_list_item_length = 500  # Max chars per assumption or non-goal item
+    max_list_items = 10  # Max number of assumptions or non-goals to include
 
     problem_statement = expanded_proposal.problem_statement[:max_field_length]
     proposed_solution = expanded_proposal.proposed_solution[:max_field_length]
