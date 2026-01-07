@@ -138,11 +138,24 @@ def create_app() -> FastAPI:
             JSON response with validation error details
         """
         request_id = getattr(request.state, "request_id", "unknown")
+
+        # Convert error details to JSON-serializable format
+        errors = []
+        for error in exc.errors():
+            errors.append(
+                {
+                    "type": error.get("type"),
+                    "loc": list(error.get("loc", [])),
+                    "msg": str(error.get("msg", "")),
+                    "input": str(error.get("input", ""))[:100],  # Truncate long inputs
+                }
+            )
+
         logger.warning(
             "Validation error",
             extra={
                 "request_id": request_id,
-                "errors": exc.errors(),
+                "errors": errors,
             },
         )
         return JSONResponse(
@@ -150,7 +163,7 @@ def create_app() -> FastAPI:
             content={
                 "code": "VALIDATION_ERROR",
                 "message": "Request validation failed",
-                "details": exc.errors(),
+                "details": errors,
                 "request_id": request_id,
             },
         )
@@ -169,11 +182,24 @@ def create_app() -> FastAPI:
             JSON response with validation error details
         """
         request_id = getattr(request.state, "request_id", "unknown")
+
+        # Convert error details to JSON-serializable format
+        errors = []
+        for error in exc.errors():
+            errors.append(
+                {
+                    "type": error.get("type"),
+                    "loc": list(error.get("loc", [])),
+                    "msg": str(error.get("msg", "")),
+                    "input": str(error.get("input", ""))[:100],  # Truncate long inputs
+                }
+            )
+
         logger.warning(
             "Pydantic validation error",
             extra={
                 "request_id": request_id,
-                "errors": exc.errors(),
+                "errors": errors,
             },
         )
         return JSONResponse(
@@ -181,7 +207,7 @@ def create_app() -> FastAPI:
             content={
                 "code": "VALIDATION_ERROR",
                 "message": "Request validation failed",
-                "details": exc.errors(),
+                "details": errors,
                 "request_id": request_id,
             },
         )
