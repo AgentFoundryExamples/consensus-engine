@@ -277,6 +277,15 @@ class TestAggregatePersonaReviews:
         with pytest.raises(ValueError, match="Cannot aggregate empty list"):
             aggregate_persona_reviews([])
 
+    def test_aggregator_raises_error_on_unknown_persona_id(self) -> None:
+        """Test that aggregator raises error for unknown persona_id."""
+        reviews = [
+            create_persona_review("unknown_persona", "UnknownPersona", 0.80),
+        ]
+
+        with pytest.raises(ValueError, match="Unknown persona_id 'unknown_persona'"):
+            aggregate_persona_reviews(reviews)
+
     def test_aggregator_multiple_minority_reports(self) -> None:
         """Test multiple personas can have minority reports simultaneously."""
         reviews = [

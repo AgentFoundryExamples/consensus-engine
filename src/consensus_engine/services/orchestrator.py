@@ -137,6 +137,8 @@ Be thorough, specific, and constructive in your feedback."""
 
         try:
             # Call OpenAI with structured output for this persona
+            # Note: persona_config.temperature is 0.2 for all personas (PERSONA_TEMPERATURE)
+            # This ensures deterministic, consistent reviews across all personas
             parsed_response, metadata = client.create_structured_response(
                 system_instruction=REVIEW_SYSTEM_INSTRUCTION,
                 user_prompt=user_prompt,

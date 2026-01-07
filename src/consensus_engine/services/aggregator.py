@@ -64,8 +64,15 @@ def aggregate_persona_reviews(
         persona_id = review.persona_id
         confidence = review.confidence_score
 
-        # Get weight for this persona (default to 0 if not in config)
-        weight = persona_weights.get(persona_id, 0.0)
+        # Get weight for this persona (error if not in config)
+        if persona_id not in persona_weights:
+            available_ids = ", ".join(persona_weights.keys())
+            raise ValueError(
+                f"Unknown persona_id '{persona_id}' in review. "
+                f"Available persona IDs: {available_ids}"
+            )
+        
+        weight = persona_weights[persona_id]
 
         weights[persona_id] = weight
         individual_scores[persona_id] = confidence
