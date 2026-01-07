@@ -315,3 +315,141 @@ class TestReviewWithAllPersonas:
         for i, call in enumerate(calls):
             developer_instruction = call[1]["developer_instruction"]
             assert persona_names[i] in developer_instruction
+
+
+class TestDeterminePersonasToRerun:
+    """Test suite for determine_personas_to_rerun function."""
+
+    def test_rerun_low_confidence_persona(self) -> None:
+        """Test that personas with confidence < 0.70 are marked for re-run."""
+        from consensus_engine.services.orchestrator import determine_personas_to_rerun
+
+        parent_reviews = [
+            (
+                "architect",
+                {
+                    "persona_id": "architect",
+                    "confidence_score": 0.65,
+                    "blocking_issues": [],
+                },
+            ),
+            (
+                "critic",
+                {
+                    "persona_id": "critic",
+                    "confidence_score": 0.85,
+                    "blocking_issues": [],
+                },
+            ),
+        ]
+
+        personas_to_rerun = determine_personas_to_rerun(parent_reviews)
+
+        assert "architect" in personas_to_rerun
+        assert "critic" not in personas_to_rerun
+
+    def test_rerun_persona_with_blocking_issues(self) -> None:
+        """Test that personas with blocking issues are marked for re-run."""
+        from consensus_engine.services.orchestrator import determine_personas_to_rerun
+
+        parent_reviews = [
+            (
+                "architect",
+                {
+                    "persona_id": "architect",
+                    "confidence_score": 0.85,
+                    "blocking_issues": [{"text": "Critical issue", "security_critical": False}],
+                },
+            ),
+            (
+                "critic",
+                {
+                    "persona_id": "critic",
+                    "confidence_score": 0.80,
+                    "blocking_issues": [],
+                },
+            ),
+        ]
+
+        personas_to_rerun = determine_personas_to_rerun(parent_reviews)
+
+        assert "architect" in personas_to_rerun
+        assert "critic" not in personas_to_rerun
+
+    def test_rerun_security_guardian_with_security_concerns(self) -> None:
+        """Test that SecurityGuardian with security_critical issues is marked for re-run."""
+        from consensus_engine.services.orchestrator import determine_personas_to_rerun
+
+        parent_reviews = [
+            (
+                "security_guardian",
+                {
+                    "persona_id": "security_guardian",
+                    "confidence_score": 0.85,
+                    "blocking_issues": [
+                        {"text": "SQL injection risk", "security_critical": True}
+                    ],
+                },
+            ),
+            (
+                "critic",
+                {
+                    "persona_id": "critic",
+                    "confidence_score": 0.80,
+                    "blocking_issues": [],
+                },
+            ),
+        ]
+
+        personas_to_rerun = determine_personas_to_rerun(parent_reviews)
+
+        assert "security_guardian" in personas_to_rerun
+        assert "critic" not in personas_to_rerun
+
+    def test_no_rerun_for_high_confidence_no_issues(self) -> None:
+        """Test that personas with high confidence and no issues are not marked for re-run."""
+        from consensus_engine.services.orchestrator import determine_personas_to_rerun
+
+        parent_reviews = [
+            (
+                "architect",
+                {
+                    "persona_id": "architect",
+                    "confidence_score": 0.85,
+                    "blocking_issues": [],
+                },
+            ),
+            (
+                "critic",
+                {
+                    "persona_id": "critic",
+                    "confidence_score": 0.90,
+                    "blocking_issues": [],
+                },
+            ),
+        ]
+
+        personas_to_rerun = determine_personas_to_rerun(parent_reviews)
+
+        assert len(personas_to_rerun) == 0
+
+    def test_multiple_criteria_trigger_rerun(self) -> None:
+        """Test that multiple criteria can trigger re-run for same persona."""
+        from consensus_engine.services.orchestrator import determine_personas_to_rerun
+
+        parent_reviews = [
+            (
+                "architect",
+                {
+                    "persona_id": "architect",
+                    "confidence_score": 0.65,
+                    "blocking_issues": [{"text": "Issue", "security_critical": False}],
+                },
+            ),
+        ]
+
+        personas_to_rerun = determine_personas_to_rerun(parent_reviews)
+
+        # Should be marked for re-run due to both low confidence and blocking issues
+        assert "architect" in personas_to_rerun
+        assert len(personas_to_rerun) == 1

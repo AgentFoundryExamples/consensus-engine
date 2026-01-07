@@ -18,7 +18,6 @@ for querying run history and retrieving individual run details, as well as
 POST /v1/runs/{run_id}/revisions for creating revision runs.
 """
 
-import json
 import time
 import uuid
 from datetime import datetime

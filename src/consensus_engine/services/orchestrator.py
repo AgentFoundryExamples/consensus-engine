@@ -23,7 +23,7 @@ from typing import Any
 
 from consensus_engine.clients.openai_client import OpenAIClientWrapper
 from consensus_engine.config.logging import get_logger
-from consensus_engine.config.personas import REVISE_THRESHOLD, get_all_personas
+from consensus_engine.config.personas import get_all_personas
 from consensus_engine.config.settings import Settings
 from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.review import PersonaReview
@@ -133,7 +133,10 @@ def determine_personas_to_rerun(
             )
 
     logger.info(
-        f"Determined {len(personas_to_rerun)} personas to rerun out of {len(parent_persona_reviews)}",
+        (
+            f"Determined {len(personas_to_rerun)} personas to rerun "
+            f"out of {len(parent_persona_reviews)}"
+        ),
         extra={
             "rerun_count": len(personas_to_rerun),
             "total_count": len(parent_persona_reviews),
