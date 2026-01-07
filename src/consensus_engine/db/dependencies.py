@@ -80,6 +80,9 @@ def get_db_session() -> Generator[Session, None, None]:
     This function is used with FastAPI's dependency injection system
     to provide database sessions to route handlers.
 
+    Note: Does NOT auto-commit. The route handler is responsible for 
+    committing or rolling back the transaction as appropriate.
+
     Yields:
         Database session
 
@@ -92,9 +95,5 @@ def get_db_session() -> Generator[Session, None, None]:
     session = _session_factory()
     try:
         yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
     finally:
         session.close()

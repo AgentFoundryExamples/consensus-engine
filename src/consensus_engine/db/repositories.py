@@ -46,6 +46,7 @@ class RunRepository:
     @staticmethod
     def create_run(
         session: Session,
+        run_id: uuid.UUID,
         input_idea: str,
         extra_context: dict[str, Any] | None,
         run_type: RunType,
@@ -59,6 +60,7 @@ class RunRepository:
 
         Args:
             session: Database session
+            run_id: Pre-generated UUID for the run
             input_idea: The original idea text
             extra_context: Optional additional context as dict
             run_type: Whether this is an initial or revision run
@@ -76,6 +78,7 @@ class RunRepository:
         """
         try:
             run = Run(
+                id=run_id,
                 status=RunStatus.RUNNING,
                 input_idea=input_idea,
                 extra_context=extra_context,
@@ -88,10 +91,9 @@ class RunRepository:
             )
 
             session.add(run)
-            session.flush()  # Flush to get the ID without committing
 
             logger.info(
-                f"Created Run with id={run.id}, status={run.status.value}",
+                f"Created Run object with id={run.id}, status={run.status.value}",
                 extra={"run_id": str(run.id), "status": run.status.value},
             )
 
