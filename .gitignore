@@ -63,3 +63,10 @@ dmypy.json
 
 # Ruff
 .ruff_cache/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+pgadmin_data/

@@ -97,4 +97,89 @@ pytest tests/unit/test_aggregator.py
 pytest tests/integration/test_multi_persona.py
 ```
 
+## Persistence
+
+The Consensus Engine uses PostgreSQL to persist run lifecycle data with SQLAlchemy and Alembic migrations.
+
+### Database Infrastructure
+
+- **Engine**: SQLAlchemy 2.0+ with connection pooling
+- **Migrations**: Alembic for schema version control
+- **Local Development**: Docker Compose with PostgreSQL 16
+- **Production**: Cloud SQL for PostgreSQL with IAM authentication
+
+### Connection Modes
+
+**Local Development:**
+```python
+from consensus_engine.config import get_settings
+from consensus_engine.db import create_engine_from_settings
+
+settings = get_settings()
+engine = create_engine_from_settings(settings)
+```
+
+**Cloud SQL with IAM Authentication:**
+```bash
+USE_CLOUD_SQL_CONNECTOR=true
+DB_INSTANCE_CONNECTION_NAME=project:region:instance
+DB_IAM_AUTH=true
+```
+
+**Cloud SQL with Password Authentication:**
+```bash
+USE_CLOUD_SQL_CONNECTOR=true
+DB_INSTANCE_CONNECTION_NAME=project:region:instance
+DB_IAM_AUTH=false
+DB_PASSWORD=your-password
+```
+
+### Health Checks
+
+Database connectivity is verified through health checks:
+
+```python
+from consensus_engine.db import check_database_health
+
+if not check_database_health(engine):
+    logger.error("Database is unreachable")
+    # Fail fast with actionable error
+```
+
+Health checks:
+- Never fall back to IP allowlists
+- Emit clear errors when DB is unreachable
+- Surface actionable error messages for IAM principal issues
+
+### Connection Pool Management
+
+- **Pool Size**: Configurable via `DB_POOL_SIZE` (default: 5)
+- **Max Overflow**: Configurable via `DB_MAX_OVERFLOW` (default: 10)
+- **Pool Timeout**: Configurable via `DB_POOL_TIMEOUT` (default: 30s)
+- **Pool Recycle**: Configurable via `DB_POOL_RECYCLE` (default: 3600s)
+- **Pre-Ping**: Enabled to verify connections before use
+- **Retries**: Connection pool exhaustion triggers backoff
+
+### Security Considerations
+
+- **No Passwords in Code**: All credentials from environment variables
+- **IAM Authentication**: Recommended for Cloud SQL (no passwords)
+- **Masked Logging**: Database passwords masked in logs via `get_safe_dict()`
+- **No Ad-Hoc Connections**: All persistence via SQLAlchemy/Alembic
+
+### Migration Workflow
+
+```bash
+# Create a new migration after model changes
+alembic revision --autogenerate -m "add_new_table"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback last migration
+alembic downgrade -1
+
+# Migrations are idempotent and safe to run multiple times
+```
+
 See full documentation in the repository for complete details.

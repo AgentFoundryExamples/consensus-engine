@@ -44,11 +44,18 @@ def setup_logging(settings: Settings) -> None:
     logging.getLogger("fastapi").setLevel(log_level)
     logging.getLogger("consensus_engine").setLevel(log_level)
 
+    # Set database-related loggers
+    logging.getLogger("sqlalchemy.engine").setLevel(log_level)
+    logging.getLogger("sqlalchemy.pool").setLevel(log_level)
+    logging.getLogger("alembic").setLevel(log_level)
+
     # Suppress overly verbose third-party loggers in production
     if not settings.debug:
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("httpcore").setLevel(logging.WARNING)
         logging.getLogger("openai").setLevel(logging.WARNING)
+        logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+        logging.getLogger("sqlalchemy.pool").setLevel(logging.INFO)
 
 
 def get_logger(name: str) -> logging.Logger:
