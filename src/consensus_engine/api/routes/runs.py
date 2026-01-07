@@ -153,35 +153,56 @@ async def list_runs(
     if start_date is not None:
         try:
             start_date_dt = datetime.fromisoformat(start_date)
+            if start_date_dt.tzinfo is None:
+                raise ValueError("Date must include timezone information")
         except ValueError as e:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid start_date format: {start_date}. Must be ISO 8601 format",
+                detail=(
+                    f"Invalid start_date format: {start_date}. "
+                    "Must be ISO 8601 format with timezone."
+                ),
             ) from e
 
     end_date_dt: datetime | None = None
     if end_date is not None:
         try:
             end_date_dt = datetime.fromisoformat(end_date)
+            if end_date_dt.tzinfo is None:
+                raise ValueError("Date must include timezone information")
         except ValueError as e:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid end_date format: {end_date}. Must be ISO 8601 format",
+                detail=(
+                    f"Invalid end_date format: {end_date}. "
+                    "Must be ISO 8601 format with timezone."
+                ),
             ) from e
 
     # Query database
-    runs, total = RunRepository.list_runs(
-        session=db_session,
-        limit=limit,
-        offset=offset,
-        status=status_enum,
-        run_type=run_type_enum,
-        parent_run_id=parent_run_uuid,
-        decision=decision,
-        min_confidence=min_confidence,
-        start_date=start_date_dt,
-        end_date=end_date_dt,
-    )
+    try:
+        runs, total = RunRepository.list_runs(
+            session=db_session,
+            limit=limit,
+            offset=offset,
+            status=status_enum,
+            run_type=run_type_enum,
+            parent_run_id=parent_run_uuid,
+            decision=decision,
+            min_confidence=min_confidence,
+            start_date=start_date_dt,
+            end_date=end_date_dt,
+        )
+    except Exception as e:
+        logger.error(
+            "Database error while listing runs",
+            extra={"limit": limit, "offset": offset},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve runs from database",
+        ) from e
 
     # Build response items
     run_items: list[RunListItemResponse] = []
@@ -264,7 +285,18 @@ async def get_run_detail(
         ) from e
 
     # Retrieve run with all relations
-    run = RunRepository.get_run_with_relations(db_session, run_uuid)
+    try:
+        run = RunRepository.get_run_with_relations(db_session, run_uuid)
+    except Exception as e:
+        logger.error(
+            f"Database error while retrieving run {run_id}",
+            extra={"run_id": run_id},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve run from database",
+        ) from e
 
     if run is None:
         raise HTTPException(

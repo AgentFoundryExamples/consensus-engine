@@ -432,6 +432,13 @@ class TestListRunsEndpoint:
         data = response.json()
         assert "Invalid start_date format" in data["detail"]
     
+    def test_list_runs_date_without_timezone(self, test_client, sample_runs):
+        """Test date without timezone information."""
+        response = test_client.get("/v1/runs?start_date=2025-01-07T00:00:00")
+        assert response.status_code == 400
+        data = response.json()
+        assert "timezone" in data["detail"].lower()
+    
     def test_list_runs_nonexistent_parent_returns_empty(self, test_client, sample_runs):
         """Test filtering by nonexistent parent_run_id returns empty list."""
         nonexistent_uuid = str(uuid.uuid4())
