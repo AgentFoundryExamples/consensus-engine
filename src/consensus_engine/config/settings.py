@@ -42,6 +42,12 @@ class Settings(BaseSettings):
         openai_api_key: OpenAI API key for authentication (required)
         openai_model: OpenAI model to use (default: gpt-5.1)
         temperature: Temperature for model responses (0.0-1.0, default: 0.7)
+        expand_model: Model for expansion step (default: gpt-5.1)
+        expand_temperature: Temperature for expansion (default: 0.7)
+        review_model: Model for review step (default: gpt-5.1)
+        review_temperature: Temperature for review (default: 0.2)
+        default_persona_name: Default persona name for reviews (default: GenericReviewer)
+        default_persona_instructions: Default persona instructions for reviews
         env: Application environment mode (default: development)
         log_level: Logging level based on environment
         debug: Debug mode flag based on environment
@@ -69,6 +75,46 @@ class Settings(BaseSettings):
         ge=0.0,
         le=1.0,
         description="Temperature for model responses (0.0-1.0)",
+    )
+
+    # Expansion Configuration
+    expand_model: str = Field(
+        default="gpt-5.1",
+        description="Model for expansion step (default: gpt-5.1)",
+    )
+    expand_temperature: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Temperature for expansion (0.0-1.0, default: 0.7)",
+    )
+
+    # Review Configuration
+    review_model: str = Field(
+        default="gpt-5.1",
+        description="Model for review step (default: gpt-5.1)",
+    )
+    review_temperature: float = Field(
+        default=0.2,
+        ge=0.0,
+        le=1.0,
+        description="Temperature for review (0.0-1.0, default: 0.2 for deterministic reviews)",
+    )
+
+    # Persona Configuration
+    default_persona_name: str = Field(
+        default="GenericReviewer",
+        description="Default persona name for reviews",
+        min_length=1,
+    )
+    default_persona_instructions: str = Field(
+        default=(
+            "You are a technical reviewer evaluating proposals for feasibility, "
+            "risks, and completeness. Provide balanced feedback identifying both "
+            "strengths and concerns."
+        ),
+        description="Default persona instructions for reviews",
+        min_length=1,
     )
 
     # Application Configuration
@@ -101,7 +147,7 @@ class Settings(BaseSettings):
 
         return v.strip()
 
-    @field_validator("temperature")
+    @field_validator("temperature", "expand_temperature", "review_temperature")
     @classmethod
     def validate_temperature(cls, v: float) -> float:
         """Validate temperature is within the allowed range [0.0, 1.0].

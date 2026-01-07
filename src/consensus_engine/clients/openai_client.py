@@ -51,6 +51,7 @@ class OpenAIClientWrapper:
         client: OpenAI SDK client instance
         model: Model name to use for API calls
         temperature: Temperature setting for response generation
+        settings: Application settings for access to step-specific config
     """
 
     def __init__(self, settings: Settings):
@@ -62,6 +63,7 @@ class OpenAIClientWrapper:
         self.client = OpenAI(api_key=settings.openai_api_key)
         self.model = settings.openai_model
         self.temperature = settings.temperature
+        self.settings = settings
         logger.debug(f"OpenAI client initialized with model={self.model}")
 
     def create_structured_response(
@@ -70,6 +72,9 @@ class OpenAIClientWrapper:
         user_prompt: str,
         response_model: type[T],
         developer_instruction: str | None = None,
+        step_name: str = "llm_call",
+        model_override: str | None = None,
+        temperature_override: float | None = None,
     ) -> tuple[T, dict[str, Any]]:
         """Create a structured response using OpenAI Responses API.
 
@@ -81,6 +86,9 @@ class OpenAIClientWrapper:
             user_prompt: User prompt containing the actual request
             response_model: Pydantic model defining the expected response structure
             developer_instruction: Optional developer instructions for additional guidance
+            step_name: Name of the step for telemetry logging (default: "llm_call")
+            model_override: Override the default model for this call
+            temperature_override: Override the default temperature for this call
 
         Returns:
             Tuple of (parsed response model instance, metadata dict with request_id, timing, etc.)
@@ -95,12 +103,17 @@ class OpenAIClientWrapper:
         request_id = str(uuid.uuid4())
         start_time = time.time()
 
+        # Use overrides or fall back to defaults
+        model = model_override or self.model
+        temperature = temperature_override if temperature_override is not None else self.temperature
+
         logger.info(
-            "Starting OpenAI request",
+            f"Starting OpenAI request for step={step_name}",
             extra={
                 "request_id": request_id,
-                "model": self.model,
-                "temperature": self.temperature,
+                "step_name": step_name,
+                "model": model,
+                "temperature": temperature,
             },
         )
 
@@ -119,19 +132,21 @@ class OpenAIClientWrapper:
 
             # Make API call with structured output
             response = self.client.beta.chat.completions.parse(
-                model=self.model,
+                model=model,
                 messages=messages,  # type: ignore[arg-type]
                 response_format=response_model,
-                temperature=self.temperature,
+                temperature=temperature,
             )
 
+            # Calculate elapsed time immediately after API call for consistency
+            # This ensures both success and error paths measure the same duration
             elapsed_time = time.time() - start_time
 
             # Extract the parsed response
             if not response.choices or not response.choices[0].message.parsed:
                 raise SchemaValidationError(
                     "No parsed content in response",
-                    details={"request_id": request_id},
+                    details={"request_id": request_id, "step_name": step_name},
                 )
 
             parsed_response = cast(T, response.choices[0].message.parsed)
@@ -139,76 +154,129 @@ class OpenAIClientWrapper:
             # Build metadata
             metadata = {
                 "request_id": request_id,
-                "model": self.model,
-                "temperature": self.temperature,
+                "step_name": step_name,
+                "model": model,
+                "temperature": temperature,
                 "elapsed_time": elapsed_time,
+                "latency": elapsed_time,
                 "finish_reason": response.choices[0].finish_reason,
                 "usage": response.usage.model_dump() if response.usage else None,
+                "status": "success",
             }
 
             logger.info(
-                "OpenAI request completed successfully",
+                f"OpenAI request completed successfully for step={step_name}",
                 extra={
                     "request_id": request_id,
+                    "step_name": step_name,
+                    "model": model,
+                    "temperature": temperature,
+                    "latency": f"{elapsed_time:.2f}s",
                     "elapsed_time": f"{elapsed_time:.2f}s",
                     "finish_reason": metadata["finish_reason"],
+                    "status": "success",
                 },
             )
 
             return parsed_response, metadata
 
         except AuthenticationError as e:
+            elapsed_time = time.time() - start_time
             logger.error(
-                "OpenAI authentication failed",
-                extra={"request_id": request_id, "error": str(e)},
+                f"OpenAI authentication failed for step={step_name}",
+                extra={
+                    "request_id": request_id,
+                    "step_name": step_name,
+                    "latency": f"{elapsed_time:.2f}s",
+                    "status": "error",
+                    "error": str(e),
+                },
             )
             raise LLMAuthenticationError(
                 f"OpenAI authentication failed: {str(e)}",
-                details={"request_id": request_id},
+                details={"request_id": request_id, "step_name": step_name},
             ) from e
 
         except RateLimitError as e:
+            elapsed_time = time.time() - start_time
             logger.warning(
-                "OpenAI rate limit exceeded",
-                extra={"request_id": request_id, "error": str(e)},
+                f"OpenAI rate limit exceeded for step={step_name}",
+                extra={
+                    "request_id": request_id,
+                    "step_name": step_name,
+                    "latency": f"{elapsed_time:.2f}s",
+                    "status": "rate_limited",
+                    "error": str(e),
+                },
             )
             raise LLMRateLimitError(
                 f"OpenAI rate limit exceeded: {str(e)}",
-                details={"request_id": request_id, "retryable": True},
+                details={"request_id": request_id, "step_name": step_name, "retryable": True},
             ) from e
 
         except APITimeoutError as e:
+            elapsed_time = time.time() - start_time
             logger.warning(
-                "OpenAI request timed out",
-                extra={"request_id": request_id, "error": str(e)},
+                f"OpenAI request timed out for step={step_name}",
+                extra={
+                    "request_id": request_id,
+                    "step_name": step_name,
+                    "latency": f"{elapsed_time:.2f}s",
+                    "status": "timeout",
+                    "error": str(e),
+                },
             )
             raise LLMTimeoutError(
                 f"OpenAI request timed out: {str(e)}",
-                details={"request_id": request_id, "retryable": True},
+                details={"request_id": request_id, "step_name": step_name, "retryable": True},
             ) from e
 
         except APIConnectionError as e:
+            elapsed_time = time.time() - start_time
             logger.error(
-                "OpenAI connection error",
-                extra={"request_id": request_id, "error": str(e)},
+                f"OpenAI connection error for step={step_name}",
+                extra={
+                    "request_id": request_id,
+                    "step_name": step_name,
+                    "latency": f"{elapsed_time:.2f}s",
+                    "status": "connection_error",
+                    "error": str(e),
+                },
             )
             raise LLMServiceError(
                 f"OpenAI connection error: {str(e)}",
                 code="LLM_CONNECTION_ERROR",
-                details={"request_id": request_id, "retryable": True},
+                details={"request_id": request_id, "step_name": step_name, "retryable": True},
             ) from e
 
         except SchemaValidationError:
+            elapsed_time = time.time() - start_time
+            logger.error(
+                f"Schema validation error for step={step_name}",
+                extra={
+                    "request_id": request_id,
+                    "step_name": step_name,
+                    "latency": f"{elapsed_time:.2f}s",
+                    "status": "validation_error",
+                },
+            )
             # Re-raise SchemaValidationError as-is (don't wrap it)
             raise
 
         except Exception as e:
+            elapsed_time = time.time() - start_time
             logger.error(
-                "Unexpected error in OpenAI request",
-                extra={"request_id": request_id, "error": str(e)},
+                f"Unexpected error in OpenAI request for step={step_name}",
+                extra={
+                    "request_id": request_id,
+                    "step_name": step_name,
+                    "latency": f"{elapsed_time:.2f}s",
+                    "status": "error",
+                    "error": str(e),
+                },
                 exc_info=True,
             )
             raise LLMServiceError(
                 f"Unexpected error in OpenAI request: {str(e)}",
-                details={"request_id": request_id},
+                details={"request_id": request_id, "step_name": step_name},
             ) from e

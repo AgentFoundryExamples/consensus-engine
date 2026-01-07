@@ -14,5 +14,6 @@
 """Services package for business logic."""
 
 from consensus_engine.services.expand import expand_idea
+from consensus_engine.services.review import review_proposal
 
-__all__ = ["expand_idea"]
+__all__ = ["expand_idea", "review_proposal"]

@@ -88,6 +88,9 @@ def expand_idea(
         user_prompt=user_prompt,
         response_model=ExpandedProposal,
         developer_instruction=DEVELOPER_INSTRUCTION,
+        step_name="expand",
+        model_override=settings.expand_model,
+        temperature_override=settings.expand_temperature,
     )
 
     # Log success without sensitive data
@@ -95,9 +98,11 @@ def expand_idea(
         "Idea expansion completed successfully",
         extra={
             "request_id": metadata.get("request_id"),
+            "step_name": "expand",
             "model": metadata.get("model"),
             "temperature": metadata.get("temperature"),
             "elapsed_time": metadata.get("elapsed_time"),
+            "latency": metadata.get("latency"),
             "status": "success",
         },
     )
