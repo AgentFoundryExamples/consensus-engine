@@ -492,8 +492,11 @@ class TestFullReviewEndpointComprehensive:
         assert len(data["persona_reviews"]) == 5
 
         # Verify each expected persona is in the response
+        from consensus_engine.config.personas import get_all_personas
+
+        expected_personas = get_all_personas()
         persona_ids = {review["persona_id"] for review in data["persona_reviews"]}
-        expected_ids = {"architect", "critic", "optimist", "security_guardian", "user_advocate"}
+        expected_ids = set(expected_personas.keys())
         assert persona_ids == expected_ids
 
         # Verify each review has required fields
@@ -566,8 +569,11 @@ class TestFullReviewEndpointComprehensive:
         data = response.json()
 
         # Verify order is preserved (based on config order, not execution order)
+        from consensus_engine.config.personas import get_all_personas
+
+        expected_personas = get_all_personas()
         persona_ids_in_response = [r["persona_id"] for r in data["persona_reviews"]]
-        expected_order = ["architect", "critic", "optimist", "security_guardian", "user_advocate"]
+        expected_order = list(expected_personas.keys())
         assert persona_ids_in_response == expected_order
 
     @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")

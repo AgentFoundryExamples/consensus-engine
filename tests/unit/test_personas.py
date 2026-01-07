@@ -443,7 +443,8 @@ class TestPersonaConfigMapping:
             persona = PERSONAS[persona_id]
             instructions_lower = persona.developer_instructions.lower()
             # At least one keyword should be present
-            assert any(kw in instructions_lower for kw in keywords), \
+            has_expected_keyword = any(kw in instructions_lower for kw in keywords)
+            assert has_expected_keyword, \
                 f"Persona {persona_id} instructions missing expected keywords: {keywords}"
 
     def test_system_prompt_provides_clear_guidance(self) -> None:

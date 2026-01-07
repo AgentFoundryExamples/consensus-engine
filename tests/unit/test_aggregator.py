@@ -48,19 +48,29 @@ class TestAggregatePersonaReviews:
 
     def test_aggregator_computes_weighted_average(self) -> None:
         """Test that aggregator correctly computes weighted confidence."""
+        from consensus_engine.config.personas import get_persona_weights
+
+        persona_weights = get_persona_weights()
+
         reviews = [
-            create_persona_review("architect", "Architect", 0.80),  # weight 0.25
-            create_persona_review("critic", "Critic", 0.70),  # weight 0.25
-            create_persona_review("optimist", "Optimist", 0.90),  # weight 0.15
-            create_persona_review("security_guardian", "SecurityGuardian", 0.75),  # weight 0.20
-            create_persona_review("user_advocate", "UserAdvocate", 0.85),  # weight 0.15
+            create_persona_review("architect", "Architect", 0.80),
+            create_persona_review("critic", "Critic", 0.70),
+            create_persona_review("optimist", "Optimist", 0.90),
+            create_persona_review("security_guardian", "SecurityGuardian", 0.75),
+            create_persona_review("user_advocate", "UserAdvocate", 0.85),
         ]
 
         result = aggregate_persona_reviews(reviews)
 
-        # Expected: 0.25*0.80 + 0.25*0.70 + 0.15*0.90 + 0.20*0.75 + 0.15*0.85
-        #         = 0.20 + 0.175 + 0.135 + 0.15 + 0.1275 = 0.7875
-        assert result.weighted_confidence == pytest.approx(0.7875, abs=0.0001)
+        # Expected: weighted sum of confidence scores
+        expected = (
+            persona_weights["architect"] * 0.80
+            + persona_weights["critic"] * 0.70
+            + persona_weights["optimist"] * 0.90
+            + persona_weights["security_guardian"] * 0.75
+            + persona_weights["user_advocate"] * 0.85
+        )
+        assert result.weighted_confidence == pytest.approx(expected, abs=0.0001)
         assert result.overall_weighted_confidence == result.weighted_confidence
 
     def test_aggregator_applies_approve_threshold(self) -> None:
@@ -429,9 +439,7 @@ class TestAggregatePersonaReviews:
                 "security_guardian",
                 "SecurityGuardian",
                 0.80,
-                blocking_issues=[
-                    BlockingIssue(text="Issue", security_critical=None)  # Explicitly None
-                ],
+                blocking_issues=[BlockingIssue(text="Issue", security_critical=None)],
             ),
             create_persona_review("user_advocate", "UserAdvocate", 0.90),
         ]
