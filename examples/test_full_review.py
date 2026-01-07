@@ -73,7 +73,7 @@ def test_full_review():
             # Print score breakdown
             breakdown = decision.get("detailed_score_breakdown", {})
             if breakdown:
-                print(f"   Persona Weights:")
+                print("   Persona Weights:")
                 for persona_id, weight in breakdown["weights"].items():
                     score = breakdown["individual_scores"][persona_id]
                     contrib = breakdown["weighted_contributions"][persona_id]

@@ -10,11 +10,9 @@ from consensus_engine.app import create_app
 from consensus_engine.exceptions import (
     LLMAuthenticationError,
     LLMRateLimitError,
-    LLMTimeoutError,
-    SchemaValidationError,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
-from consensus_engine.schemas.review import BlockingIssue, Concern, PersonaReview
+from consensus_engine.schemas.review import Concern, PersonaReview
 
 
 @pytest.fixture
@@ -97,13 +95,6 @@ class TestFullReviewEndpoint:
                 dependency_risks=[],
             )
             persona_reviews.append(review)
-
-        mock_orchestrator_metadata = {
-            "run_id": "orchestrator-run-123",
-            "elapsed_time": 10.5,
-            "persona_count": 5,
-            "status": "success",
-        }
 
         mock_orchestrator_client = MagicMock()
         # Simulate the orchestrator calling create_structured_response multiple times
@@ -299,15 +290,13 @@ class TestFullReviewEndpoint:
 
         # Setup orchestrator mock with minimal persona reviews
         persona_reviews = []
-        for i, (persona_id, persona_name) in enumerate(
-            [
-                ("architect", "Architect"),
-                ("critic", "Critic"),
-                ("optimist", "Optimist"),
-                ("security_guardian", "SecurityGuardian"),
-                ("user_advocate", "UserAdvocate"),
-            ]
-        ):
+        for persona_id, persona_name in [
+            ("architect", "Architect"),
+            ("critic", "Critic"),
+            ("optimist", "Optimist"),
+            ("security_guardian", "SecurityGuardian"),
+            ("user_advocate", "UserAdvocate"),
+        ]:
             review = PersonaReview(
                 persona_name=persona_name,
                 persona_id=persona_id,

@@ -17,7 +17,6 @@ import pytest
 
 from consensus_engine.schemas.review import (
     BlockingIssue,
-    Concern,
     DecisionEnum,
     PersonaReview,
 )
