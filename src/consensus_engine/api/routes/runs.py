@@ -8,7 +8,8 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import status as http_status
 from sqlalchemy.orm import Session
 
 from consensus_engine.config.logging import get_logger
@@ -30,7 +31,7 @@ router = APIRouter(prefix="/v1", tags=["runs"])
 @router.get(
     "/runs",
     response_model=RunListResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=http_status.HTTP_200_OK,
     summary="List runs with filtering and pagination",
     description=(
         "Returns a paginated list of runs sorted by created_at descending. "
@@ -124,7 +125,7 @@ async def list_runs(
             status_enum = RunStatus(status)
         except ValueError as e:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid status: {status}. Must be one of: running, completed, failed",
             ) from e
 
@@ -134,7 +135,7 @@ async def list_runs(
             run_type_enum = RunType(run_type)
         except ValueError as e:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid run_type: {run_type}. Must be one of: initial, revision",
             ) from e
 
@@ -144,7 +145,7 @@ async def list_runs(
             parent_run_uuid = uuid.UUID(parent_run_id)
         except ValueError as e:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid parent_run_id UUID: {parent_run_id}",
             ) from e
 
@@ -154,7 +155,7 @@ async def list_runs(
             start_date_dt = datetime.fromisoformat(start_date)
         except ValueError as e:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid start_date format: {start_date}. Must be ISO 8601 format",
             ) from e
 
@@ -164,7 +165,7 @@ async def list_runs(
             end_date_dt = datetime.fromisoformat(end_date)
         except ValueError as e:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid end_date format: {end_date}. Must be ISO 8601 format",
             ) from e
 
@@ -225,7 +226,7 @@ async def list_runs(
 @router.get(
     "/runs/{run_id}",
     response_model=RunDetailResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=http_status.HTTP_200_OK,
     summary="Get full run details by ID",
     description=(
         "Returns the full run detail including metadata, proposal JSON, "
@@ -258,7 +259,7 @@ async def get_run_detail(
         run_uuid = uuid.UUID(run_id)
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=http_status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid run_id UUID: {run_id}",
         ) from e
 
@@ -267,7 +268,7 @@ async def get_run_detail(
 
     if run is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=f"Run not found: {run_id}",
         )
 

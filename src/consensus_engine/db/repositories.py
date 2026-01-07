@@ -168,6 +168,126 @@ class RunRepository:
         """
         return session.get(Run, run_id)
 
+    @staticmethod
+    def list_runs(
+        session: Session,
+        limit: int = 30,
+        offset: int = 0,
+        status: RunStatus | None = None,
+        run_type: RunType | None = None,
+        parent_run_id: uuid.UUID | None = None,
+        decision: str | None = None,
+        min_confidence: float | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> tuple[list[Run], int]:
+        """List runs with filtering, pagination, and ordering.
+
+        Args:
+            session: Database session
+            limit: Number of items per page
+            offset: Offset for pagination
+            status: Optional filter by status
+            run_type: Optional filter by run_type
+            parent_run_id: Optional filter by parent_run_id
+            decision: Optional filter by decision_label
+            min_confidence: Optional filter by minimum overall_weighted_confidence
+            start_date: Optional filter by created_at >= start_date
+            end_date: Optional filter by created_at <= end_date
+
+        Returns:
+            Tuple of (list of Run instances, total count)
+        """
+        from sqlalchemy import func, select
+
+        query = select(Run)
+        count_query = select(func.count()).select_from(Run)
+
+        # Apply filters
+        if status is not None:
+            query = query.where(Run.status == status)
+            count_query = count_query.where(Run.status == status)
+
+        if run_type is not None:
+            query = query.where(Run.run_type == run_type)
+            count_query = count_query.where(Run.run_type == run_type)
+
+        if parent_run_id is not None:
+            query = query.where(Run.parent_run_id == parent_run_id)
+            count_query = count_query.where(Run.parent_run_id == parent_run_id)
+
+        if decision is not None:
+            query = query.where(Run.decision_label == decision)
+            count_query = count_query.where(Run.decision_label == decision)
+
+        if min_confidence is not None:
+            query = query.where(Run.overall_weighted_confidence >= min_confidence)
+            count_query = count_query.where(Run.overall_weighted_confidence >= min_confidence)
+
+        if start_date is not None:
+            query = query.where(Run.created_at >= start_date)
+            count_query = count_query.where(Run.created_at >= start_date)
+
+        if end_date is not None:
+            query = query.where(Run.created_at <= end_date)
+            count_query = count_query.where(Run.created_at <= end_date)
+
+        # Order by created_at descending (newest first)
+        query = query.order_by(Run.created_at.desc())
+
+        # Apply pagination
+        query = query.limit(limit).offset(offset)
+
+        # Execute queries
+        runs = list(session.execute(query).scalars().all())
+        total = session.execute(count_query).scalar_one()
+
+        logger.info(
+            f"Listed {len(runs)} runs (total={total}, limit={limit}, offset={offset})",
+            extra={"count": len(runs), "total": total, "limit": limit, "offset": offset}
+        )
+
+        return runs, total
+
+    @staticmethod
+    def get_run_with_relations(session: Session, run_id: uuid.UUID) -> Run | None:
+        """Retrieve a Run by ID with all related data eagerly loaded.
+
+        Args:
+            session: Database session
+            run_id: Run ID
+
+        Returns:
+            Run instance with relations loaded, or None if not found
+        """
+        from sqlalchemy import select
+        from sqlalchemy.orm import joinedload
+
+        query = (
+            select(Run)
+            .where(Run.id == run_id)
+            .options(
+                joinedload(Run.proposal_version),
+                joinedload(Run.persona_reviews),
+                joinedload(Run.decision),
+            )
+        )
+
+        result = session.execute(query).unique().scalar_one_or_none()
+
+        if result:
+            logger.info(
+                f"Retrieved run {run_id} with relations",
+                extra={"run_id": str(run_id)}
+            )
+        else:
+            logger.warning(
+                f"Run {run_id} not found",
+                extra={"run_id": str(run_id)}
+            )
+
+        return result
+
 
 class ProposalVersionRepository:
     """Repository for ProposalVersion model operations."""
@@ -371,122 +491,3 @@ class DecisionRepository:
             logger.error(f"Failed to create Decision for run_id={run_id}: {e}", exc_info=True)
             raise
 
-    @staticmethod
-    def list_runs(
-        session: Session,
-        limit: int = 30,
-        offset: int = 0,
-        status: RunStatus | None = None,
-        run_type: RunType | None = None,
-        parent_run_id: uuid.UUID | None = None,
-        decision: str | None = None,
-        min_confidence: float | None = None,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None,
-    ) -> tuple[list[Run], int]:
-        """List runs with filtering, pagination, and ordering.
-
-        Args:
-            session: Database session
-            limit: Number of items per page
-            offset: Offset for pagination
-            status: Optional filter by status
-            run_type: Optional filter by run_type
-            parent_run_id: Optional filter by parent_run_id
-            decision: Optional filter by decision_label
-            min_confidence: Optional filter by minimum overall_weighted_confidence
-            start_date: Optional filter by created_at >= start_date
-            end_date: Optional filter by created_at <= end_date
-
-        Returns:
-            Tuple of (list of Run instances, total count)
-        """
-        from sqlalchemy import func, select
-
-        query = select(Run)
-        count_query = select(func.count()).select_from(Run)
-
-        # Apply filters
-        if status is not None:
-            query = query.where(Run.status == status)
-            count_query = count_query.where(Run.status == status)
-
-        if run_type is not None:
-            query = query.where(Run.run_type == run_type)
-            count_query = count_query.where(Run.run_type == run_type)
-
-        if parent_run_id is not None:
-            query = query.where(Run.parent_run_id == parent_run_id)
-            count_query = count_query.where(Run.parent_run_id == parent_run_id)
-
-        if decision is not None:
-            query = query.where(Run.decision_label == decision)
-            count_query = count_query.where(Run.decision_label == decision)
-
-        if min_confidence is not None:
-            query = query.where(Run.overall_weighted_confidence >= min_confidence)
-            count_query = count_query.where(Run.overall_weighted_confidence >= min_confidence)
-
-        if start_date is not None:
-            query = query.where(Run.created_at >= start_date)
-            count_query = count_query.where(Run.created_at >= start_date)
-
-        if end_date is not None:
-            query = query.where(Run.created_at <= end_date)
-            count_query = count_query.where(Run.created_at <= end_date)
-
-        # Order by created_at descending (newest first)
-        query = query.order_by(Run.created_at.desc())
-
-        # Apply pagination
-        query = query.limit(limit).offset(offset)
-
-        # Execute queries
-        runs = list(session.execute(query).scalars().all())
-        total = session.execute(count_query).scalar_one()
-
-        logger.info(
-            f"Listed {len(runs)} runs (total={total}, limit={limit}, offset={offset})",
-            extra={"count": len(runs), "total": total, "limit": limit, "offset": offset}
-        )
-
-        return runs, total
-
-    @staticmethod
-    def get_run_with_relations(session: Session, run_id: uuid.UUID) -> Run | None:
-        """Retrieve a Run by ID with all related data eagerly loaded.
-
-        Args:
-            session: Database session
-            run_id: Run ID
-
-        Returns:
-            Run instance with relations loaded, or None if not found
-        """
-        from sqlalchemy import select
-        from sqlalchemy.orm import joinedload
-
-        query = (
-            select(Run)
-            .where(Run.id == run_id)
-            .options(
-                joinedload(Run.proposal_version),
-                joinedload(Run.persona_reviews),
-                joinedload(Run.decision),
-            )
-        )
-
-        result = session.execute(query).unique().scalar_one_or_none()
-
-        if result:
-            logger.info(
-                f"Retrieved run {run_id} with relations",
-                extra={"run_id": str(run_id)}
-            )
-        else:
-            logger.warning(
-                f"Run {run_id} not found",
-                extra={"run_id": str(run_id)}
-            )
-
-        return result
