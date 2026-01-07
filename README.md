@@ -6,10 +6,63 @@ A FastAPI-based backend service with LLM integration for consensus building. Thi
 
 - **FastAPI Backend**: Modern async Python web framework
 - **LLM Integration**: OpenAI GPT-5.1 support with configurable parameters
+- **Multi-Persona Consensus**: Five specialized personas for comprehensive proposal review
 - **Configuration Management**: Pydantic-based settings with validation
 - **Structured Logging**: Environment-aware logging configuration
 - **Dependency Injection**: Clean separation of concerns
 - **Comprehensive Testing**: Unit and integration tests with pytest
+
+## Multi-Persona Consensus System
+
+The Consensus Engine employs a multi-persona approach to evaluate proposals from diverse perspectives, ensuring comprehensive analysis and balanced decision-making.
+
+### Personas
+
+The system includes five specialized personas, each with distinct expertise and focus areas:
+
+#### 1. Architect (Weight: 0.25)
+- **Focus**: System design, scalability, maintainability, and technical architecture
+- **Role**: Evaluates proposals for architectural soundness, design patterns, and long-term viability
+- **Evaluates**: Design quality, scalability concerns, architectural patterns, technical debt
+
+#### 2. Critic (Weight: 0.25)
+- **Focus**: Risks, edge cases, potential failures, and implementation challenges
+- **Role**: Provides skeptical analysis to ensure thorough consideration of downsides
+- **Evaluates**: Risk factors, edge cases, failure modes, implementation complexity
+
+#### 3. Optimist (Weight: 0.15)
+- **Focus**: Strengths, opportunities, and positive aspects
+- **Role**: Balances critical feedback with recognition of good ideas and feasible approaches
+- **Evaluates**: Proposal strengths, feasibility, practical opportunities, potential for success
+
+#### 4. SecurityGuardian (Weight: 0.20)
+- **Focus**: Security vulnerabilities, data protection, authentication, authorization
+- **Role**: Security expert with **veto power** through `security_critical` blocking issues
+- **Evaluates**: Security risks, vulnerabilities, compliance, data protection, authentication
+
+**Veto Power**: The SecurityGuardian can mark blocking issues with `security_critical: true`, giving these issues special weight in decision aggregation. This ensures critical security concerns cannot be overlooked.
+
+#### 5. UserAdvocate (Weight: 0.15)
+- **Focus**: Usability, user experience, accessibility, and value delivery
+- **Role**: Advocates for user needs and practical utility
+- **Evaluates**: UX quality, accessibility, user value, ease of use
+
+### Consensus Thresholds
+
+Decision outcomes are determined by weighted confidence scores:
+
+- **Approve**: `weighted_confidence >= 0.80` (and no blocking issues)
+- **Revise**: `0.60 <= weighted_confidence < 0.80` (and no blocking issues)
+- **Reject**: `weighted_confidence < 0.60` or has blocking issues
+
+### Consensus Configuration
+
+All personas share a common configuration:
+- **Temperature**: 0.2 (low temperature for deterministic, consistent reviews)
+- **Weights**: Sum to exactly 1.0 for proper aggregation
+- **Model**: Uses configured `REVIEW_MODEL` (default: gpt-5.1)
+
+The persona weights and thresholds are defined in `src/consensus_engine/config/personas.py` and validated at startup to ensure correctness.
 
 ## Project Structure
 
@@ -733,17 +786,22 @@ Represents a detailed proposal expanded from a brief idea. All strings are autom
 Represents a review from a specific persona evaluating a proposal.
 
 **Required Fields:**
-- `persona_name` (str): Name of the reviewing persona
+- `persona_name` (str): Name of the reviewing persona (e.g., "Architect", "SecurityGuardian")
+- `persona_id` (str): Stable identifier for the persona (e.g., "architect", "security_guardian")
 - `confidence_score` (float): Confidence in the proposal, range [0.0, 1.0]
 - `strengths` (list[str]): Identified strengths in the proposal
 - `concerns` (list[Concern]): Concerns with blocking flags
 - `recommendations` (list[str]): Actionable recommendations
-- `blocking_issues` (list[str]): Critical blocking issues (can be empty)
+- `blocking_issues` (list[BlockingIssue]): Critical blocking issues with optional security flags (can be empty)
 - `estimated_effort` (str | dict[str, Any]): Effort estimation
 - `dependency_risks` (list[str | dict[str, Any]]): Identified dependency risks (can be empty)
 
 **Optional Fields:**
-- `persona_id` (UUID | None): UUID for tracking persona identity
+- `internal_metadata` (dict[str, Any] | None): Internal metadata for tracking (e.g., model, duration, timestamps)
+
+**BlockingIssue Schema:**
+- `text` (str): The blocking issue description
+- `security_critical` (bool | None): Whether this is a security-critical issue (SecurityGuardian veto power)
 
 **Concern Schema:**
 - `text` (str): The concern description
@@ -754,47 +812,121 @@ Represents a review from a specific persona evaluating a proposal.
 - String list items must be non-empty after trimming
 - `dependency_risks` accepts both strings and structured dicts
 - Empty strings in `dependency_risks` are filtered out
+- `security_critical` flag on BlockingIssue enables SecurityGuardian veto power
 
 #### DecisionAggregation
 
-Represents aggregated decision from multiple persona reviews.
+Represents aggregated decision from multiple persona reviews with comprehensive score breakdown.
 
 **Required Fields:**
-- `overall_weighted_confidence` (float): Weighted confidence across all personas [0.0, 1.0]
+- `overall_weighted_confidence` (float): Weighted confidence across all personas [0.0, 1.0] (legacy field)
 - `decision` (DecisionEnum): Final decision outcome (approve/revise/reject)
-- `score_breakdown` (dict[str, PersonaScoreBreakdown]): Per-persona scoring details
 
-**Optional Fields:**
-- `minority_report` (MinorityReport | None): Dissenting opinion from minority persona
+**Optional Fields (New Schema):**
+- `weighted_confidence` (float | None): Weighted confidence (mirrors overall_weighted_confidence)
+- `detailed_score_breakdown` (DetailedScoreBreakdown | None): Comprehensive scoring details
+- `minority_reports` (list[MinorityReport] | None): Multiple dissenting opinions
+
+**Optional Fields (Legacy Schema):**
+- `score_breakdown` (dict[str, PersonaScoreBreakdown] | None): Per-persona scoring (legacy format)
+- `minority_report` (MinorityReport | None): Single dissenting opinion (legacy field)
 
 **DecisionEnum Values:**
-- `APPROVE`: "approve"
-- `REVISE`: "revise"
-- `REJECT`: "reject"
+- `APPROVE`: "approve" - Proposal approved (weighted_confidence >= 0.80, no blocking issues)
+- `REVISE`: "revise" - Proposal needs revision (0.60 <= weighted_confidence < 0.80, no blocking issues)
+- `REJECT`: "reject" - Proposal rejected (weighted_confidence < 0.60 or has blocking issues)
 
-**PersonaScoreBreakdown:**
+**DetailedScoreBreakdown:**
+- `weights` (dict[str, float]): Persona IDs mapped to their weights
+- `individual_scores` (dict[str, float]): Persona IDs mapped to their confidence scores
+- `weighted_contributions` (dict[str, float]): Persona IDs mapped to their weighted contribution (weight * score)
+- `formula` (str): Description of the aggregation formula (e.g., "weighted_confidence = sum(weight_i * score_i)")
+
+**PersonaScoreBreakdown (Legacy):**
 - `weight` (float): Weight assigned to persona's review (>= 0.0)
 - `notes` (str | None): Optional notes about persona's contribution
 
-**MinorityReport:**
+**MinorityReport (Extended):**
+- `persona_id` (str): Stable identifier of dissenting persona
 - `persona_name` (str): Name of dissenting persona
-- `strengths` (list[str]): Identified strengths from minority view
-- `concerns` (list[str]): Concerns from minority view
+- `confidence_score` (float): Confidence score of dissenting persona [0.0, 1.0]
+- `blocking_summary` (str): Summary of blocking issues from dissenting persona
+- `mitigation_recommendation` (str): Recommended mitigation for blocking issues
+- `strengths` (list[str] | None): Optional strengths (backward compatibility)
+- `concerns` (list[str] | None): Optional concerns (backward compatibility)
 
 **Validation:**
-- `overall_weighted_confidence` must be between 0.0 and 1.0
+- `overall_weighted_confidence` and `weighted_confidence` must be between 0.0 and 1.0
+- Weights in `detailed_score_breakdown` should sum to 1.0
 - When only one persona exists, confidence matches that reviewer's score
-- Weights must be non-negative
+- Multiple minority reports support simultaneous dissenters
+
+**Score Breakdown Contract:**
+
+The `detailed_score_breakdown` provides full transparency into how the final decision was computed:
+
+1. **weights**: Shows each persona's influence (must sum to 1.0)
+2. **individual_scores**: Shows each persona's confidence score
+3. **weighted_contributions**: Shows each persona's contribution to final score (weight × score)
+4. **formula**: Documents the exact aggregation method used
+
+Example:
+```python
+detailed_score_breakdown = DetailedScoreBreakdown(
+    weights={
+        "architect": 0.25,
+        "critic": 0.25,
+        "optimist": 0.15,
+        "security_guardian": 0.20,
+        "user_advocate": 0.15
+    },
+    individual_scores={
+        "architect": 0.80,
+        "critic": 0.70,
+        "optimist": 0.90,
+        "security_guardian": 0.75,
+        "user_advocate": 0.85
+    },
+    weighted_contributions={
+        "architect": 0.200,
+        "critic": 0.175,
+        "optimist": 0.135,
+        "security_guardian": 0.150,
+        "user_advocate": 0.1275
+    },
+    formula="weighted_confidence = sum(weight_i * score_i for each persona i) = 0.7875"
+)
+```
+
+**Minority Report Triggers:**
+
+Minority reports are generated when:
+1. A persona's confidence significantly differs from the majority
+2. A persona has blocking issues that were overruled
+3. A persona strongly dissents from the final decision
+
+Multiple minority reports can be present when several personas dissent.
+
+**SecurityGuardian Veto Behavior:**
+
+The SecurityGuardian can exercise veto power by marking blocking issues with `security_critical: true`:
+- Security-critical blocking issues trigger automatic REJECT decision
+- This ensures critical security vulnerabilities are never overlooked
+- Non-security blocking issues from SecurityGuardian follow normal aggregation rules
+- Only SecurityGuardian blocking issues can have the `security_critical` flag
 
 ### Usage Examples
 
 ```python
 from consensus_engine.schemas import (
-    ExpandedProposal,
-    PersonaReview,
+    BlockingIssue,
     Concern,
     DecisionAggregation,
     DecisionEnum,
+    DetailedScoreBreakdown,
+    ExpandedProposal,
+    MinorityReport,
+    PersonaReview,
     PersonaScoreBreakdown,
 )
 
@@ -807,29 +939,64 @@ proposal = ExpandedProposal(
     title="API Performance Improvement",
 )
 
-# Create a persona review
+# Create a persona review with new schema
 review = PersonaReview(
-    persona_name="Performance Engineer",
-    confidence_score=0.85,
+    persona_name="SecurityGuardian",
+    persona_id="security_guardian",
+    confidence_score=0.40,
     strengths=["Good caching strategy", "Realistic assumptions"],
     concerns=[
-        Concern(text="No cache invalidation strategy", is_blocking=True),
+        Concern(text="No authentication on cache", is_blocking=True),
         Concern(text="Redis cluster sizing unclear", is_blocking=False),
     ],
-    recommendations=["Define invalidation rules", "Size Redis cluster"],
-    blocking_issues=["No cache invalidation strategy"],
+    recommendations=["Add Redis authentication", "Size Redis cluster"],
+    blocking_issues=[
+        BlockingIssue(text="No authentication on cache", security_critical=True),
+        BlockingIssue(text="Missing cache invalidation strategy", security_critical=False),
+    ],
     estimated_effort="2 weeks",
     dependency_risks=["Redis cluster setup", "Cache key design"],
+    internal_metadata={"model": "gpt-5.1", "duration": 2.5},
 )
 
-# Create a decision aggregation
+# Create a decision aggregation with detailed score breakdown
 decision = DecisionAggregation(
-    overall_weighted_confidence=0.75,
-    decision=DecisionEnum.REVISE,
-    score_breakdown={
-        "Performance": PersonaScoreBreakdown(weight=0.6, notes="Major concerns"),
-        "Security": PersonaScoreBreakdown(weight=0.4, notes="Minor issues"),
-    },
+    overall_weighted_confidence=0.7875,
+    weighted_confidence=0.7875,
+    decision=DecisionEnum.APPROVE,
+    detailed_score_breakdown=DetailedScoreBreakdown(
+        weights={
+            "architect": 0.25,
+            "critic": 0.25,
+            "optimist": 0.15,
+            "security_guardian": 0.20,
+            "user_advocate": 0.15,
+        },
+        individual_scores={
+            "architect": 0.80,
+            "critic": 0.70,
+            "optimist": 0.90,
+            "security_guardian": 0.75,
+            "user_advocate": 0.85,
+        },
+        weighted_contributions={
+            "architect": 0.200,
+            "critic": 0.175,
+            "optimist": 0.135,
+            "security_guardian": 0.150,
+            "user_advocate": 0.1275,
+        },
+        formula="weighted_confidence = sum(weight_i * score_i for each persona i)",
+    ),
+    minority_reports=[
+        MinorityReport(
+            persona_id="critic",
+            persona_name="Critic",
+            confidence_score=0.50,
+            blocking_summary="Too many edge cases not addressed",
+            mitigation_recommendation="Add comprehensive error handling and edge case tests",
+        )
+    ],
 )
 ```
 
