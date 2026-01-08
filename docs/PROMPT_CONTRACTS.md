@@ -447,7 +447,7 @@ _registry.register(
   ```
   X-API-Deprecation: true
   X-API-Sunset: 2026-12-31
-  X-API-Migration-Guide: https://docs.example.com/migration-v2
+  X-API-Migration-Guide: https://<your-docs-domain>/migration-v2
   ```
 - Log usage of deprecated endpoints for monitoring
 
