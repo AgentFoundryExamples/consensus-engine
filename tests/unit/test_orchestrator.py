@@ -117,7 +117,7 @@ class TestReviewWithAllPersonas:
 
         mock_client = MagicMock()
         # Return different reviews for each call
-        mock_client.create_structured_response.side_effect = [
+        mock_client.create_structured_response_with_payload.side_effect = [
             (review, {"request_id": f"req-{i}", "model": "gpt-5.1", "latency": 1.0})
             for i, review in enumerate(mock_reviews)
         ]
@@ -128,7 +128,7 @@ class TestReviewWithAllPersonas:
 
         # Verify all five personas were called
         assert len(reviews) == 5
-        assert mock_client.create_structured_response.call_count == 5
+        assert mock_client.create_structured_response_with_payload.call_count == 5
 
         # Verify persona order matches config
         assert reviews[0].persona_id == "architect"
@@ -164,7 +164,7 @@ class TestReviewWithAllPersonas:
 
         mock_client = MagicMock()
         # Return same review 5 times
-        mock_client.create_structured_response.return_value = (
+        mock_client.create_structured_response_with_payload.return_value = (
             mock_review,
             {
                 "request_id": "test-req",
@@ -194,7 +194,7 @@ class TestReviewWithAllPersonas:
     ) -> None:
         """Test that orchestrator fails immediately if first persona fails."""
         mock_client = MagicMock()
-        mock_client.create_structured_response.side_effect = LLMServiceError(
+        mock_client.create_structured_response_with_payload.side_effect = LLMServiceError(
             "API error", code="LLM_SERVICE_ERROR"
         )
         mock_client_class.return_value = mock_client
@@ -204,7 +204,7 @@ class TestReviewWithAllPersonas:
             review_with_all_personas(sample_proposal, mock_settings)
 
         # Verify only one call was made (failed immediately)
-        assert mock_client.create_structured_response.call_count == 1
+        assert mock_client.create_structured_response_with_payload.call_count == 1
 
     @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
     def test_orchestrator_fails_on_middle_persona_error(
@@ -228,7 +228,7 @@ class TestReviewWithAllPersonas:
 
         mock_client = MagicMock()
         # First two succeed, third fails
-        mock_client.create_structured_response.side_effect = [
+        mock_client.create_structured_response_with_payload.side_effect = [
             (mock_review, {"request_id": "req-1"}),
             (mock_review, {"request_id": "req-2"}),
             LLMServiceError("API error", code="LLM_SERVICE_ERROR"),
@@ -240,7 +240,7 @@ class TestReviewWithAllPersonas:
             review_with_all_personas(sample_proposal, mock_settings)
 
         # Verify three calls were made before failure
-        assert mock_client.create_structured_response.call_count == 3
+        assert mock_client.create_structured_response_with_payload.call_count == 3
 
     @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
     def test_orchestrator_uses_correct_temperature_per_persona(
@@ -263,7 +263,7 @@ class TestReviewWithAllPersonas:
         )
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (
+        mock_client.create_structured_response_with_payload.return_value = (
             mock_review,
             {"request_id": "test-req"},
         )
@@ -273,7 +273,7 @@ class TestReviewWithAllPersonas:
         review_with_all_personas(sample_proposal, mock_settings)
 
         # Verify all calls used temperature 0.2
-        for call in mock_client.create_structured_response.call_args_list:
+        for call in mock_client.create_structured_response_with_payload.call_args_list:
             assert call[1]["temperature_override"] == 0.2
 
     @patch("consensus_engine.services.orchestrator.OpenAIClientWrapper")
@@ -297,7 +297,7 @@ class TestReviewWithAllPersonas:
         )
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (
+        mock_client.create_structured_response_with_payload.return_value = (
             mock_review,
             {"request_id": "test-req"},
         )
@@ -307,14 +307,15 @@ class TestReviewWithAllPersonas:
         review_with_all_personas(sample_proposal, mock_settings)
 
         # Verify developer instructions contain persona names
-        calls = mock_client.create_structured_response.call_args_list
+        calls = mock_client.create_structured_response_with_payload.call_args_list
         assert len(calls) == 5
 
         # Check that each call has different persona instructions
         persona_names = ["Architect", "Critic", "Optimist", "SecurityGuardian", "UserAdvocate"]
         for i, call in enumerate(calls):
-            developer_instruction = call[1]["developer_instruction"]
-            assert persona_names[i] in developer_instruction
+            instruction_payload = call[1]["instruction_payload"]
+            # The persona name should be in the combined instruction (via with_persona)
+            assert persona_names[i] in instruction_payload.combined_instruction
 
 
 class TestDeterminePersonasToRerun:

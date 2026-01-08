@@ -608,14 +608,16 @@ class PipelineWorker:
                         },
                     )
                     continue
-                
-                # Build prompt parameters
+
+                # Build prompt parameters with centralized config
+                llm_config = self.settings.get_llm_steps_config()
                 prompt_parameters = {
                     "model": self.settings.review_model,
                     "temperature": self.settings.review_temperature,
                     "persona_template_version": self.settings.persona_template_version,
+                    "prompt_set_version": llm_config.prompt_set_version,
                 }
-                
+
                 PersonaReviewRepository.create_persona_review(
                     session=session,
                     run_id=run.id,

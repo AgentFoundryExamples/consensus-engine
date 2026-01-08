@@ -15,12 +15,14 @@
 
 This module provides the reviewProposal service that uses OpenAI's structured
 outputs to generate persona-based reviews of expanded proposals with validated
-structure.
+structure. Uses centralized configuration and instruction builder.
 """
 
 from typing import Any
 
 from consensus_engine.clients.openai_client import OpenAIClientWrapper
+from consensus_engine.config.instruction_builder import InstructionBuilder
+from consensus_engine.config.llm_steps import StepName
 from consensus_engine.config.logging import get_logger
 from consensus_engine.config.settings import Settings
 from consensus_engine.schemas.proposal import ExpandedProposal
@@ -74,7 +76,7 @@ def review_proposal(
 
     This function validates the input proposal, constructs persona-aware prompts,
     invokes the OpenAI client with structured outputs, and returns a validated
-    PersonaReview model.
+    PersonaReview model. Uses centralized configuration and instruction builder.
 
     Args:
         expanded_proposal: Validated ExpandedProposal to review
@@ -98,6 +100,10 @@ def review_proposal(
         f"Starting proposal review with persona={persona_name}",
         extra={"persona_name": persona_name},
     )
+
+    # Get centralized step configuration
+    llm_config = settings.get_llm_steps_config()
+    review_config = llm_config.get_step_config(StepName.REVIEW)
 
     # Construct developer instruction with persona context
     developer_instruction = REVIEW_DEVELOPER_INSTRUCTION_TEMPLATE.format(
@@ -185,18 +191,26 @@ def review_proposal(
                 )
         user_prompt = f"**Summary:** {summary_truncated}\n\n" + user_prompt
 
+    # Build instruction payload using InstructionBuilder
+    instruction_payload = InstructionBuilder.create_review_payload(
+        system_instruction=REVIEW_SYSTEM_INSTRUCTION,
+        developer_instruction=developer_instruction,
+        user_content=user_prompt,
+        persona_name=persona_name,
+        persona_instructions=persona_instructions,
+    )
+
     # Initialize OpenAI client
     client = OpenAIClientWrapper(settings)
 
-    # Call OpenAI with structured output for review
-    parsed_response, metadata = client.create_structured_response(
-        system_instruction=REVIEW_SYSTEM_INSTRUCTION,
-        user_prompt=user_prompt,
+    # Call OpenAI with structured output for review using instruction payload
+    parsed_response, metadata = client.create_structured_response_with_payload(
+        instruction_payload=instruction_payload,
         response_model=PersonaReview,
-        developer_instruction=developer_instruction,
         step_name="review",
-        model_override=settings.review_model,
-        temperature_override=settings.review_temperature,
+        model_override=review_config.model,
+        temperature_override=review_config.temperature,
+        max_retries=review_config.max_retries,
     )
 
     # Add truncation info to metadata if truncation occurred
@@ -214,6 +228,7 @@ def review_proposal(
             "temperature": metadata.get("temperature"),
             "elapsed_time": metadata.get("elapsed_time"),
             "latency": metadata.get("latency"),
+            "prompt_set_version": metadata.get("prompt_set_version"),
             "status": "success",
             "truncated_fields": truncation_details if truncation_occurred else None,
         },

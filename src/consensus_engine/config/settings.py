@@ -19,10 +19,14 @@ It handles environment variable loading, validation, and provides sensible defau
 
 from enum import Enum
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from urllib.parse import quote_plus
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from consensus_engine.config.llm_steps import LLMStepsConfig
 
 
 class Environment(str, Enum):
@@ -100,6 +104,21 @@ class Settings(BaseSettings):
         ge=0.0,
         le=1.0,
         description="Temperature for review (0.0-1.0, default: 0.2 for deterministic reviews)",
+    )
+
+    # Aggregation Configuration
+    aggregate_model: str = Field(
+        default="gpt-5.1",
+        description="Model for aggregation step (default: gpt-5.1)",
+    )
+    aggregate_temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Temperature for aggregation (0.0-1.0, "
+            "default: 0.0 for deterministic aggregation)"
+        ),
     )
 
     # Persona Configuration
@@ -236,7 +255,7 @@ class Settings(BaseSettings):
         description="Pub/Sub subscription name for worker to consume",
         min_length=1,
     )
-    
+
     # Worker Configuration
     worker_max_concurrency: int = Field(
         default=10,
@@ -392,6 +411,46 @@ class Settings(BaseSettings):
             # Mask database password for safe logging
             data["db_password"] = "***MASKED***"
         return data
+
+    def get_llm_steps_config(self) -> "LLMStepsConfig":
+        """Get centralized LLM steps configuration from settings.
+
+        Creates an LLMStepsConfig instance populated with step-specific
+        settings from environment variables. This provides a unified
+        configuration surface for all LLM pipeline steps.
+
+        Returns:
+            LLMStepsConfig instance with expand, review, and aggregate configs
+
+        Raises:
+            ValidationError: If any step configuration is invalid
+        """
+        from consensus_engine.config.llm_steps import LLMStepsConfig, StepConfig, StepName
+
+        return LLMStepsConfig(
+            expand=StepConfig(
+                step_name=StepName.EXPAND,
+                model=self.expand_model,
+                temperature=self.expand_temperature,
+                max_retries=self.max_retries_per_persona,
+                timeout_seconds=self.worker_step_timeout_seconds,
+            ),
+            review=StepConfig(
+                step_name=StepName.REVIEW,
+                model=self.review_model,
+                temperature=self.review_temperature,
+                max_retries=self.max_retries_per_persona,
+                timeout_seconds=self.worker_step_timeout_seconds,
+            ),
+            aggregate=StepConfig(
+                step_name=StepName.AGGREGATE,
+                model=self.aggregate_model,
+                temperature=self.aggregate_temperature,
+                max_retries=self.max_retries_per_persona,
+                timeout_seconds=self.worker_step_timeout_seconds,
+            ),
+            prompt_set_version=self.persona_template_version,
+        )
 
 
 @lru_cache

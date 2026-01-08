@@ -15,7 +15,7 @@
 
 This module provides the expandIdea service that uses OpenAI's structured
 outputs to expand a simple idea into a comprehensive proposal with validated
-structure.
+structure. Uses centralized configuration and instruction builder.
 """
 
 import json
@@ -23,6 +23,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from consensus_engine.clients.openai_client import OpenAIClientWrapper
+from consensus_engine.config.instruction_builder import InstructionBuilder
+from consensus_engine.config.llm_steps import StepName
 from consensus_engine.config.logging import get_logger
 from consensus_engine.config.settings import Settings
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
@@ -58,7 +60,7 @@ def expand_idea(
 
     This function validates the input payload, constructs appropriate prompts,
     invokes the OpenAI client with structured outputs, and returns a validated
-    ExpandedProposal model.
+    ExpandedProposal model. Uses centralized configuration and instruction builder.
 
     Args:
         idea_input: Validated input payload containing the idea and optional context
@@ -74,6 +76,10 @@ def expand_idea(
     """
     logger.info("Starting idea expansion")
 
+    # Get centralized step configuration
+    llm_config = settings.get_llm_steps_config()
+    expand_config = llm_config.get_step_config(StepName.EXPAND)
+
     # Construct user prompt (note: prompt contains user input but is never logged)
     user_prompt = f"Expand the following idea into a detailed proposal:\n\n{idea_input.idea}"
 
@@ -81,18 +87,24 @@ def expand_idea(
     if idea_input.extra_context:
         user_prompt += f"\n\nAdditional Context:\n{idea_input.extra_context}"
 
+    # Build instruction payload using InstructionBuilder
+    instruction_payload = InstructionBuilder.create_expand_payload(
+        system_instruction=SYSTEM_INSTRUCTION,
+        developer_instruction=DEVELOPER_INSTRUCTION,
+        user_content=user_prompt,
+    )
+
     # Initialize OpenAI client
     client = OpenAIClientWrapper(settings)
 
-    # Call OpenAI with structured output
-    parsed_response, metadata = client.create_structured_response(
-        system_instruction=SYSTEM_INSTRUCTION,
-        user_prompt=user_prompt,
+    # Call OpenAI with structured output using instruction payload
+    parsed_response, metadata = client.create_structured_response_with_payload(
+        instruction_payload=instruction_payload,
         response_model=ExpandedProposal,
-        developer_instruction=DEVELOPER_INSTRUCTION,
         step_name="expand",
-        model_override=settings.expand_model,
-        temperature_override=settings.expand_temperature,
+        model_override=expand_config.model,
+        temperature_override=expand_config.temperature,
+        max_retries=expand_config.max_retries,
     )
 
     # Log success without sensitive data
@@ -105,6 +117,7 @@ def expand_idea(
             "temperature": metadata.get("temperature"),
             "elapsed_time": metadata.get("elapsed_time"),
             "latency": metadata.get("latency"),
+            "prompt_set_version": metadata.get("prompt_set_version"),
             "status": "success",
         },
     )
@@ -122,6 +135,7 @@ def expand_with_edits(
 
     This function takes a parent proposal and edit inputs, merges them intelligently,
     re-expands via the LLM to ensure coherence, and computes a diff for auditability.
+    Uses centralized configuration and instruction builder.
 
     Args:
         parent_proposal: The parent ExpandedProposal to base revisions on
@@ -138,6 +152,10 @@ def expand_with_edits(
         ValidationError: If input validation fails
     """
     logger.info("Starting proposal expansion with edits")
+
+    # Get centralized step configuration
+    llm_config = settings.get_llm_steps_config()
+    expand_config = llm_config.get_step_config(StepName.EXPAND)
 
     # Build the edit context from parent proposal and edit inputs
     parent_dict = json.loads(parent_proposal.model_dump_json())
@@ -168,18 +186,24 @@ def expand_with_edits(
         "while maintaining coherence and completeness."
     )
 
+    # Build instruction payload using InstructionBuilder
+    instruction_payload = InstructionBuilder.create_expand_payload(
+        system_instruction=SYSTEM_INSTRUCTION,
+        developer_instruction=DEVELOPER_INSTRUCTION,
+        user_content=user_prompt,
+    )
+
     # Initialize OpenAI client
     client = OpenAIClientWrapper(settings)
 
-    # Call OpenAI with structured output
-    parsed_response, metadata = client.create_structured_response(
-        system_instruction=SYSTEM_INSTRUCTION,
-        user_prompt=user_prompt,
+    # Call OpenAI with structured output using instruction payload
+    parsed_response, metadata = client.create_structured_response_with_payload(
+        instruction_payload=instruction_payload,
         response_model=ExpandedProposal,
-        developer_instruction=DEVELOPER_INSTRUCTION,
         step_name="expand_with_edits",
-        model_override=settings.expand_model,
-        temperature_override=settings.expand_temperature,
+        model_override=expand_config.model,
+        temperature_override=expand_config.temperature,
+        max_retries=expand_config.max_retries,
     )
 
     # Compute diff between parent and new proposal
@@ -196,6 +220,7 @@ def expand_with_edits(
             "temperature": metadata.get("temperature"),
             "elapsed_time": metadata.get("elapsed_time"),
             "latency": metadata.get("latency"),
+            "prompt_set_version": metadata.get("prompt_set_version"),
             "status": "success",
             "diff_fields": list(diff_json.get("changed_fields", {}).keys()),
         },
