@@ -1,0 +1,23 @@
+{
+  "problem_statement": "We need a way to systematically evaluate proposals from multiple expert perspectives",
+  "proposed_solution": "Implement a multi-persona consensus engine that evaluates proposals through specialized reviewer lenses",
+  "assumptions": [
+    "LLM responses are deterministic enough with temperature control",
+    "Five personas provide sufficient coverage of concerns",
+    "Weighted scoring accurately reflects relative importance"
+  ],
+  "scope_non_goals": [
+    "Real-time collaboration features",
+    "Human-in-the-loop review process",
+    "Multi-language support"
+  ],
+  "title": "Multi-Persona Consensus Engine",
+  "summary": "A system for evaluating proposals through multiple expert perspectives with aggregated decision-making",
+  "raw_idea": "Build a consensus engine with multiple personas",
+  "raw_expanded_proposal": "Detailed expansion of the original idea with problem statement, solution, and scope",
+  "metadata": {
+    "model": "gpt-5.1",
+    "temperature": 0.7,
+    "request_id": "test-request-123"
+  }
+}
