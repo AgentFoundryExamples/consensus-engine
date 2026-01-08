@@ -161,6 +161,34 @@ ENV=development
 | `DB_POOL_TIMEOUT` | No | `30` | Connection pool timeout in seconds (1-300) |
 | `DB_POOL_RECYCLE` | No | `3600` | Connection pool recycle time in seconds (60-7200) |
 
+**Google Cloud Pub/Sub Configuration:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `PUBSUB_PROJECT_ID` | Production | - | Google Cloud project ID for Pub/Sub (required for production) |
+| `PUBSUB_TOPIC` | No | `consensus-engine-jobs` | Pub/Sub topic name for job queue |
+| `PUBSUB_CREDENTIALS_FILE` | Local Dev | - | Path to service account JSON credentials file |
+| `PUBSUB_EMULATOR_HOST` | No | - | Pub/Sub emulator host (e.g., localhost:8085) for local testing |
+| `PUBSUB_USE_MOCK` | No | `false` | Use mock publisher for testing (no-op that logs messages) |
+
+**Pub/Sub Deployment Modes:**
+
+The API supports multiple modes for Pub/Sub integration:
+
+- **Production Mode**: Uses Application Default Credentials (ADC) or service account credentials
+  - Set `PUBSUB_PROJECT_ID` to your Google Cloud project ID
+  - On Cloud Run/GCE, ADC is automatically available
+  - For local deployment with real Pub/Sub, set `PUBSUB_CREDENTIALS_FILE` to your service account JSON file
+
+- **Emulator Mode**: Uses Pub/Sub emulator for local testing
+  - Set `PUBSUB_EMULATOR_HOST` to your emulator address (e.g., `localhost:8085`)
+  - Project ID can be any non-empty string when using emulator
+
+- **Mock Mode**: Uses no-op publisher for testing without Pub/Sub
+  - Set `PUBSUB_USE_MOCK=true`
+  - Messages are logged but not sent to Pub/Sub
+  - Useful for local development without emulator or credentials
+
 **Temperature Guidelines:**
 - Range: 0.0 to 1.0
 - **Expansion (0.7)**: Balanced creativity for generating comprehensive proposals
@@ -301,6 +329,45 @@ alembic revision --autogenerate -m "description"
 ```
 
 All migrations are idempotent and can be run multiple times safely.
+
+### Asynchronous Job Execution
+
+The Consensus Engine uses Google Cloud Pub/Sub for asynchronous job processing. When you submit a review request, the API:
+
+1. **Creates a Run** with `status='queued'` in the database
+2. **Initializes StepProgress** entries for all pipeline steps (expand, review_*, aggregate_decision)
+3. **Publishes a job message** to Pub/Sub containing run_id, run_type, priority, and request payload
+4. **Returns immediately** with run_id and status='queued'
+
+Clients should poll `GET /v1/runs/{run_id}` to check job status and retrieve results once processing completes.
+
+**Job Message Structure:**
+```json
+{
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "run_type": "initial",  // or "revision"
+  "priority": "normal",   // or "high"
+  "payload": {
+    "idea": "Build a REST API...",
+    "extra_context": {...},
+    "parameters": {...}
+  }
+}
+```
+
+**Run Lifecycle:**
+1. `queued` → Job enqueued, waiting for worker pickup
+2. `running` → Worker processing job (not yet implemented)
+3. `completed` → Job finished successfully with results
+4. `failed` → Job failed with error details
+
+**Benefits:**
+- **Fast response times**: API returns immediately without waiting for LLM calls
+- **Scalability**: Workers can process jobs independently
+- **Fault tolerance**: Failed jobs can be retried without affecting API availability
+- **Queue management**: Priority-based job ordering
+
+**Note**: Worker implementation is not yet complete. This release focuses on job enqueueing; worker processing will be added in a future release.
 
 ### Running the Server
 
@@ -496,7 +563,7 @@ curl -X POST http://localhost:8000/v1/review-idea \
 
 ### Full Review (POST /v1/full-review)
 
-Orchestrates idea expansion, multi-persona review, and decision aggregation in a single synchronous request. This endpoint expands a brief idea into a detailed proposal, reviews it with all five personas (Architect, Critic, Optimist, SecurityGuardian, UserAdvocate), and aggregates a final decision based on weighted consensus.
+Enqueues a job to expand an idea and review it with all five personas (Architect, Critic, Optimist, SecurityGuardian, UserAdvocate). The API creates a Run with `status='queued'`, publishes a job message to Pub/Sub, and returns immediately with run_id for status polling.
 
 **Request:**
 ```bash
@@ -520,97 +587,89 @@ Content-Type: application/json
 - `idea` (required, string): The core idea to expand and review with all personas (1-10 sentences)
 - `extra_context` (optional, dict or string): Additional context or constraints
 
-**Success Response (200):**
+**Success Response (202 Accepted):**
 ```json
 {
-  "expanded_proposal": {
-    "problem_statement": "Clear articulation of the problem to be solved",
-    "proposed_solution": "Detailed description of the solution approach",
-    "assumptions": ["Assumption 1", "Assumption 2"],
-    "scope_non_goals": ["Out of scope item 1"],
-    "raw_expanded_proposal": "Complete proposal text...",
-    "metadata": {
-      "request_id": "expand-550e8400-e29b-41d4-a716-446655440000",
-      "model": "gpt-5.1",
-      "temperature": 0.7,
-      "elapsed_time": 2.5
-    }
-  },
-  "persona_reviews": [
-    {
-      "persona_id": "architect",
-      "persona_name": "Architect",
-      "confidence_score": 0.85,
-      "strengths": ["Good architecture", "Scalable design"],
-      "concerns": [
-        {
-          "text": "Consider caching strategy",
-          "is_blocking": false
-        }
-      ],
-      "recommendations": ["Add Redis for caching"],
-      "blocking_issues": [],
-      "estimated_effort": "3-4 weeks",
-      "dependency_risks": []
-    },
-    {
-      "persona_id": "critic",
-      "persona_name": "Critic",
-      "confidence_score": 0.75,
-      "strengths": ["Clear scope"],
-      "concerns": [
-        {
-          "text": "Error handling not detailed",
-          "is_blocking": false
-        }
-      ],
-      "recommendations": ["Define error handling strategy"],
-      "blocking_issues": [],
-      "estimated_effort": "3-4 weeks",
-      "dependency_risks": ["Third-party API failures"]
-    },
-    {
-      "persona_id": "optimist",
-      "persona_name": "Optimist",
-      "confidence_score": 0.90,
-      "strengths": ["Practical approach", "Clear goals"],
-      "concerns": [],
-      "recommendations": ["Consider future extensibility"],
-      "blocking_issues": [],
-      "estimated_effort": "2-3 weeks",
-      "dependency_risks": []
-    },
-    {
-      "persona_id": "security_guardian",
-      "persona_name": "SecurityGuardian",
-      "confidence_score": 0.70,
-      "strengths": ["Authentication mentioned"],
-      "concerns": [
-        {
-          "text": "Input validation strategy unclear",
-          "is_blocking": false
-        }
-      ],
-      "recommendations": ["Define input validation and sanitization strategy"],
-      "blocking_issues": [],
-      "estimated_effort": "3-4 weeks",
-      "dependency_risks": []
-    },
-    {
-      "persona_id": "user_advocate",
-      "persona_name": "UserAdvocate",
-      "confidence_score": 0.82,
-      "strengths": ["User-centric", "Clear features"],
-      "concerns": [
-        {
-          "text": "Consider user onboarding flow",
-          "is_blocking": false
-        }
-      ],
-      "recommendations": ["Document API for users"],
-      "blocking_issues": [],
-      "estimated_effort": "3 weeks",
-      "dependency_risks": []
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "queued",
+  "run_type": "initial",
+  "priority": "normal",
+  "created_at": "2026-01-08T04:00:00.000000Z",
+  "queued_at": "2026-01-08T04:00:00.000000Z",
+  "message": "Full review job enqueued successfully. Poll GET /v1/runs/550e8400-e29b-41d4-a716-446655440000 for status."
+}
+```
+
+**Response Fields:**
+- `run_id`: Unique identifier for this run (use this to poll for status and results)
+- `status`: Current status of the run (`queued`)
+- `run_type`: Type of run (`initial` for new reviews, `revision` for re-reviews)
+- `priority`: Priority level (`normal` or `high`)
+- `created_at`: ISO 8601 timestamp when run was created
+- `queued_at`: ISO 8601 timestamp when job was enqueued
+- `message`: Human-readable message with polling instructions
+
+**Polling for Results:**
+
+After receiving the 202 response, poll `GET /v1/runs/{run_id}` to check status:
+
+```bash
+GET /v1/runs/550e8400-e29b-41d4-a716-446655440000
+```
+
+The response will include:
+- Current `status` (`queued`, `running`, `completed`, or `failed`)
+- When `status='completed'`: Full results including expanded_proposal, persona_reviews, and decision
+- When `status='failed'`: Error details
+
+**Job Processing:**
+1. Worker picks up the job from Pub/Sub (when worker is implemented)
+2. Expands the idea into a detailed proposal
+3. Reviews with all five personas
+4. Aggregates final decision
+5. Updates run status to `completed` with results
+
+**Status Codes:**
+- **202 Accepted**: Job enqueued successfully
+- **422 Unprocessable Entity**: Validation error (empty idea, too many sentences, etc.)
+- **503 Service Unavailable**: Pub/Sub publish failed (database changes rolled back)
+- **500 Internal Server Error**: Database error or unexpected failure
+
+**Error Responses:**
+
+Pub/Sub publish failure (503):
+```json
+{
+  "code": "PUBSUB_PUBLISH_ERROR",
+  "message": "Failed to enqueue job: Pub/Sub publish failed",
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "details": {"error": "..."}
+}
+```
+
+Database failure (500):
+```json
+{
+  "code": "DATABASE_ERROR",
+  "message": "Failed to create run: Database operation failed",
+  "run_id": "550e8400-e29b-41d4-a716-446655440000",
+  "details": {"error": "..."}
+}
+```
+
+**Orchestration Flow (Worker - Not Yet Implemented):**
+1. **Expand**: Transforms the brief idea into a comprehensive proposal (uses `EXPAND_MODEL` and `EXPAND_TEMPERATURE`)
+2. **Review**: Evaluates the proposal with all five personas (Architect, Critic, Optimist, SecurityGuardian, UserAdvocate) using `REVIEW_MODEL` and `REVIEW_TEMPERATURE`
+3. **Aggregate**: Computes final decision from weighted consensus of all persona reviews
+
+Once the worker completes processing, the run will include full results with:
+- `expanded_proposal`: Detailed proposal with problem statement, solution, assumptions, and scope
+- `persona_reviews`: Array of five PersonaReview objects (one per persona)
+- `decision`: Aggregated decision with weighted confidence, score breakdown, and minority report
+
+See the **Multi-Persona Consensus System** section for details on personas, weights, and decision thresholds.
+
+**Important Notes:**
     }
   ],
   "decision": {
