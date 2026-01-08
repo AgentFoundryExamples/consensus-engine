@@ -80,13 +80,26 @@ consensus-engine/
 │       ├── services/     # Business logic services
 │       ├── workers/      # Background workers (pipeline processor)
 │       └── app.py        # FastAPI application factory
+├── webapp/              # React + TypeScript web frontend
+│   ├── src/
+│   │   ├── api/         # Generated API client and wrapper
+│   │   ├── components/  # React components (layout, UI primitives)
+│   │   ├── config/      # Environment configuration
+│   │   ├── App.tsx      # Main application component
+│   │   └── main.tsx     # Application entry point
+│   ├── package.json     # Frontend dependencies and scripts
+│   ├── vite.config.ts   # Vite build configuration
+│   └── .env.example     # Frontend environment variables
 ├── tests/
 │   ├── unit/            # Unit tests
 │   └── integration/     # Integration tests
 ├── docs/                # Documentation
+│   └── WEB_FRONTEND.md  # Web frontend documentation
 ├── migrations/          # Alembic database migrations
+├── scripts/             # Utility scripts
+│   └── generate-api-client.sh  # OpenAPI client generation
 ├── pyproject.toml       # Project metadata and dependencies
-├── .env.example         # Example environment configuration
+├── .env.example         # Backend environment configuration
 └── README.md
 ```
 
@@ -135,6 +148,7 @@ See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for deployment details.
 - [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) - Production deployment and monitoring
 - [Multi-Persona Orchestration](docs/MULTI_PERSONA_ORCHESTRATION.md) - Consensus building architecture
 - [Async Run Persistence](docs/async_run_persistence.md) - Database persistence patterns
+- [Web Frontend Documentation](docs/WEB_FRONTEND.md) - React + TypeScript webapp setup, development, and deployment
 
 ## Quick Start
 
@@ -450,7 +464,7 @@ Clients should poll `GET /v1/runs/{run_id}` to check job status and retrieve res
 
 ### Running the Application
 
-The Consensus Engine consists of two components:
+The Consensus Engine consists of three components:
 
 #### 1. API Server
 
@@ -496,6 +510,43 @@ The worker will consume messages from the configured Pub/Sub subscription and pr
   ```
 
 See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for detailed deployment instructions.
+
+#### 3. Web Frontend
+
+The Consensus Engine includes a modern React + TypeScript web application for interacting with the API.
+
+**Quick Start:**
+
+1. Navigate to the webapp directory:
+```bash
+cd webapp
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Copy environment file and configure:
+```bash
+cp .env.example .env
+# Edit .env and set VITE_API_BASE_URL=http://localhost:8000
+```
+
+4. Start the development server:
+```bash
+npm run dev
+```
+
+The webapp will be available at http://localhost:5173
+
+**Key Features:**
+- Type-safe API client auto-generated from OpenAPI spec
+- Responsive design with Tailwind CSS
+- Accessible UI components with ARIA landmarks
+- Environment-driven configuration for multiple deployments
+
+See [Web Frontend Documentation](docs/WEB_FRONTEND.md) for detailed setup, development, and deployment instructions.
 
 ### Running Tests
 
