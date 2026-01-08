@@ -152,13 +152,17 @@ class TestPipelineWorker:
 
         worker = PipelineWorker(settings)
 
-        # Mock session
+        # Mock session with execute method for SELECT FOR UPDATE
         mock_session = Mock()
         run_id = uuid.uuid4()
         mock_run = Mock(spec=Run)
         mock_run.id = run_id
         mock_run.status = RunStatus.COMPLETED
-        mock_session.get.return_value = mock_run
+        
+        # Mock the execute method to return a result with scalar_one_or_none
+        mock_result = Mock()
+        mock_result.scalar_one_or_none.return_value = mock_run
+        mock_session.execute.return_value = mock_result
 
         should_skip, run = worker._check_idempotency(mock_session, run_id)
         assert should_skip is True
@@ -176,13 +180,16 @@ class TestPipelineWorker:
 
         worker = PipelineWorker(settings)
 
-        # Mock session
+        # Mock session with execute method
         mock_session = Mock()
         run_id = uuid.uuid4()
         mock_run = Mock(spec=Run)
         mock_run.id = run_id
         mock_run.status = RunStatus.QUEUED
-        mock_session.get.return_value = mock_run
+        
+        mock_result = Mock()
+        mock_result.scalar_one_or_none.return_value = mock_run
+        mock_session.execute.return_value = mock_result
 
         should_skip, run = worker._check_idempotency(mock_session, run_id)
         assert should_skip is False
@@ -200,10 +207,13 @@ class TestPipelineWorker:
 
         worker = PipelineWorker(settings)
 
-        # Mock session
+        # Mock session with execute method returning None
         mock_session = Mock()
         run_id = uuid.uuid4()
-        mock_session.get.return_value = None
+        
+        mock_result = Mock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
 
         should_skip, run = worker._check_idempotency(mock_session, run_id)
         assert should_skip is False

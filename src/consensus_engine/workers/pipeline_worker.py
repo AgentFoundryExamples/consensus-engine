@@ -121,6 +121,9 @@ class PipelineWorker:
         self.settings = settings
         self.should_stop = False
         
+        # Track retry attempts per run
+        self.retry_counts: dict[str, int] = {}
+        
         # Set up database engine
         self.engine = get_engine(settings)
         
@@ -137,9 +140,11 @@ class PipelineWorker:
                 raise ValueError("PUBSUB_PROJECT_ID is required when not using emulator")
             self.project_id = settings.pubsub_project_id
         
-        # Set up credentials if provided
+        # Set up credentials if provided (avoid modifying global env if possible)
         if settings.pubsub_credentials_file and not settings.pubsub_emulator_host:
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.pubsub_credentials_file
+            # Only set if not already set to avoid overwriting
+            if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.pubsub_credentials_file
         
         self.subscriber = pubsub_v1.SubscriberClient()
         self.subscription_path = self.subscriber.subscription_path(
@@ -151,11 +156,34 @@ class PipelineWorker:
             extra={
                 "project_id": self.project_id,
                 "subscription": settings.pubsub_subscription,
-                "subscription_path": self.subscription_path,
                 "max_concurrency": settings.worker_max_concurrency,
-                "ack_deadline_seconds": settings.worker_ack_deadline_seconds,
+                "step_timeout_seconds": settings.worker_step_timeout_seconds,
+                "job_timeout_seconds": settings.worker_job_timeout_seconds,
             },
         )
+    
+    def _sanitize_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Sanitize payload for safe logging by removing/masking sensitive data.
+        
+        Args:
+            payload: Raw payload data
+            
+        Returns:
+            Sanitized payload safe for logging
+        """
+        sanitized = {}
+        for key, value in payload.items():
+            # Mask or truncate potentially sensitive fields
+            if key in ("api_key", "password", "token", "secret"):
+                sanitized[key] = "***MASKED***"
+            elif isinstance(value, str) and len(value) > 200:
+                # Truncate long strings
+                sanitized[key] = value[:200] + "...[truncated]"
+            elif isinstance(value, dict):
+                sanitized[key] = self._sanitize_payload(value)
+            else:
+                sanitized[key] = value
+        return sanitized
     
     def _validate_message(self, message_data: dict[str, Any]) -> JobMessage:
         """Validate Pub/Sub message schema.
@@ -172,15 +200,23 @@ class PipelineWorker:
         try:
             return JobMessage(**message_data)
         except ValidationError as e:
+            # Log without sensitive payload data
+            sanitized_data = {
+                "run_id": message_data.get("run_id", "unknown"),
+                "run_type": message_data.get("run_type", "unknown"),
+                "priority": message_data.get("priority", "unknown"),
+            }
             logger.error(
                 "Invalid message schema",
-                extra={"error": str(e), "message_data": message_data},
+                extra={"error": str(e), "message_data": sanitized_data},
                 exc_info=True,
             )
             raise
     
     def _check_idempotency(self, session: Session, run_id: uuid.UUID) -> tuple[bool, Run | None]:
         """Check if run has already been processed (idempotency guard).
+        
+        Uses SELECT FOR UPDATE to prevent race conditions on concurrent message deliveries.
         
         Args:
             session: Database session
@@ -191,7 +227,9 @@ class PipelineWorker:
             - should_skip: True if run is already completed/failed, False otherwise
             - run_instance: The Run object if found, None otherwise
         """
-        run = session.get(Run, run_id)
+        # Use SELECT FOR UPDATE to lock the row and prevent race conditions
+        query = select(Run).where(Run.id == run_id).with_for_update()
+        run = session.execute(query).scalar_one_or_none()
         
         if not run:
             logger.warning(
@@ -340,7 +378,7 @@ class PipelineWorker:
     def _execute_expand_step(
         self, session: Session, run: Run
     ) -> ExpandedProposal:
-        """Execute the expand step.
+        """Execute the expand step with timeout enforcement.
         
         Args:
             session: Database session
@@ -351,6 +389,7 @@ class PipelineWorker:
             
         Raises:
             LLMServiceError: If expand fails
+            TimeoutError: If step exceeds timeout
         """
         step_start = time.time()
         self._mark_step_started(session, run.id, STEP_EXPAND)
@@ -364,6 +403,14 @@ class PipelineWorker:
             
             # Call expand service
             expanded_proposal, expand_metadata = expand_idea(idea_input, self.settings)
+            
+            # Check step timeout
+            step_elapsed = time.time() - step_start
+            if step_elapsed > self.settings.worker_step_timeout_seconds:
+                raise TimeoutError(
+                    f"Expand step exceeded timeout of {self.settings.worker_step_timeout_seconds}s "
+                    f"(took {step_elapsed:.2f}s)"
+                )
             
             # Save proposal version to database
             ProposalVersionRepository.create_proposal_version(
@@ -388,7 +435,7 @@ class PipelineWorker:
     def _execute_review_steps(
         self, session: Session, run: Run, expanded_proposal: ExpandedProposal
     ) -> list[Any]:
-        """Execute persona review steps.
+        """Execute persona review steps with timeout enforcement.
         
         Args:
             session: Database session
@@ -400,6 +447,7 @@ class PipelineWorker:
             
         Raises:
             LLMServiceError: If review fails
+            TimeoutError: If step exceeds timeout
         """
         step_start = time.time()
         
@@ -430,6 +478,13 @@ class PipelineWorker:
         )
         
         try:
+            # Check timeout before starting reviews
+            step_elapsed = time.time() - step_start
+            if step_elapsed > self.settings.worker_step_timeout_seconds:
+                raise TimeoutError(
+                    f"Review steps exceeded timeout of {self.settings.worker_step_timeout_seconds}s"
+                )
+            
             # Determine if this is initial or revision
             if run.run_type == RunType.INITIAL:
                 # Run all personas
@@ -468,6 +523,14 @@ class PipelineWorker:
                     parent_persona_reviews,
                     personas_to_rerun,
                     self.settings,
+                )
+            
+            # Check timeout after reviews
+            step_elapsed = time.time() - step_start
+            if step_elapsed > self.settings.worker_step_timeout_seconds:
+                raise TimeoutError(
+                    f"Review steps exceeded timeout of {self.settings.worker_step_timeout_seconds}s "
+                    f"(took {step_elapsed:.2f}s)"
                 )
             
             # Save persona reviews to database
@@ -612,7 +675,7 @@ class PipelineWorker:
             raise
     
     def _process_job(self, session: Session, job_msg: JobMessage) -> None:
-        """Process a single job message.
+        """Process a single job message with timeout and retry tracking.
         
         Args:
             session: Database session
@@ -620,24 +683,33 @@ class PipelineWorker:
             
         Raises:
             Exception: If processing fails
+            TimeoutError: If job exceeds timeout
         """
         run_id = uuid.UUID(job_msg.run_id)
         job_start_time = time.time()
         
+        # Track retry count
+        run_id_str = str(run_id)
+        retry_count = self.retry_counts.get(run_id_str, 0)
+        self.retry_counts[run_id_str] = retry_count + 1
+        
         logger.info(
             "Starting job processing",
             extra={
-                "run_id": str(run_id),
+                "run_id": run_id_str,
                 "run_type": job_msg.run_type,
                 "priority": job_msg.priority,
+                "retry_count": retry_count,
                 "lifecycle_event": "job_started",
             },
         )
         
-        # Check idempotency
+        # Check idempotency (with row locking)
         should_skip, run = self._check_idempotency(session, run_id)
         if should_skip:
             # Job already completed, acknowledge and return
+            # Clear retry count on successful completion
+            self.retry_counts.pop(run_id_str, None)
             return
         
         if not run:
@@ -650,12 +722,15 @@ class PipelineWorker:
         try:
             # Execute pipeline steps
             # Step 1: Expand
+            self._check_job_timeout(job_start_time, run_id_str)
             expanded_proposal = self._execute_expand_step(session, run)
             
             # Step 2-6: Persona reviews
+            self._check_job_timeout(job_start_time, run_id_str)
             persona_reviews = self._execute_review_steps(session, run, expanded_proposal)
             
             # Step 7: Aggregate
+            self._check_job_timeout(job_start_time, run_id_str)
             self._execute_aggregate_step(session, run, persona_reviews)
             
             # Mark run as completed
@@ -669,13 +744,17 @@ class PipelineWorker:
             logger.info(
                 "Job completed successfully",
                 extra={
-                    "run_id": str(run_id),
+                    "run_id": run_id_str,
                     "job_latency_ms": job_latency_ms,
                     "decision": run.decision_label,
                     "confidence": run.overall_weighted_confidence,
+                    "retry_count": retry_count,
                     "lifecycle_event": "job_completed",
                 },
             )
+            
+            # Clear retry count on successful completion
+            self.retry_counts.pop(run_id_str, None)
             
         except Exception as e:
             # Mark run as failed
@@ -689,9 +768,10 @@ class PipelineWorker:
             logger.error(
                 "Job failed",
                 extra={
-                    "run_id": str(run_id),
+                    "run_id": run_id_str,
                     "job_latency_ms": job_latency_ms,
                     "error": str(e),
+                    "retry_count": retry_count,
                     "lifecycle_event": "job_failed",
                 },
                 exc_info=True,
@@ -699,6 +779,33 @@ class PipelineWorker:
             
             # Re-raise to nack message (will be retried by Pub/Sub)
             raise
+    
+    def _check_job_timeout(self, job_start_time: float, run_id: str) -> None:
+        """Check if job has exceeded overall timeout.
+        
+        Args:
+            job_start_time: Time when job started
+            run_id: Run ID for logging
+            
+        Raises:
+            TimeoutError: If job exceeds timeout
+        """
+        job_elapsed = time.time() - job_start_time
+        if job_elapsed > self.settings.worker_job_timeout_seconds:
+            error_msg = (
+                f"Job exceeded overall timeout of {self.settings.worker_job_timeout_seconds}s "
+                f"(took {job_elapsed:.2f}s)"
+            )
+            logger.error(
+                "Job timeout exceeded",
+                extra={
+                    "run_id": run_id,
+                    "job_elapsed_seconds": job_elapsed,
+                    "timeout_seconds": self.settings.worker_job_timeout_seconds,
+                    "lifecycle_event": "job_timeout",
+                },
+            )
+            raise TimeoutError(error_msg)
     
     def _message_callback(self, message: pubsub_v1.subscriber.message.Message) -> None:
         """Callback for processing Pub/Sub messages.
