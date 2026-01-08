@@ -448,6 +448,10 @@ class TestPersonaContentInjection:
         assert payload.metadata["persona_name"] == "SecondPersona"
         assert "SecondPersona" in payload.developer_instruction
         assert "Second instructions" in payload.developer_instruction
+        
+        # First persona should NOT be present
+        assert "FirstPersona" not in payload.developer_instruction
+        assert "First instructions" not in payload.developer_instruction
 
 
 class TestPromptSetVersionTagging:

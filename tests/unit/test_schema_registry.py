@@ -756,12 +756,10 @@ class TestBackwardCompatibility:
         with open(fixture_path) as f:
             payload = json.load(f)
 
-        # Note: The metadata field in the fixture is for documentation purposes
-        # and is not part of the ExpandedProposal schema itself (it's used in responses)
-        # Remove it before validation
-        metadata = payload.pop("metadata", None)
+        # Verify fixture contains metadata field for documentation
+        assert "metadata" in payload, "Fixture should contain metadata field for documentation"
 
-        # Schema should validate
+        # Schema should validate (metadata is part of ExpandedProposal schema)
         schema_version = get_schema_version("ExpandedProposal", "1.0.0")
         proposal = schema_version.schema_class(**payload)
 
@@ -773,6 +771,7 @@ class TestBackwardCompatibility:
         assert proposal.summary == payload["summary"]
         assert proposal.raw_idea == payload["raw_idea"]
         assert proposal.raw_expanded_proposal == payload["raw_expanded_proposal"]
+        assert proposal.metadata == payload["metadata"]
 
     def test_load_persona_review_v1_0_0_fixture(self) -> None:
         """Test loading PersonaReview v1.0.0 fixture validates correctly."""
