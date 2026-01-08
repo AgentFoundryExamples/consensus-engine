@@ -729,3 +729,32 @@ class RunDiffResponse(BaseModel):
             "Overall decision comparison including confidence delta and decision label changes"
         ),
     )
+
+
+class JobEnqueuedResponse(BaseModel):
+    """Response model for job enqueueing endpoints (POST /v1/full-review, POST /v1/runs/{run_id}/revisions).
+
+    This response is returned immediately after a run is created and a job is enqueued
+    to Pub/Sub. Clients can poll GET /v1/runs/{run_id} to check status and retrieve
+    results once processing completes.
+
+    Attributes:
+        run_id: UUID of the created run
+        status: Current status of the run ('queued')
+        run_type: Type of run ('initial' or 'revision')
+        priority: Priority level ('normal' or 'high')
+        created_at: ISO timestamp when run was created
+        queued_at: ISO timestamp when run was enqueued
+        message: Human-readable message about the enqueued job
+    """
+
+    run_id: str = Field(..., description="UUID of the created run")
+    status: str = Field(..., description="Current status: 'queued'")
+    run_type: str = Field(..., description="Type of run: 'initial' or 'revision'")
+    priority: str = Field(..., description="Priority level: 'normal' or 'high'")
+    created_at: str = Field(..., description="ISO timestamp when run was created")
+    queued_at: str = Field(..., description="ISO timestamp when run was enqueued")
+    message: str = Field(
+        ...,
+        description="Human-readable message about the enqueued job",
+    )

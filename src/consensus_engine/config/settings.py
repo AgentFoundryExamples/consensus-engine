@@ -209,6 +209,29 @@ class Settings(BaseSettings):
         description="Connection pool recycle time in seconds",
     )
 
+    # Pub/Sub Configuration
+    pubsub_project_id: str | None = Field(
+        default=None,
+        description="Google Cloud project ID for Pub/Sub (required for production)",
+    )
+    pubsub_topic: str = Field(
+        default="consensus-engine-jobs",
+        description="Pub/Sub topic name for job queue",
+        min_length=1,
+    )
+    pubsub_credentials_file: str | None = Field(
+        default=None,
+        description="Path to service account JSON credentials file",
+    )
+    pubsub_emulator_host: str | None = Field(
+        default=None,
+        description="Pub/Sub emulator host (e.g., localhost:8085) for local testing",
+    )
+    pubsub_use_mock: bool = Field(
+        default=False,
+        description="Use mock publisher for testing (no-op that logs messages)",
+    )
+
     @field_validator("openai_api_key")
     @classmethod
     def validate_api_key(cls, v: str) -> str:
