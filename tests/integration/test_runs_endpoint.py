@@ -30,7 +30,7 @@ from sqlalchemy.orm import sessionmaker
 from consensus_engine.app import create_app
 from consensus_engine.db import Base
 from consensus_engine.db.dependencies import get_db_session
-from consensus_engine.db.models import Decision, PersonaReview, ProposalVersion, Run, RunStatus, RunType
+from consensus_engine.db.models import Decision, PersonaReview, ProposalVersion, Run, RunStatus, RunType, StepProgress, StepStatus
 
 
 def is_database_available():
@@ -273,6 +273,163 @@ def sample_runs(test_session_factory):
         session.commit()
         
         return runs
+        
+    finally:
+        session.close()
+
+
+@pytest.fixture
+def run_with_step_progress(test_session_factory):
+    """Create a run with actual StepProgress records for testing."""
+    session = test_session_factory()
+    
+    try:
+        # Create a queued run with step progress
+        run_id = uuid.uuid4()
+        now = datetime.now(UTC)
+        
+        run = Run(
+            id=run_id,
+            status=RunStatus.RUNNING,
+            queued_at=now - timedelta(minutes=5),
+            started_at=now - timedelta(minutes=4),
+            input_idea="Test idea with step progress",
+            extra_context=None,
+            run_type=RunType.INITIAL,
+            model="gpt-5.1",
+            temperature=0.7,
+            parameters_json={"max_tokens": 4000},
+            created_at=now - timedelta(minutes=5),
+        )
+        session.add(run)
+        
+        # Add step progress records - some completed, some running, some pending
+        # Step 1: expand - completed
+        step1 = StepProgress(
+            run_id=run_id,
+            step_name="expand",
+            step_order=0,
+            status=StepStatus.COMPLETED,
+            started_at=now - timedelta(minutes=4),
+            completed_at=now - timedelta(minutes=3, seconds=30),
+        )
+        session.add(step1)
+        
+        # Step 2: review_architect - completed
+        step2 = StepProgress(
+            run_id=run_id,
+            step_name="review_architect",
+            step_order=1,
+            status=StepStatus.COMPLETED,
+            started_at=now - timedelta(minutes=3, seconds=30),
+            completed_at=now - timedelta(minutes=3),
+        )
+        session.add(step2)
+        
+        # Step 3: review_critic - running
+        step3 = StepProgress(
+            run_id=run_id,
+            step_name="review_critic",
+            step_order=2,
+            status=StepStatus.RUNNING,
+            started_at=now - timedelta(minutes=3),
+            completed_at=None,
+        )
+        session.add(step3)
+        
+        # Steps 4-7: pending
+        for i, step_name in enumerate([
+            "review_optimist",
+            "review_security",
+            "review_user_advocate",
+            "aggregate_decision",
+        ], start=3):
+            step = StepProgress(
+                run_id=run_id,
+                step_name=step_name,
+                step_order=i,
+                status=StepStatus.PENDING,
+                started_at=None,
+                completed_at=None,
+            )
+            session.add(step)
+        
+        session.commit()
+        
+        return run
+        
+    finally:
+        session.close()
+
+
+@pytest.fixture
+def failed_run_with_error(test_session_factory):
+    """Create a failed run with error in step progress."""
+    session = test_session_factory()
+    
+    try:
+        run_id = uuid.uuid4()
+        now = datetime.now(UTC)
+        
+        run = Run(
+            id=run_id,
+            status=RunStatus.FAILED,
+            queued_at=now - timedelta(minutes=5),
+            started_at=now - timedelta(minutes=4),
+            completed_at=now - timedelta(minutes=2),
+            input_idea="Test idea that fails",
+            extra_context=None,
+            run_type=RunType.INITIAL,
+            model="gpt-5.1",
+            temperature=0.7,
+            parameters_json={"max_tokens": 4000},
+            created_at=now - timedelta(minutes=5),
+        )
+        session.add(run)
+        
+        # Add step progress - expand completed, review_architect failed
+        step1 = StepProgress(
+            run_id=run_id,
+            step_name="expand",
+            step_order=0,
+            status=StepStatus.COMPLETED,
+            started_at=now - timedelta(minutes=4),
+            completed_at=now - timedelta(minutes=3),
+        )
+        session.add(step1)
+        
+        step2 = StepProgress(
+            run_id=run_id,
+            step_name="review_architect",
+            step_order=1,
+            status=StepStatus.FAILED,
+            started_at=now - timedelta(minutes=3),
+            completed_at=now - timedelta(minutes=2),
+            error_message="API rate limit exceeded. Please retry later.",
+        )
+        session.add(step2)
+        
+        # Remaining steps stay pending
+        for i, step_name in enumerate([
+            "review_critic",
+            "review_optimist",
+            "review_security",
+            "review_user_advocate",
+            "aggregate_decision",
+        ], start=2):
+            step = StepProgress(
+                run_id=run_id,
+                step_name=step_name,
+                step_order=i,
+                status=StepStatus.PENDING,
+                started_at=None,
+                completed_at=None,
+            )
+            session.add(step)
+        
+        session.commit()
+        
+        return run
         
     finally:
         session.close()
@@ -577,6 +734,289 @@ class TestGetRunDetailEndpoint:
         assert data["overall_weighted_confidence"] is None
         assert data["decision_label"] is None
         assert data["decision"] is None
+    
+    def test_get_run_detail_includes_step_progress(self, test_client, sample_runs):
+        """Test that run detail includes step progress information."""
+        run_id = str(sample_runs[0].id)  # Completed run
+        
+        response = test_client.get(f"/v1/runs/{run_id}")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify step_progress field is present
+        assert "step_progress" in data
+        assert isinstance(data["step_progress"], list)
+        
+        # Should have default steps even if no StepProgress records exist
+        assert len(data["step_progress"]) == 7  # All canonical steps
+        
+        # Verify step structure
+        for step in data["step_progress"]:
+            assert "step_name" in step
+            assert "step_order" in step
+            assert "status" in step
+            assert "started_at" in step
+            assert "completed_at" in step
+            assert "error_message" in step
+        
+        # Verify steps are ordered
+        step_orders = [s["step_order"] for s in data["step_progress"]]
+        assert step_orders == sorted(step_orders)
+        
+        # Verify expected step names
+        step_names = [s["step_name"] for s in data["step_progress"]]
+        expected_names = [
+            "expand",
+            "review_architect",
+            "review_critic",
+            "review_optimist",
+            "review_security",
+            "review_user_advocate",
+            "aggregate_decision",
+        ]
+        assert step_names == expected_names
+    
+    def test_get_run_detail_includes_timestamp_fields(self, test_client, sample_runs):
+        """Test that run detail includes queued_at, started_at, completed_at."""
+        run_id = str(sample_runs[0].id)  # Completed run
+        
+        response = test_client.get(f"/v1/runs/{run_id}")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify timestamp fields are present
+        assert "queued_at" in data
+        assert "started_at" in data
+        assert "completed_at" in data
+        assert "retry_count" in data
+        assert "priority" in data
+    
+    def test_list_runs_includes_timestamp_fields(self, test_client, sample_runs):
+        """Test that list runs includes queued_at, started_at, completed_at."""
+        response = test_client.get("/v1/runs")
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert len(data["runs"]) > 0
+        
+        # Verify timestamp fields are present in list items
+        for run in data["runs"]:
+            assert "queued_at" in run
+            assert "started_at" in run
+            assert "completed_at" in run
+            assert "retry_count" in run
+            assert "priority" in run
+
+
+class TestStepProgressInRuns:
+    """Tests for step progress in run responses."""
+    
+    def test_run_with_partial_step_progress(self, test_client, run_with_step_progress):
+        """Test run with some steps completed, some running, some pending."""
+        run_id = str(run_with_step_progress.id)
+        
+        response = test_client.get(f"/v1/runs/{run_id}")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify step progress is present and ordered
+        assert "step_progress" in data
+        assert len(data["step_progress"]) == 7
+        
+        steps = data["step_progress"]
+        
+        # Check first step (expand) - completed
+        assert steps[0]["step_name"] == "expand"
+        assert steps[0]["status"] == "completed"
+        assert steps[0]["started_at"] is not None
+        assert steps[0]["completed_at"] is not None
+        assert steps[0]["error_message"] is None
+        
+        # Check second step (review_architect) - completed
+        assert steps[1]["step_name"] == "review_architect"
+        assert steps[1]["status"] == "completed"
+        assert steps[1]["started_at"] is not None
+        assert steps[1]["completed_at"] is not None
+        
+        # Check third step (review_critic) - running
+        assert steps[2]["step_name"] == "review_critic"
+        assert steps[2]["status"] == "running"
+        assert steps[2]["started_at"] is not None
+        assert steps[2]["completed_at"] is None
+        
+        # Check remaining steps - pending
+        for step in steps[3:]:
+            assert step["status"] == "pending"
+            assert step["started_at"] is None
+            assert step["completed_at"] is None
+    
+    def test_failed_run_with_error_message(self, test_client, failed_run_with_error):
+        """Test failed run includes error message in step progress."""
+        run_id = str(failed_run_with_error.id)
+        
+        response = test_client.get(f"/v1/runs/{run_id}")
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["status"] == "failed"
+        
+        steps = data["step_progress"]
+        
+        # First step completed
+        assert steps[0]["step_name"] == "expand"
+        assert steps[0]["status"] == "completed"
+        
+        # Second step failed with error message
+        assert steps[1]["step_name"] == "review_architect"
+        assert steps[1]["status"] == "failed"
+        assert steps[1]["error_message"] is not None
+        assert "rate limit" in steps[1]["error_message"].lower()
+        assert steps[1]["started_at"] is not None
+        assert steps[1]["completed_at"] is not None
+        
+        # Remaining steps pending
+        for step in steps[2:]:
+            assert step["status"] == "pending"
+    
+    def test_queued_run_returns_default_steps(self, test_client, test_session_factory):
+        """Test queued run without StepProgress records returns default steps."""
+        session = test_session_factory()
+        
+        try:
+            # Create a queued run without any StepProgress records
+            run_id = uuid.uuid4()
+            run = Run(
+                id=run_id,
+                status=RunStatus.QUEUED,
+                queued_at=datetime.now(UTC),
+                input_idea="Queued run test",
+                extra_context=None,
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            
+            # Query the run via API
+            response = test_client.get(f"/v1/runs/{str(run_id)}")
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Should return default steps with 'pending' status
+            assert len(data["step_progress"]) == 7
+            for step in data["step_progress"]:
+                assert step["status"] == "pending"
+                assert step["started_at"] is None
+                assert step["completed_at"] is None
+                assert step["error_message"] is None
+            
+            # Verify step names and order
+            expected_names = [
+                "expand",
+                "review_architect",
+                "review_critic",
+                "review_optimist",
+                "review_security",
+                "review_user_advocate",
+                "aggregate_decision",
+            ]
+            actual_names = [s["step_name"] for s in data["step_progress"]]
+            assert actual_names == expected_names
+            
+        finally:
+            session.close()
+    
+    def test_partial_step_progress_returns_complete_list(self, test_client, test_session_factory):
+        """Test that runs with partial StepProgress records return all 7 steps."""
+        session = test_session_factory()
+        
+        try:
+            # Create a run with only 2 StepProgress records (expand and review_architect)
+            run_id = uuid.uuid4()
+            now = datetime.now(UTC)
+            
+            run = Run(
+                id=run_id,
+                status=RunStatus.RUNNING,
+                queued_at=now - timedelta(minutes=5),
+                started_at=now - timedelta(minutes=4),
+                input_idea="Partial progress test",
+                extra_context=None,
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            
+            # Only add 2 steps
+            step1 = StepProgress(
+                run_id=run_id,
+                step_name="expand",
+                step_order=0,
+                status=StepStatus.COMPLETED,
+                started_at=now - timedelta(minutes=4),
+                completed_at=now - timedelta(minutes=3),
+            )
+            session.add(step1)
+            
+            step2 = StepProgress(
+                run_id=run_id,
+                step_name="review_architect",
+                step_order=1,
+                status=StepStatus.RUNNING,
+                started_at=now - timedelta(minutes=3),
+                completed_at=None,
+            )
+            session.add(step2)
+            
+            session.commit()
+            
+            # Query the run via API
+            response = test_client.get(f"/v1/runs/{str(run_id)}")
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Should return all 7 steps (2 actual + 5 default)
+            assert len(data["step_progress"]) == 7
+            
+            # First step should be completed
+            assert data["step_progress"][0]["step_name"] == "expand"
+            assert data["step_progress"][0]["status"] == "completed"
+            assert data["step_progress"][0]["started_at"] is not None
+            assert data["step_progress"][0]["completed_at"] is not None
+            
+            # Second step should be running
+            assert data["step_progress"][1]["step_name"] == "review_architect"
+            assert data["step_progress"][1]["status"] == "running"
+            assert data["step_progress"][1]["started_at"] is not None
+            assert data["step_progress"][1]["completed_at"] is None
+            
+            # Remaining 5 steps should be pending
+            for i in range(2, 7):
+                step = data["step_progress"][i]
+                assert step["status"] == "pending"
+                assert step["started_at"] is None
+                assert step["completed_at"] is None
+                assert step["error_message"] is None
+            
+            # Verify all step names are present in correct order
+            expected_names = [
+                "expand",
+                "review_architect",
+                "review_critic",
+                "review_optimist",
+                "review_security",
+                "review_user_advocate",
+                "aggregate_decision",
+            ]
+            actual_names = [s["step_name"] for s in data["step_progress"]]
+            assert actual_names == expected_names
+            
+        finally:
+            session.close()
 
 
 class TestRunsEndpointNoLLMCalls:

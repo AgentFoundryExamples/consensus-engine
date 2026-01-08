@@ -462,7 +462,7 @@ Returns a paginated list of runs with filtering and sorting capabilities.
 **Query Parameters:**
 - `limit` (optional, 1-100, default: 30): Number of items per page
 - `offset` (optional, ≥0, default: 0): Offset for pagination
-- `status` (optional): Filter by status (`running`, `completed`, `failed`)
+- `status` (optional): Filter by status (`running`, `completed`, `failed`, `queued`)
 - `run_type` (optional): Filter by type (`initial`, `revision`)
 - `parent_run_id` (optional, UUID): Filter revisions by parent run
 - `decision` (optional): Filter by decision label (e.g., `approve`, `revise`, `reject`)
@@ -473,7 +473,11 @@ Returns a paginated list of runs with filtering and sorting capabilities.
 **Response:**
 - Sorted by `created_at` descending (newest first)
 - Returns empty list (200) for no matches
-- Each item includes truncated proposal metadata (title, summary)
+- Each item includes:
+  - Run metadata with timestamps (queued_at, started_at, completed_at)
+  - Priority level (normal, high)
+  - Retry count
+  - Truncated proposal metadata (title, summary)
 
 **Example:**
 ```bash
@@ -483,10 +487,21 @@ GET /v1/runs?status=completed&min_confidence=0.8&limit=10
 ### GET /v1/runs/{run_id}
 
 Returns full details for a single run including:
-- Run metadata (timestamps, status, type, model, parameters)
+- Run metadata (timestamps, status, type, priority, model, parameters)
+- Step-by-step progress with ordered pipeline steps (expand, review_*, aggregate_decision)
 - Complete proposal JSON (null if run failed before proposal)
 - Persona review summaries with confidence scores
 - Decision JSON (null if incomplete)
+
+**Step Progress:**
+Each run includes an ordered `step_progress` array showing:
+- `step_name`: Canonical step identifier (e.g., "expand", "review_architect")
+- `step_order`: Integer ordering (0-6 for the seven pipeline steps)
+- `status`: Current status ("pending", "running", "completed", or "failed")
+- `started_at`, `completed_at`: ISO timestamps (null until started/completed)
+- `error_message`: Error details if step failed (null otherwise)
+
+Queued runs return default pending steps even before the worker starts processing, enabling immediate polling.
 
 **Example:**
 ```bash
@@ -495,9 +510,10 @@ GET /v1/runs/550e8400-e29b-41d4-a716-446655440000
 
 **Notes:**
 - No LLM calls are made during GET requests
-- Failed runs return partial data persisted before failure
+- Failed runs return partial data persisted before failure, with error_message in failed step
 - Useful for auditing decisions and understanding review history
 - Can be used to retrieve parent proposals when creating revisions
+- Step progress enables live monitoring of long-running consensus jobs
 
 See the main README for complete API documentation and response examples.
 

@@ -33,37 +33,70 @@ from consensus_engine.clients.pubsub import PubSubPublishError, get_publisher
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
 from consensus_engine.db.dependencies import get_db_session
-from consensus_engine.db.models import RunPriority, RunStatus, RunType, StepStatus
+from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
 from consensus_engine.db.repositories import (
-    DecisionRepository,
-    PersonaReviewRepository,
-    ProposalVersionRepository,
     RunRepository,
     StepProgressRepository,
 )
-from consensus_engine.exceptions import ConsensusEngineError
-from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.requests import (
     CreateRevisionRequest,
-    CreateRevisionResponse,
     JobEnqueuedResponse,
     PersonaReviewSummary,
     RunDetailResponse,
     RunDiffResponse,
     RunListItemResponse,
     RunListResponse,
+    StepProgressSummary,
 )
-from consensus_engine.services.aggregator import aggregate_persona_reviews
 from consensus_engine.services.diff import compute_run_diff
-from consensus_engine.services.expand import expand_with_edits
-from consensus_engine.services.orchestrator import (
-    determine_personas_to_rerun,
-    review_with_selective_personas,
-)
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["runs"])
+
+
+def _build_step_progress_summaries(run: Run) -> list[StepProgressSummary]:
+    """Build ordered step progress summaries for a run.
+
+    Merges actual StepProgress records with default pending steps to ensure
+    a complete, ordered list of all canonical steps is always returned.
+
+    Args:
+        run: Run instance with step_progress relationship loaded
+
+    Returns:
+        List of StepProgressSummary objects ordered by step_order
+    """
+    # Create a dictionary of actual steps, keyed by step_name
+    actual_steps = {step.step_name: step for step in run.step_progress}
+    summaries = []
+
+    # Iterate through all canonical steps to build a complete list
+    for i, step_name in enumerate(StepProgressRepository.VALID_STEP_NAMES):
+        if step_name in actual_steps:
+            # Use the actual step progress if it exists
+            step = actual_steps[step_name]
+            summary = StepProgressSummary(
+                step_name=step.step_name,
+                step_order=step.step_order,
+                status=step.status.value,
+                started_at=step.started_at.isoformat() if step.started_at else None,
+                completed_at=step.completed_at.isoformat() if step.completed_at else None,
+                error_message=step.error_message,
+            )
+        else:
+            # Generate a default pending step if it's missing
+            summary = StepProgressSummary(
+                step_name=step_name,
+                step_order=i,
+                status=StepStatus.PENDING.value,
+                started_at=None,
+                completed_at=None,
+                error_message=None,
+            )
+        summaries.append(summary)
+
+    return summaries
 
 
 @router.get(
@@ -258,7 +291,12 @@ async def list_runs(
             run_id=str(run.id),
             created_at=run.created_at.isoformat(),
             status=run.status.value,
+            queued_at=run.queued_at.isoformat() if run.queued_at else None,
+            started_at=run.started_at.isoformat() if run.started_at else None,
+            completed_at=run.completed_at.isoformat() if run.completed_at else None,
+            retry_count=run.retry_count,
             run_type=run.run_type.value,
+            priority=run.priority.value,
             parent_run_id=str(run.parent_run_id) if run.parent_run_id else None,
             overall_weighted_confidence=float(run.overall_weighted_confidence)
             if run.overall_weighted_confidence is not None
@@ -364,13 +402,21 @@ async def get_run_detail(
     if run.decision:
         decision_json = run.decision.decision_json
 
+    # Build step progress summaries
+    step_progress_summaries = _build_step_progress_summaries(run)
+
     # Build response
     response = RunDetailResponse(
         run_id=str(run.id),
         created_at=run.created_at.isoformat(),
         updated_at=run.updated_at.isoformat(),
         status=run.status.value,
+        queued_at=run.queued_at.isoformat() if run.queued_at else None,
+        started_at=run.started_at.isoformat() if run.started_at else None,
+        completed_at=run.completed_at.isoformat() if run.completed_at else None,
+        retry_count=run.retry_count,
         run_type=run.run_type.value,
+        priority=run.priority.value,
         parent_run_id=str(run.parent_run_id) if run.parent_run_id else None,
         input_idea=run.input_idea,
         extra_context=run.extra_context,
@@ -384,6 +430,7 @@ async def get_run_detail(
         proposal=proposal_json,
         persona_reviews=persona_reviews,
         decision=decision_json,
+        step_progress=step_progress_summaries,
     )
 
     logger.info(
@@ -394,6 +441,7 @@ async def get_run_detail(
             "has_proposal": proposal_json is not None,
             "persona_reviews_count": len(persona_reviews),
             "has_decision": decision_json is not None,
+            "step_progress_count": len(step_progress_summaries),
         },
     )
 
@@ -568,7 +616,8 @@ async def create_revision(
         JobEnqueuedResponse with run_id, status='queued', and timestamps
 
     Raises:
-        HTTPException: 400 for invalid input, 404 for missing run, 409 for failed parent, 500 for errors
+        HTTPException: 400 for invalid input, 404 for missing run,
+            409 for failed parent, 500 for errors
     """
     logger.info(
         f"Enqueuing revision job for run {run_id}",
@@ -806,7 +855,11 @@ async def create_revision(
         run_type=RunType.REVISION.value,
         priority=priority.value,
         created_at=new_run.created_at.isoformat(),
-        queued_at=new_run.queued_at.isoformat() if new_run.queued_at else new_run.created_at.isoformat(),
+        queued_at=(
+            new_run.queued_at.isoformat()
+            if new_run.queued_at
+            else new_run.created_at.isoformat()
+        ),
         message=f"Revision job enqueued successfully. Poll GET /v1/runs/{new_run_id} for status.",
     )
 

@@ -105,8 +105,13 @@ class RunRepository:
             session.add(run)
 
             logger.info(
-                f"Created Run object with id={run.id}, status={run.status.value}, priority={run.priority.value}",
-                extra={"run_id": str(run.id), "status": run.status.value, "priority": run.priority.value},
+                f"Created Run object with id={run.id}, status={run.status.value}, "
+                f"priority={run.priority.value}",
+                extra={
+                    "run_id": str(run.id),
+                    "status": run.status.value,
+                    "priority": run.priority.value,
+                },
             )
 
             return run
@@ -302,6 +307,7 @@ class RunRepository:
                     joinedload(Run.proposal_version),
                     selectinload(Run.persona_reviews),
                     joinedload(Run.decision),
+                    selectinload(Run.step_progress),
                 )
             )
 
@@ -561,10 +567,11 @@ class StepProgressRepository:
         """
         try:
             return StepProgressRepository.VALID_STEP_NAMES.index(step_name)
-        except ValueError:
+        except ValueError as e:
             raise ValueError(
-                f"Invalid step_name '{step_name}'. Must be one of: {', '.join(StepProgressRepository.VALID_STEP_NAMES)}"
-            )
+                f"Invalid step_name '{step_name}'. "
+                f"Must be one of: {', '.join(StepProgressRepository.VALID_STEP_NAMES)}"
+            ) from e
 
     @staticmethod
     def upsert_step_progress(
@@ -619,17 +626,20 @@ class StepProgressRepository:
                     existing.started_at = started_at
                 if completed_at is not None:
                     existing.completed_at = completed_at
-                
-                # If an error message is provided, set it. Otherwise, clear it for non-failed statuses.
+
+                # If an error message is provided, set it.
                 if error_message is not None:
                     existing.error_message = error_message
-                elif status != StepStatus.FAILED:
+
+                # If the new status is not FAILED, always clear any old error message.
+                if status != StepStatus.FAILED:
                     existing.error_message = None
-                
+
                 session.flush()
-                
+
                 logger.info(
-                    f"Updated StepProgress id={existing.id} for run_id={run_id}, step={step_name}, status={status.value}",
+                    f"Updated StepProgress id={existing.id} for run_id={run_id}, "
+                    f"step={step_name}, status={status.value}",
                     extra={
                         "step_progress_id": str(existing.id),
                         "run_id": str(run_id),
@@ -637,7 +647,7 @@ class StepProgressRepository:
                         "status": status.value,
                     },
                 )
-                
+
                 return existing
             else:
                 # Create new record
@@ -655,7 +665,8 @@ class StepProgressRepository:
                 session.flush()
 
                 logger.info(
-                    f"Created StepProgress id={step_progress.id} for run_id={run_id}, step={step_name}",
+                    f"Created StepProgress id={step_progress.id} for run_id={run_id}, "
+                    f"step={step_name}",
                     extra={
                         "step_progress_id": str(step_progress.id),
                         "run_id": str(run_id),
