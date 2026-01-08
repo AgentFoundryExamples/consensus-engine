@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 84
+Total files: 87
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -60,6 +60,15 @@ Total files: 84
 **LOC:** 16  
 **TODOs/FIXMEs:** 0  
 
+## migrations/versions/a1b2c3d4e5f6_add_version_tracking_to_runs.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python module for a1b2c3d4e5f6 add version tracking to runs  
+**Size:** 1.92 KB  
+**LOC:** 23  
+**TODOs/FIXMEs:** 0  
+
 ## src/consensus_engine/__init__.py
 **Language:** Python  
 **Role:** module-init  
@@ -110,8 +119,8 @@ Total files: 84
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 9.45 KB  
-**LOC:** 206  
+**Size:** 9.75 KB  
+**LOC:** 211  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/health.py
@@ -137,8 +146,8 @@ Total files: 84
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 31.51 KB  
-**LOC:** 739  
+**Size:** 31.64 KB  
+**LOC:** 741  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/app.py
@@ -200,8 +209,8 @@ Total files: 84
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 6.95 KB  
-**LOC:** 178  
+**Size:** 7.25 KB  
+**LOC:** 186  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/config/logging.py
@@ -254,8 +263,8 @@ Total files: 84
 **Role:** model  
 **Role Justification:** model/schema name 'models'  
 **Summary:** Python data models (role: model)  
-**Size:** 15.83 KB  
-**LOC:** 329  
+**Size:** 16.34 KB  
+**LOC:** 335  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/repositories.py
@@ -263,8 +272,8 @@ Total files: 84
 **Role:** data-access  
 **Role Justification:** data access name 'repositories'  
 **Summary:** Python data access layer (role: data-access)  
-**Size:** 23.95 KB  
-**LOC:** 573  
+**Size:** 24.97 KB  
+**LOC:** 589  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py
@@ -326,8 +335,8 @@ Total files: 84
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 7.30 KB  
-**LOC:** 162  
+**Size:** 8.84 KB  
+**LOC:** 189  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/__init__.py
@@ -398,8 +407,8 @@ Total files: 84
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 37.23 KB  
-**LOC:** 840  
+**Size:** 40.19 KB  
+**LOC:** 893  
 **TODOs/FIXMEs:** 0  
 
 ## tests/__init__.py
@@ -553,6 +562,15 @@ Total files: 84
 **Summary:** Python test file (role: test)  
 **Size:** 47.31 KB  
 **LOC:** 993  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_version_tracking_api.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 6.91 KB  
+**LOC:** 157  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py
@@ -760,4 +778,13 @@ Total files: 84
 **Summary:** Python test file (role: test)  
 **Size:** 19.01 KB  
 **LOC:** 360  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_version_tracking.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 5.80 KB  
+**LOC:** 118  
 **TODOs/FIXMEs:** 0  

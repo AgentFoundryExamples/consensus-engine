@@ -88,6 +88,21 @@
       }
     },
     {
+      "id": "migrations/versions/a1b2c3d4e5f6_add_version_tracking_to_runs.py",
+      "path": "migrations/versions/a1b2c3d4e5f6_add_version_tracking_to_runs.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Sequence"
+        ],
+        "third-party": [
+          "alembic.op",
+          "sqlalchemy",
+          "sqlalchemy.dialects.postgresql"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/__init__.py",
       "path": "src/consensus_engine/__init__.py",
       "type": "file",
@@ -972,6 +987,26 @@
       }
     },
     {
+      "id": "tests/integration/test_version_tracking_api.py",
+      "path": "tests/integration/test_version_tracking_api.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "os",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest",
+          "sqlalchemy.create_engine",
+          "sqlalchemy.orm.sessionmaker",
+          "sqlalchemy.text"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/__init__.py",
       "path": "tests/unit/__init__.py",
       "type": "file",
@@ -1286,6 +1321,21 @@
         "third-party": [
           "pydantic.ValidationError",
           "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/unit/test_version_tracking.py",
+      "path": "tests/unit/test_version_tracking.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "unittest.mock.MagicMock",
+          "uuid"
+        ],
+        "third-party": [
+          "pytest",
+          "sqlalchemy.orm.Session"
         ]
       }
     }
@@ -2064,6 +2114,26 @@
       "target": "src/consensus_engine/db/models.py"
     },
     {
+      "source": "tests/integration/test_version_tracking_api.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_version_tracking_api.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_version_tracking_api.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "tests/integration/test_version_tracking_api.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/integration/test_version_tracking_api.py",
+      "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
       "source": "tests/unit/test_aggregator.py",
       "target": "src/consensus_engine/schemas/review.py"
     },
@@ -2270,6 +2340,14 @@
     {
       "source": "tests/unit/test_validation.py",
       "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "tests/unit/test_version_tracking.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/unit/test_version_tracking.py",
+      "target": "src/consensus_engine/db/repositories.py"
     }
   ],
   "external_dependencies_summary": {

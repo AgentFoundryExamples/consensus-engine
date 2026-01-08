@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 84,
+  "total_files": 87,
   "files": [
     {
       "schema_version": "2.0",
@@ -88,6 +88,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "migrations/versions/a1b2c3d4e5f6_add_version_tracking_to_runs.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python module for a1b2c3d4e5f6 add version tracking to runs",
+      "summary_text": "Python module for a1b2c3d4e5f6 add version tracking to runs",
+      "metrics": {
+        "size_bytes": 1961,
+        "loc": 23,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "src/consensus_engine/__init__.py",
       "language": "Python",
       "role": "module-init",
@@ -165,8 +179,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9672,
-        "loc": 206,
+        "size_bytes": 9988,
+        "loc": 211,
         "todo_count": 0
       }
     },
@@ -207,8 +221,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 32263,
-        "loc": 739,
+        "size_bytes": 32396,
+        "loc": 741,
         "todo_count": 0
       }
     },
@@ -305,8 +319,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 7114,
-        "loc": 178,
+        "size_bytes": 7419,
+        "loc": 186,
         "todo_count": 0
       }
     },
@@ -389,8 +403,8 @@
       "summary": "Python data models (role: model)",
       "summary_text": "Python data models (role: model)",
       "metrics": {
-        "size_bytes": 16208,
-        "loc": 329,
+        "size_bytes": 16728,
+        "loc": 335,
         "todo_count": 0
       }
     },
@@ -403,8 +417,8 @@
       "summary": "Python data access layer (role: data-access)",
       "summary_text": "Python data access layer (role: data-access)",
       "metrics": {
-        "size_bytes": 24524,
-        "loc": 573,
+        "size_bytes": 25573,
+        "loc": 589,
         "todo_count": 0
       }
     },
@@ -501,8 +515,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 7477,
-        "loc": 162,
+        "size_bytes": 9056,
+        "loc": 189,
         "todo_count": 0
       }
     },
@@ -613,8 +627,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 38126,
-        "loc": 840,
+        "size_bytes": 41154,
+        "loc": 893,
         "todo_count": 0
       }
     },
@@ -853,6 +867,20 @@
       "metrics": {
         "size_bytes": 48445,
         "loc": 993,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_version_tracking_api.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 7075,
+        "loc": 157,
         "todo_count": 0
       }
     },
@@ -1175,6 +1203,20 @@
       "metrics": {
         "size_bytes": 19463,
         "loc": 360,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_version_tracking.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 5942,
+        "loc": 118,
         "todo_count": 0
       }
     }

@@ -20,6 +20,7 @@
   ├── MULTI_PERSONA_ORCHESTRATION.md
   ├── SCHEMA_REGISTRY.md
   ├── SCHEMA_VERSIONING.md
+  ├── VERSION_TRACKING.md
   └── WORKER_DEPLOYMENT.md
 ├── examples
   └── test_full_review.py
@@ -28,7 +29,8 @@
     ├── 1be7b272f496_add_analytics_index_for_decision_and_.py
     ├── 453a79c83bde_add_versioned_run_tables.py
     ├── 77563d1e925b_add_async_run_and_step_progress.py
-    └── 9a73090ad792_initial_empty_migration.py
+    ├── 9a73090ad792_initial_empty_migration.py
+    └── a1b2c3d4e5f6_add_version_tracking_to_runs.py
   ├── env.py
   ├── README
   └── script.py.mako
@@ -97,7 +99,8 @@
     ├── test_review_endpoint.py
     ├── test_review_service.py
     ├── test_revision_endpoint.py
-    └── test_runs_endpoint.py
+    ├── test_runs_endpoint.py
+    └── test_version_tracking_api.py
   ├── unit
     ├── __init__.py
     ├── test_aggregator.py
@@ -121,7 +124,8 @@
     ├── test_review_service.py
     ├── test_schema_registry.py
     ├── test_schema_validation.py
-    └── test_validation.py
+    ├── test_validation.py
+    └── test_version_tracking.py
   ├── __init__.py
   └── conftest.py
 ├── .env.example
