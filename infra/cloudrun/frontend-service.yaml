@@ -3,11 +3,16 @@
 # This file demonstrates how to deploy the web frontend as a separate Cloud Run service
 # protected by Identity-Aware Proxy (IAP) for user authentication.
 #
+# Docker Image:
+#   Build: docker build -t gcr.io/PROJECT_ID/consensus-web:TAG webapp/
+#   Push:  docker push gcr.io/PROJECT_ID/consensus-web:TAG
+#
 # Usage:
-#   1. Replace placeholders with your actual values
-#   2. Deploy: gcloud run services replace frontend-service.yaml
-#   3. Enable IAP on the service via Console or gcloud
-#   4. Configure IAM bindings for users/groups
+#   1. Build and push Docker image to Google Container Registry or Artifact Registry
+#   2. Replace placeholders with your actual values (PROJECT_ID, backend URL, etc.)
+#   3. Deploy: gcloud run services replace frontend-service.yaml
+#   4. Enable IAP on the service via Console or gcloud
+#   5. Configure IAM bindings for users/groups
 #
 # Note: This is an example configuration. Adjust resource limits, scaling, and
 # environment variables based on your actual requirements.
@@ -44,6 +49,9 @@ spec:
       serviceAccountName: 'consensus-web-sa@PROJECT_ID.iam.gserviceaccount.com'  # Replace
       containers:
       - name: consensus-web
+        # Docker image built from webapp/Dockerfile
+        # Build: docker build -t gcr.io/PROJECT_ID/consensus-web:TAG webapp/
+        # Or use Artifact Registry: REGION-docker.pkg.dev/PROJECT_ID/REPO/consensus-web:TAG
         image: 'gcr.io/PROJECT_ID/consensus-web:latest'  # Replace with your image
         ports:
         - name: http1
