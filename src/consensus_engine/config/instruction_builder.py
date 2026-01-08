@@ -15,11 +15,11 @@ from consensus_engine.config.llm_steps import PROMPT_SET_VERSION
 
 class InstructionPayload(BaseModel):
     """Structured payload for Responses API calls.
-    
+
     This class encapsulates the complete instruction hierarchy for an LLM call,
     separating concerns between system-level requirements, developer guidance,
     and user-provided content.
-    
+
     Attributes:
         system_instruction: System-level instructions (safety, schema requirements)
         developer_instruction: Developer instructions (house style, persona role)
@@ -27,7 +27,7 @@ class InstructionPayload(BaseModel):
         combined_instruction: Full combined instruction for the API
         metadata: Additional metadata about the payload
     """
-    
+
     system_instruction: str = Field(
         ...,
         min_length=1,
@@ -55,11 +55,11 @@ class InstructionPayload(BaseModel):
 
 class InstructionBuilder:
     """Builder for composing Responses API instruction payloads.
-    
+
     This builder provides a fluent interface for constructing instruction
     payloads with clear separation of system, developer, and user content.
     It ensures consistency across all LLM calls and supports persona injection.
-    
+
     Example:
         >>> builder = InstructionBuilder()
         >>> payload = builder.with_system_instruction(
@@ -73,7 +73,7 @@ class InstructionBuilder:
         ...     persona_instructions="You are a security expert...",
         ... ).build()
     """
-    
+
     def __init__(self) -> None:
         """Initialize the instruction builder."""
         self._system_instruction: str | None = None
@@ -84,95 +84,95 @@ class InstructionBuilder:
         self._metadata: dict[str, Any] = {
             "prompt_set_version": PROMPT_SET_VERSION,
         }
-    
+
     def with_system_instruction(self, system_instruction: str) -> "InstructionBuilder":
         """Set the system-level instruction.
-        
+
         System instructions define safety boundaries, schema requirements,
         and fundamental behavior constraints.
-        
+
         Args:
             system_instruction: System-level instruction text
-            
+
         Returns:
             Self for method chaining
         """
         self._system_instruction = system_instruction
         return self
-    
+
     def with_developer_instruction(self, developer_instruction: str) -> "InstructionBuilder":
         """Set the developer instruction.
-        
+
         Developer instructions provide additional guidance on house style,
         formatting preferences, and context-specific requirements.
-        
+
         Args:
             developer_instruction: Developer instruction text
-            
+
         Returns:
             Self for method chaining
         """
         self._developer_instruction = developer_instruction
         return self
-    
+
     def with_user_content(self, user_content: str) -> "InstructionBuilder":
         """Set the user-provided content.
-        
+
         User content is the actual prompt or input from the user that the
         LLM should respond to.
-        
+
         Args:
             user_content: User content text
-            
+
         Returns:
             Self for method chaining
         """
         self._user_content = user_content
         return self
-    
+
     def with_persona(
         self, persona_name: str, persona_instructions: str
     ) -> "InstructionBuilder":
         """Inject persona context into the instruction.
-        
+
         Persona injection adds role-specific guidance to the developer
         instruction, ensuring the LLM responds from the correct perspective.
-        
+
         Args:
             persona_name: Name of the persona (e.g., "SecurityGuardian")
             persona_instructions: Instructions specific to this persona
-            
+
         Returns:
             Self for method chaining
         """
         self._persona_name = persona_name
         self._persona_instructions = persona_instructions
         return self
-    
+
     def with_metadata(self, key: str, value: Any) -> "InstructionBuilder":
         """Add metadata to the payload.
-        
+
         Args:
             key: Metadata key
             value: Metadata value
-            
+
         Returns:
             Self for method chaining
         """
         self._metadata[key] = value
         return self
-    
+
     def build(self) -> InstructionPayload:
         """Build the final instruction payload.
-        
+
         This method combines all instruction components in the correct order:
         1. System instruction (required)
         2. Developer instruction (optional, includes persona if set)
         3. User content (required)
-        
+
         Returns:
             InstructionPayload with all components combined
-            
+
         Raises:
             ValueError: If required components are missing
         """
@@ -181,10 +181,10 @@ class InstructionBuilder:
             raise ValueError("System instruction is required")
         if not self._user_content:
             raise ValueError("User content is required")
-        
+
         # Build combined instruction
         combined_instruction = self._system_instruction
-        
+
         # Add developer instruction if present
         developer_instruction = self._developer_instruction
         if self._persona_name and self._persona_instructions:
@@ -197,14 +197,14 @@ class InstructionBuilder:
                 developer_instruction = f"{persona_context}\n\n{developer_instruction}"
             else:
                 developer_instruction = persona_context
-        
+
         if developer_instruction:
             combined_instruction = f"{combined_instruction}\n\n{developer_instruction}"
-        
+
         # Add metadata
         if self._persona_name:
             self._metadata["persona_name"] = self._persona_name
-        
+
         return InstructionPayload(
             system_instruction=self._system_instruction,
             developer_instruction=developer_instruction,
@@ -212,20 +212,20 @@ class InstructionBuilder:
             combined_instruction=combined_instruction,
             metadata=self._metadata,
         )
-    
+
     @classmethod
     def create_expand_payload(
         cls, system_instruction: str, developer_instruction: str, user_content: str
     ) -> InstructionPayload:
         """Create a payload for the expand step.
-        
+
         Convenience method for creating expand step payloads.
-        
+
         Args:
             system_instruction: System instruction for expand
             developer_instruction: Developer instruction for expand
             user_content: User content to expand
-            
+
         Returns:
             InstructionPayload for expand step
         """
@@ -237,7 +237,7 @@ class InstructionBuilder:
             .with_metadata("step_name", "expand")
             .build()
         )
-    
+
     @classmethod
     def create_review_payload(
         cls,
@@ -248,17 +248,17 @@ class InstructionBuilder:
         persona_instructions: str | None = None,
     ) -> InstructionPayload:
         """Create a payload for the review step.
-        
+
         Convenience method for creating review step payloads with optional
         persona injection.
-        
+
         Args:
             system_instruction: System instruction for review
             developer_instruction: Developer instruction for review
             user_content: User content to review
             persona_name: Optional persona name
             persona_instructions: Optional persona instructions
-            
+
         Returns:
             InstructionPayload for review step
         """
@@ -269,10 +269,10 @@ class InstructionBuilder:
             .with_user_content(user_content)
             .with_metadata("step_name", "review")
         )
-        
+
         if persona_name and persona_instructions:
             builder = builder.with_persona(persona_name, persona_instructions)
-        
+
         return builder.build()
 
 

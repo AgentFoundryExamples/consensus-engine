@@ -19,10 +19,14 @@ It handles environment variable loading, validation, and provides sensible defau
 
 from enum import Enum
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from urllib.parse import quote_plus
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from consensus_engine.config.llm_steps import LLMStepsConfig
 
 
 class Environment(str, Enum):
@@ -111,7 +115,10 @@ class Settings(BaseSettings):
         default=0.0,
         ge=0.0,
         le=1.0,
-        description="Temperature for aggregation (0.0-1.0, default: 0.0 for deterministic aggregation)",
+        description=(
+            "Temperature for aggregation (0.0-1.0, "
+            "default: 0.0 for deterministic aggregation)"
+        ),
     )
 
     # Persona Configuration
@@ -248,7 +255,7 @@ class Settings(BaseSettings):
         description="Pub/Sub subscription name for worker to consume",
         min_length=1,
     )
-    
+
     # Worker Configuration
     worker_max_concurrency: int = Field(
         default=10,

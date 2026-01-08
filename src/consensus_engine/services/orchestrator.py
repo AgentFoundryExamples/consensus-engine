@@ -15,6 +15,7 @@
 
 This module provides orchestration of proposal reviews across multiple personas,
 implementing deterministic failure handling and metadata collection.
+Uses centralized configuration and instruction builder.
 """
 
 import time
@@ -22,6 +23,8 @@ import uuid
 from typing import Any
 
 from consensus_engine.clients.openai_client import OpenAIClientWrapper
+from consensus_engine.config.instruction_builder import InstructionBuilder
+from consensus_engine.config.llm_steps import StepName
 from consensus_engine.config.logging import get_logger
 from consensus_engine.config.personas import get_all_personas
 from consensus_engine.config.settings import Settings
@@ -156,6 +159,7 @@ def review_with_all_personas(
     This function orchestrates reviews from all five personas defined in the
     configuration, implementing deterministic failure handling where any single
     persona failure causes the entire operation to fail.
+    Uses centralized configuration and instruction builder.
 
     Args:
         expanded_proposal: Validated ExpandedProposal to review
@@ -176,6 +180,10 @@ def review_with_all_personas(
         f"Starting multi-persona orchestration with run_id={run_id}",
         extra={"run_id": run_id, "step_name": "orchestrate"},
     )
+
+    # Get centralized step configuration
+    llm_config = settings.get_llm_steps_config()
+    review_config = llm_config.get_step_config(StepName.REVIEW)
 
     # Get all personas in config order
     all_personas = get_all_personas()
@@ -237,7 +245,6 @@ def review_with_all_personas(
 
         # Construct developer instruction with persona context
         developer_instruction = (
-            f"Review this proposal from the perspective of: {persona_config.display_name}\n\n"
             f"Persona instructions: {persona_config.developer_instructions}\n\n"
             "Provide your review using the PersonaReview schema with the following fields:\n"
             f"- persona_name: Your assigned persona name ({persona_config.display_name})\n"
@@ -253,18 +260,26 @@ def review_with_all_personas(
             "Be thorough, specific, and constructive in your feedback."
         )
 
+        # Build instruction payload using InstructionBuilder
+        instruction_payload = InstructionBuilder.create_review_payload(
+            system_instruction=REVIEW_SYSTEM_INSTRUCTION,
+            developer_instruction=developer_instruction,
+            user_content=user_prompt,
+            persona_name=persona_config.display_name,
+            persona_instructions=persona_config.developer_instructions,
+        )
+
         try:
             # Call OpenAI with structured output for this persona
             # Note: persona_config.temperature is 0.2 for all personas (PERSONA_TEMPERATURE)
             # This ensures deterministic, consistent reviews across all personas
-            parsed_response, metadata = client.create_structured_response(
-                system_instruction=REVIEW_SYSTEM_INSTRUCTION,
-                user_prompt=user_prompt,
+            parsed_response, metadata = client.create_structured_response_with_payload(
+                instruction_payload=instruction_payload,
                 response_model=PersonaReview,
-                developer_instruction=developer_instruction,
                 step_name="review",
-                model_override=settings.review_model,
+                model_override=review_config.model,
                 temperature_override=persona_config.temperature,
+                max_retries=review_config.max_retries,
             )
 
             # Attach internal metadata to the review
@@ -341,6 +356,7 @@ def review_with_selective_personas(
 
     This function orchestrates reviews for a revision run, re-running only selected
     personas while reusing cached reviews from the parent run for others.
+    Uses centralized configuration and instruction builder.
 
     Args:
         expanded_proposal: Validated ExpandedProposal to review
@@ -359,6 +375,10 @@ def review_with_selective_personas(
     """
     run_id = str(uuid.uuid4())
     start_time = time.time()
+
+    # Get centralized step configuration
+    llm_config = settings.get_llm_steps_config()
+    review_config = llm_config.get_step_config(StepName.REVIEW)
 
     logger.info(
         f"Starting selective persona orchestration with run_id={run_id}",
@@ -433,7 +453,6 @@ def review_with_selective_personas(
 
             # Construct developer instruction with persona context
             developer_instruction = (
-                f"Review this proposal from the perspective of: {persona_config.display_name}\n\n"
                 f"Persona instructions: {persona_config.developer_instructions}\n\n"
                 "Provide your review using the PersonaReview schema with the following fields:\n"
                 f"- persona_name: Your assigned persona name ({persona_config.display_name})\n"
@@ -448,16 +467,24 @@ def review_with_selective_personas(
                 "Be thorough, specific, and constructive in your feedback."
             )
 
+            # Build instruction payload using InstructionBuilder
+            instruction_payload = InstructionBuilder.create_review_payload(
+                system_instruction=REVIEW_SYSTEM_INSTRUCTION,
+                developer_instruction=developer_instruction,
+                user_content=user_prompt,
+                persona_name=persona_config.display_name,
+                persona_instructions=persona_config.developer_instructions,
+            )
+
             try:
                 # Call OpenAI with structured output for this persona
-                parsed_response, metadata = client.create_structured_response(
-                    system_instruction=REVIEW_SYSTEM_INSTRUCTION,
-                    user_prompt=user_prompt,
+                parsed_response, metadata = client.create_structured_response_with_payload(
+                    instruction_payload=instruction_payload,
                     response_model=PersonaReview,
-                    developer_instruction=developer_instruction,
                     step_name="review",
-                    model_override=settings.review_model,
+                    model_override=review_config.model,
                     temperature_override=persona_config.temperature,
+                    max_retries=review_config.max_retries,
                 )
 
                 # Attach internal metadata to the review

@@ -16,7 +16,7 @@ PROMPT_SET_VERSION = "1.0.0"
 
 class StepName(str, Enum):
     """Enumeration of pipeline step names."""
-    
+
     EXPAND = "expand"
     REVIEW = "review"
     AGGREGATE = "aggregate"
@@ -24,7 +24,7 @@ class StepName(str, Enum):
 
 class StepConfig(BaseModel):
     """Configuration for a single LLM pipeline step.
-    
+
     Attributes:
         step_name: Name of the pipeline step
         model: Model identifier (e.g., 'gpt-5.1')
@@ -33,7 +33,7 @@ class StepConfig(BaseModel):
         timeout_seconds: Timeout for this step in seconds
         feature_flags: Optional feature flags for this step
     """
-    
+
     step_name: StepName = Field(
         ...,
         description="Name of the pipeline step",
@@ -65,18 +65,18 @@ class StepConfig(BaseModel):
         default_factory=dict,
         description="Optional feature flags for this step",
     )
-    
+
     @field_validator("model")
     @classmethod
     def validate_model(cls, v: str) -> str:
         """Validate model identifier is not empty.
-        
+
         Args:
             v: Model identifier to validate
-            
+
         Returns:
             Validated model identifier
-            
+
         Raises:
             ValueError: If model identifier is empty or whitespace-only
         """
@@ -88,17 +88,17 @@ class StepConfig(BaseModel):
 
 class LLMStepsConfig(BaseModel):
     """Centralized configuration for all LLM pipeline steps.
-    
+
     This class aggregates step configurations and provides validation
     for the entire pipeline configuration.
-    
+
     Attributes:
         expand: Configuration for the expand step
         review: Configuration for the review step
         aggregate: Configuration for the aggregate step
         prompt_set_version: Version identifier for prompt templates
     """
-    
+
     expand: StepConfig = Field(
         ...,
         description="Configuration for the expand step",
@@ -116,16 +116,16 @@ class LLMStepsConfig(BaseModel):
         min_length=1,
         description="Version identifier for prompt templates",
     )
-    
+
     def get_step_config(self, step_name: StepName | str) -> StepConfig:
         """Get configuration for a specific step.
-        
+
         Args:
             step_name: Name of the step (enum or string)
-            
+
         Returns:
             StepConfig for the requested step
-            
+
         Raises:
             ValueError: If step_name is not recognized
         """
@@ -133,12 +133,12 @@ class LLMStepsConfig(BaseModel):
         if isinstance(step_name, str):
             try:
                 step_name = StepName(step_name)
-            except ValueError:
+            except ValueError as e:
                 available = ", ".join(s.value for s in StepName)
                 raise ValueError(
                     f"Unknown step name '{step_name}'. Available steps: {available}"
-                )
-        
+                ) from e
+
         # Return the appropriate config
         if step_name == StepName.EXPAND:
             return self.expand
@@ -149,17 +149,17 @@ class LLMStepsConfig(BaseModel):
         else:
             # Should never reach here due to enum validation
             raise ValueError(f"Unhandled step name: {step_name}")
-    
+
     @classmethod
-    def validate_step_configs(cls, expand: StepConfig, review: StepConfig, 
+    def validate_step_configs(cls, expand: StepConfig, review: StepConfig,
                               aggregate: StepConfig) -> None:
         """Validate that all step configs are consistent.
-        
+
         Args:
             expand: Expand step configuration
             review: Review step configuration
             aggregate: Aggregate step configuration
-            
+
         Raises:
             ValueError: If configurations are inconsistent or invalid
         """
@@ -181,7 +181,7 @@ class LLMStepsConfig(BaseModel):
 
 def create_default_llm_steps_config() -> LLMStepsConfig:
     """Create default LLM steps configuration with standard settings.
-    
+
     Returns:
         LLMStepsConfig with default settings for all steps
     """
