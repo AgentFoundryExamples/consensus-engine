@@ -1964,6 +1964,177 @@ The Consensus Engine can be deployed to Google Cloud Platform (GCP) with the fol
 4. **Cloud SQL**: PostgreSQL database with IAM authentication
 5. **Pub/Sub**: Message queue for asynchronous job processing
 
+### Quick Start: Cloud Run Deployment
+
+This quick start guide provides the essential steps to deploy the Consensus Engine to Google Cloud Run. For detailed explanations, prerequisites, and troubleshooting, see the comprehensive guides below.
+
+#### Prerequisites
+
+```bash
+# Set up environment variables
+export PROJECT_ID="your-project-id"
+export REGION="us-central1"
+
+# Install gcloud CLI and authenticate
+gcloud auth login
+gcloud config set project $PROJECT_ID
+
+# Enable required APIs
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com sqladmin.googleapis.com \
+  pubsub.googleapis.com secretmanager.googleapis.com iap.googleapis.com
+```
+
+#### 1. Create Infrastructure
+
+```bash
+# Create Artifact Registry repository
+gcloud artifacts repositories create consensus-engine \
+  --repository-format=docker \
+  --location=$REGION
+
+# Create Cloud SQL instance
+gcloud sql instances create consensus-db \
+  --database-version=POSTGRES_16 \
+  --tier=db-g1-small \
+  --region=$REGION
+
+gcloud sql databases create consensus_engine --instance=consensus-db
+
+# Create Pub/Sub topic and subscription
+gcloud pubsub topics create consensus-engine-jobs
+gcloud pubsub subscriptions create consensus-engine-jobs-sub \
+  --topic=consensus-engine-jobs \
+  --ack-deadline=600
+
+# Store OpenAI API key in Secret Manager
+echo -n "your-openai-api-key" | gcloud secrets create openai-api-key --data-file=-
+```
+
+#### 2. Create Service Accounts
+
+```bash
+# Backend service account
+gcloud iam service-accounts create consensus-api-sa \
+  --display-name="Consensus API Service"
+
+# Frontend service account
+gcloud iam service-accounts create consensus-web-sa \
+  --display-name="Consensus Web Frontend"
+
+# Worker service account
+gcloud iam service-accounts create consensus-worker-sa \
+  --display-name="Consensus Worker"
+
+# Grant permissions (see comprehensive guide for complete IAM setup)
+```
+
+#### 3. Build and Deploy Services
+
+```bash
+# Build images
+cd /path/to/consensus-engine
+
+# Backend
+gcloud builds submit \
+  --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/consensus-engine/consensus-api:latest
+
+# Worker
+gcloud builds submit \
+  --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/consensus-engine/consensus-worker:latest \
+  --file Dockerfile.worker
+
+# Frontend (from webapp directory)
+cd webapp
+gcloud builds submit \
+  --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/consensus-engine/consensus-web:latest
+
+# Deploy backend
+gcloud run deploy consensus-api \
+  --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/consensus-engine/consensus-api:latest \
+  --region=$REGION \
+  --service-account=consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com \
+  --no-allow-unauthenticated \
+  --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
+  --add-cloudsql-instances=${PROJECT_ID}:${REGION}:consensus-db \
+  --set-env-vars="ENV=production,USE_CLOUD_SQL_CONNECTOR=true,DB_INSTANCE_CONNECTION_NAME=${PROJECT_ID}:${REGION}:consensus-db,PUBSUB_PROJECT_ID=${PROJECT_ID}"
+
+# Get backend URL
+export BACKEND_URL=$(gcloud run services describe consensus-api --region=$REGION --format='value(status.url)')
+
+# Deploy frontend
+gcloud run deploy consensus-web \
+  --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/consensus-engine/consensus-web:latest \
+  --region=$REGION \
+  --service-account=consensus-web-sa@${PROJECT_ID}.iam.gserviceaccount.com \
+  --allow-unauthenticated \
+  --set-env-vars="VITE_API_BASE_URL=${BACKEND_URL}"
+
+# Deploy worker
+gcloud run deploy consensus-worker \
+  --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/consensus-engine/consensus-worker:latest \
+  --region=$REGION \
+  --service-account=consensus-worker-sa@${PROJECT_ID}.iam.gserviceaccount.com \
+  --no-allow-unauthenticated \
+  --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
+  --add-cloudsql-instances=${PROJECT_ID}:${REGION}:consensus-db \
+  --set-env-vars="ENV=production,USE_CLOUD_SQL_CONNECTOR=true,PUBSUB_PROJECT_ID=${PROJECT_ID},PUBSUB_SUBSCRIPTION=consensus-engine-jobs-sub" \
+  --min-instances=1
+```
+
+#### 4. Run Database Migrations
+
+```bash
+# Download Cloud SQL proxy
+curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64
+chmod +x cloud-sql-proxy
+
+# Start proxy and run migrations
+./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 &
+export DATABASE_URL="postgresql://consensus-api-sa@${PROJECT_ID}.iam:@localhost:5432/consensus_engine"
+alembic upgrade head
+kill %1  # Stop proxy
+```
+
+#### 5. Configure IAM and CORS
+
+```bash
+# Grant frontend permission to invoke backend
+gcloud run services add-iam-policy-binding consensus-api \
+  --member="serviceAccount:consensus-web-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --region=$REGION
+
+# Get frontend URL and update backend CORS
+export FRONTEND_URL=$(gcloud run services describe consensus-web --region=$REGION --format='value(status.url)')
+
+gcloud run services update consensus-api \
+  --update-env-vars="CORS_ORIGINS=${FRONTEND_URL}" \
+  --region=$REGION
+```
+
+#### 6. Verify Deployment
+
+```bash
+# Test backend health
+curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" ${BACKEND_URL}/health
+
+# Test frontend
+open $FRONTEND_URL  # Opens in browser
+
+# Submit test job and verify worker processes it
+curl -X POST ${BACKEND_URL}/v1/full-review \
+  -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"idea":"Build a REST API for user management"}'
+```
+
+**What's Next?**
+- Enable IAP for frontend authentication (see [WEB_FRONTEND.md](docs/WEB_FRONTEND.md#enable-identity-aware-proxy-iap-for-frontend))
+- Configure monitoring and alerts (see [Infrastructure README](infra/cloudrun/README.md#monitoring-and-logging))
+- Set up CI/CD pipelines
+- Review security best practices
+
 ### Comprehensive Deployment Guide
 
 **For complete deployment requirements and architecture details, see:**
@@ -1981,12 +2152,12 @@ This comprehensive guide covers:
 - **Cost estimation** and optimization strategies
 - **Security best practices** for production deployments
 
-### Quick Start Guides
+### Step-by-Step Deployment Guides
 
-For step-by-step deployment instructions:
-- **Infrastructure Setup**: [infra/cloudrun/README.md](infra/cloudrun/README.md) - Complete GCP setup with gcloud commands
-- **Frontend Deployment**: [docs/WEB_FRONTEND.md](docs/WEB_FRONTEND.md) - Detailed frontend deployment with IAP and CORS
-- **Worker Deployment**: [docs/WORKER_DEPLOYMENT.md](docs/WORKER_DEPLOYMENT.md) - Background worker deployment
+For detailed step-by-step deployment instructions:
+- **[Infrastructure Setup (infra/cloudrun/README.md)](infra/cloudrun/README.md)** - Complete GCP setup with gcloud commands, build/push procedures, verification steps, rollback strategies, and comprehensive troubleshooting
+- **[Frontend Deployment (docs/WEB_FRONTEND.md)](docs/WEB_FRONTEND.md)** - Detailed frontend deployment with IAP, CORS configuration, and frontend-specific troubleshooting
+- **[Worker Deployment (docs/WORKER_DEPLOYMENT.md)](docs/WORKER_DEPLOYMENT.md)** - Background worker deployment, Cloud Run service vs job comparison, scaling guidance, and worker troubleshooting
 
 ### CORS Configuration
 
