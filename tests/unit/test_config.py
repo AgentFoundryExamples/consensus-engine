@@ -255,3 +255,193 @@ class TestEnvironmentEnum:
         assert Environment.DEVELOPMENT == "development"
         assert Environment.PRODUCTION == "production"
         assert Environment.TESTING == "testing"
+
+
+class TestCORSConfiguration:
+    """Test suite for CORS configuration settings."""
+
+    def test_cors_origins_default(self, clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test CORS origins defaults to localhost:5173."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+
+        settings = Settings()
+        assert settings.cors_origins == "http://localhost:5173"
+        assert settings.cors_origins_list == ["http://localhost:5173"]
+
+    def test_cors_origins_single(self, clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test CORS origins with a single origin."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com")
+
+        settings = Settings()
+        assert settings.cors_origins == "https://app.example.com"
+        assert settings.cors_origins_list == ["https://app.example.com"]
+
+    def test_cors_origins_multiple(self, clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test CORS origins with multiple origins."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv(
+            "CORS_ORIGINS", "https://app.example.com,https://staging.example.com,http://localhost:3000"
+        )
+
+        settings = Settings()
+        assert settings.cors_origins_list == [
+            "https://app.example.com",
+            "https://staging.example.com",
+            "http://localhost:3000",
+        ]
+
+    def test_cors_origins_with_spaces(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS origins handles spaces around commas."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv(
+            "CORS_ORIGINS", "https://app.example.com , https://staging.example.com , http://localhost:3000"
+        )
+
+        settings = Settings()
+        assert settings.cors_origins_list == [
+            "https://app.example.com",
+            "https://staging.example.com",
+            "http://localhost:3000",
+        ]
+
+    def test_cors_origins_rejects_wildcard(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS origins rejects wildcard for security."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ORIGINS", "*")
+
+        with pytest.raises(ValidationError) as exc_info:
+            Settings()
+
+        errors = exc_info.value.errors()
+        assert any(
+            e["loc"] == ("cors_origins",) and "wildcard" in str(e["msg"]).lower() for e in errors
+        )
+
+    def test_cors_origins_rejects_wildcard_in_list(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS origins rejects wildcard even in a list."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com,*")
+
+        with pytest.raises(ValidationError) as exc_info:
+            Settings()
+
+        errors = exc_info.value.errors()
+        assert any(
+            e["loc"] == ("cors_origins",) and "wildcard" in str(e["msg"]).lower() for e in errors
+        )
+
+    def test_cors_origins_rejects_empty(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS origins rejects empty string."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ORIGINS", "")
+
+        with pytest.raises(ValidationError) as exc_info:
+            Settings()
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("cors_origins",) for e in errors)
+
+    def test_cors_origins_validates_url_format(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS origins validates URL format for non-localhost origins."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ORIGINS", "invalid-url")
+
+        with pytest.raises(ValidationError) as exc_info:
+            Settings()
+
+        errors = exc_info.value.errors()
+        assert any(
+            e["loc"] == ("cors_origins",) and "invalid" in str(e["msg"]).lower() for e in errors
+        )
+
+    def test_cors_origins_allows_localhost(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS origins allows localhost URLs."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:3000")
+
+        settings = Settings()
+        assert settings.cors_origins_list == ["http://localhost:5173", "http://127.0.0.1:3000"]
+
+    def test_cors_allow_headers_default(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS allow headers defaults to wildcard."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+
+        settings = Settings()
+        assert settings.cors_allow_headers == "*"
+        assert settings.cors_allow_headers_list == ["*"]
+
+    def test_cors_allow_headers_explicit(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS allow headers with explicit list."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ALLOW_HEADERS", "Content-Type,Authorization,X-Request-ID")
+
+        settings = Settings()
+        assert settings.cors_allow_headers_list == [
+            "Content-Type",
+            "Authorization",
+            "X-Request-ID",
+        ]
+
+    def test_cors_allow_headers_with_spaces(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS allow headers handles spaces around commas."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ALLOW_HEADERS", "Content-Type , Authorization , X-Request-ID")
+
+        settings = Settings()
+        assert settings.cors_allow_headers_list == [
+            "Content-Type",
+            "Authorization",
+            "X-Request-ID",
+        ]
+
+    def test_cors_allow_headers_wildcard_only(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS allow headers returns wildcard as single item list."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("CORS_ALLOW_HEADERS", "*")
+
+        settings = Settings()
+        assert settings.cors_allow_headers_list == ["*"]
+
+    def test_cors_production_recommendation(
+        self, clean_env: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test CORS configuration for production environment."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-123456789")
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com,https://staging.example.com")
+        monkeypatch.setenv(
+            "CORS_ALLOW_HEADERS", "Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version"
+        )
+
+        settings = Settings()
+
+        # Verify production settings
+        assert settings.env == Environment.PRODUCTION
+        assert "*" not in settings.cors_origins
+        assert len(settings.cors_origins_list) == 2
+        assert all("https://" in origin for origin in settings.cors_origins_list)
+        assert "*" not in settings.cors_allow_headers_list
+        assert "Content-Type" in settings.cors_allow_headers_list
+        assert "Authorization" in settings.cors_allow_headers_list
+
