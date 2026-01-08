@@ -213,10 +213,20 @@ def check_version_consistency(
         
         if has_mixed_prompts:
             error_details["mixed_prompt_versions"] = list(prompt_set_versions)
+            # Provide detailed context for debugging mixed prompt versions
+            affected_sources = [
+                info.get("source", "unknown") 
+                for info in schema_versions 
+                if info.get("prompt_set_version") in prompt_set_versions
+            ]
             logger.warning(
-                "Mixed prompt_set_versions detected within run",
+                "Mixed prompt_set_versions detected within run - this may indicate "
+                "a deployment issue or concurrent version rollout. Review the affected "
+                "pipeline steps and ensure all workers are running the same version.",
                 extra={
                     "prompt_versions": list(prompt_set_versions),
+                    "affected_sources": affected_sources,
+                    "version_count": len(prompt_set_versions),
                     **context,
                 },
             )

@@ -329,12 +329,12 @@ class PipelineWorker:
             },
         )
 
-    def _get_step_metadata(self, step_name: str, run: Run | None = None) -> dict[str, Any]:
+    def _get_step_metadata(self, step_name: str, run: Run) -> dict[str, Any]:
         """Generate step metadata with version information.
         
         Args:
             step_name: Step name
-            run: Optional Run instance to extract versions from
+            run: Run instance to extract versions from
             
         Returns:
             Dictionary with step metadata including versions
@@ -352,8 +352,8 @@ class PipelineWorker:
             step_config = llm_config.aggregate
         
         metadata = {
-            "schema_version": run.schema_version if run else "1.0.0",
-            "prompt_set_version": run.prompt_set_version if run else llm_config.prompt_set_version,
+            "schema_version": run.schema_version or "1.0.0",
+            "prompt_set_version": run.prompt_set_version or llm_config.prompt_set_version,
         }
         
         # Add step-specific config if available
@@ -367,7 +367,7 @@ class PipelineWorker:
         return metadata
 
     def _mark_step_started(
-        self, session: Session, run_id: uuid.UUID, step_name: str, run: Run | None = None
+        self, session: Session, run_id: uuid.UUID, step_name: str, run: Run
     ) -> None:
         """Mark a step as started.
         
@@ -375,7 +375,7 @@ class PipelineWorker:
             session: Database session
             run_id: Run ID
             step_name: Step name
-            run: Optional Run instance to extract version info from
+            run: Run instance to extract version info from
         """
         step_metadata = self._get_step_metadata(step_name, run)
         
