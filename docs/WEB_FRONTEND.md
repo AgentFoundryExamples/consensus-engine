@@ -670,3 +670,223 @@ In production, monitor:
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
 - [OpenAPI TypeScript Codegen](https://github.com/ferdikoomen/openapi-typescript-codegen)
+
+## Roadmap Packet and Review Views
+
+### Overview
+
+The roadmap packet feature provides a comprehensive view of completed consensus engine runs, displaying:
+- High-level summary and decision outcome
+- Risks and mitigations with blocking/non-blocking categorization
+- Recommended next steps grouped by persona
+- Acceptance criteria and implementation notes
+- Minority report badges and detailed dissenting opinions
+- Interactive modal for detailed proposal and persona reviews
+- Optional raw JSON view for power users
+
+### Components
+
+#### RoadmapPacket
+
+Main component that displays the complete roadmap packet for a completed run.
+
+```tsx
+import { RoadmapPacket } from './components/RoadmapPacket';
+
+<RoadmapPacket run={activeRunDetails} />
+```
+
+**Features:**
+- Decision badge with color-coding (approve=green, revise=yellow, reject=red)
+- Weighted confidence progress bar
+- Blocking issues highlighted in red with mitigation notes
+- Non-blocking concerns in orange
+- Recommendations grouped by persona
+- "View Detailed Proposal & Reviews" button opens modal
+
+**Props:**
+- `run` (RunDetailResponse | null): The completed run details
+- `className` (optional, string): Additional Tailwind classes
+
+#### MinorityReport
+
+Displays dissenting opinions from personas who disagree with the majority decision.
+
+```tsx
+import { MinorityReport } from './components/MinorityReport';
+
+<MinorityReport reports={minorityReports} />
+```
+
+**Features:**
+- Amber badge indicating dissenting opinion(s)
+- Core concerns from dissenting personas
+- Recommended mitigations
+- Optional strengths and additional concerns
+- Supports multiple dissenters
+
+**Props:**
+- `reports` (MinorityReport[]): Array of minority report objects
+- `className` (optional, string): Additional Tailwind classes
+
+#### PersonaReviewModal
+
+Modal dialog for viewing expanded proposal details and persona reviews.
+
+```tsx
+import { PersonaReviewModal } from './components/PersonaReviewModal';
+
+<PersonaReviewModal
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  proposal={proposal}
+  reviews={reviews}
+/>
+```
+
+**Features:**
+- Keyboard focus trap (Tab/Shift+Tab navigation)
+- Escape key to close
+- Restores focus to triggering element on close
+- Scrollable content with proper ARIA labels
+- Collapsible persona review sections (first open by default)
+- Color-coded sections: strengths (green), concerns (orange), blocking issues (red), recommendations (blue)
+- Security critical blocking issues highlighted in dark red
+
+**Props:**
+- `isOpen` (boolean): Whether modal is visible
+- `onClose` (() => void): Callback when modal closes
+- `proposal` (ProposalData | null): Extracted proposal data
+- `reviews` (PersonaReview[]): Array of persona reviews
+
+**Accessibility:**
+- `role="dialog"` with `aria-modal="true"`
+- `aria-labelledby` for modal title
+- Focus management with `useEffect` hook
+- Prevents body scroll when open
+- Keyboard navigation support
+
+#### JsonToggle
+
+Toggle component for showing/hiding raw JSON data.
+
+```tsx
+import { JsonToggle } from './components/JsonToggle';
+
+<JsonToggle data={runData} label="Raw Run Data" />
+```
+
+**Features:**
+- Expandable JSON viewer
+- Sanitized output (redacts sensitive keys like 'token', 'secret', 'password')
+- Scrollable with max-height constraint
+- Pretty-printed with indentation
+
+**Props:**
+- `data` (Record<string, unknown> | null): Object to display as JSON
+- `label` (optional, string): Button label (default: "Show Raw JSON")
+- `className` (optional, string): Additional Tailwind classes
+
+### State Selectors
+
+Helper functions in `src/state/selectors.ts` extract structured data from run payloads:
+
+```typescript
+import {
+  extractProposal,
+  extractDecision,
+  extractPersonaReviews,
+  extractRoadmapSummary,
+  extractRisks,
+  extractNextSteps,
+  extractAcceptanceCriteria,
+  sanitizeJsonForDisplay,
+} from './state/selectors';
+
+// Extract proposal data
+const proposal = extractProposal(run);
+// Returns: { title, summary, problemStatement, proposedSolution, assumptions, scopeNonGoals, rawExpandedProposal }
+
+// Extract decision data
+const decision = extractDecision(run);
+// Returns: { decision, weightedConfidence, hasMinorityReport, minorityReports }
+
+// Extract persona reviews
+const reviews = extractPersonaReviews(run);
+// Returns: PersonaReview[] with strengths, concerns, recommendations, blocking_issues
+
+// Extract risks with blocking status
+const risks = extractRisks(run);
+// Returns: RiskItem[] with { personaName, personaId, concern, isBlocking, mitigation }
+
+// Extract next steps
+const steps = extractNextSteps(run);
+// Returns: NextStep[] with { personaName, personaId, recommendation }
+
+// Sanitize JSON for display
+const sanitized = sanitizeJsonForDisplay(runData);
+// Returns: Same structure with sensitive fields redacted
+```
+
+**Important Note:** The current API only provides `PersonaReviewSummary` objects, not full `PersonaReview` data. The selectors construct basic review structures from available summary fields (persona name, ID, confidence score, blocking issues flag). Full review details (strengths, concerns, recommendations, etc.) are not currently exposed by the API endpoint.
+
+### Styling
+
+Custom styles are defined in `src/styles/roadmap.css`:
+- Smooth transitions for interactive elements
+- Custom scrollbar styling for modals and JSON views
+- Focus ring styles for accessibility
+- Pulse animation for minority report badge
+
+Import in `src/index.css`:
+```css
+@import './styles/roadmap.css';
+```
+
+### Integration
+
+The RoadmapPacket is integrated into the RunDashboard page:
+
+```tsx
+// In RunDashboard.tsx
+{activeRunDetails.status === 'completed' && (
+  <div className="mt-6">
+    <RoadmapPacket run={activeRunDetails} />
+  </div>
+)}
+```
+
+### Usage Example
+
+```tsx
+import { RoadmapPacket } from './components/RoadmapPacket';
+import { useRunsStore } from './state/runs';
+
+function MyComponent() {
+  const { activeRunDetails } = useRunsStore();
+
+  if (activeRunDetails?.status !== 'completed') {
+    return <p>Run not completed yet...</p>;
+  }
+
+  return <RoadmapPacket run={activeRunDetails} />;
+}
+```
+
+### Edge Cases
+
+- **Partial data**: Components gracefully handle missing optional fields with fallback text ("Not provided yet")
+- **Many personas**: Scrollable sections prevent viewport overflow
+- **No minority report**: MinorityReport component returns null if no reports
+- **No risks**: Displays "No risks or concerns identified"
+- **No recommendations**: Displays "No recommendations provided"
+- **Empty proposal**: Shows "No run data available" or "Not provided yet"
+
+### Future Enhancements
+
+To provide full persona review details in the modal, the backend API would need to expose additional fields in the `PersonaReviewSummary` type or provide a separate endpoint to fetch full `PersonaReview` objects. Current limitations:
+- Strengths, concerns, recommendations are not available in API response
+- Only blocking issues flag is provided, not detailed blocking issue text
+- Estimated effort and dependency risks not included in summary
+
+Consider adding a `/v1/runs/{run_id}/reviews/{persona_id}` endpoint or including full review JSON in the run detail response.
