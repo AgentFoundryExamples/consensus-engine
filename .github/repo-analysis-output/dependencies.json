@@ -182,6 +182,7 @@
       "external_dependencies": {
         "stdlib": [
           "datetime.datetime",
+          "time",
           "typing.Any",
           "uuid"
         ],
@@ -487,6 +488,9 @@
       "type": "file",
       "external_dependencies": {
         "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "json",
           "typing.Any"
         ],
         "third-party": []
@@ -690,6 +694,28 @@
         ],
         "third-party": [
           "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/integration/test_revision_endpoint.py",
+      "path": "tests/integration/test_revision_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator",
+          "os",
+          "unittest.mock.MagicMock",
+          "unittest.mock.patch",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest",
+          "sqlalchemy.create_engine",
+          "sqlalchemy.orm.Session",
+          "sqlalchemy.orm.sessionmaker",
+          "sqlalchemy.text"
         ]
       }
     },
@@ -1067,6 +1093,10 @@
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
       "target": "src/consensus_engine/config/logging.py"
     },
     {
@@ -1083,7 +1113,27 @@
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
       "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/services/aggregator.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/services/expand.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/services/orchestrator.py"
     },
     {
       "source": "src/consensus_engine/app.py",
@@ -1448,6 +1498,34 @@
     {
       "source": "tests/integration/test_review_service.py",
       "target": "src/consensus_engine/services/review.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/integration/test_revision_endpoint.py",
+      "target": "src/consensus_engine/schemas/review.py"
     },
     {
       "source": "tests/integration/test_runs_endpoint.py",

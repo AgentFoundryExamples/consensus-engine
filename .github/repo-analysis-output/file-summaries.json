@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 62,
+  "total_files": 63,
   "files": [
     {
       "schema_version": "2.0",
@@ -179,9 +179,9 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 12537,
-        "loc": 316,
-        "todo_count": 0
+        "size_bytes": 25318,
+        "loc": 590,
+        "todo_count": 1
       }
     },
     {
@@ -389,8 +389,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 20333,
-        "loc": 417,
+        "size_bytes": 24431,
+        "loc": 510,
         "todo_count": 0
       }
     },
@@ -445,8 +445,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 4258,
-        "loc": 70,
+        "size_bytes": 8911,
+        "loc": 166,
         "todo_count": 0
       }
     },
@@ -459,8 +459,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9727,
-        "loc": 160,
+        "size_bytes": 23257,
+        "loc": 431,
         "todo_count": 0
       }
     },
@@ -648,6 +648,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "tests/integration/test_revision_endpoint.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 11838,
+        "loc": 300,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "tests/integration/test_runs_endpoint.py",
       "language": "Python",
       "role": "test",
@@ -781,8 +795,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 12114,
-        "loc": 250,
+        "size_bytes": 17226,
+        "loc": 374,
         "todo_count": 0
       }
     },

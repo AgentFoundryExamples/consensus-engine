@@ -350,6 +350,10 @@
             },
             {
               "type": "file",
+              "name": "test_revision_endpoint.py"
+            },
+            {
+              "type": "file",
               "name": "test_runs_endpoint.py"
             }
           ]
@@ -453,6 +457,10 @@
     {
       "type": "file",
       "name": "IMPLEMENTATION_SUMMARY_full_review_persistence.md"
+    },
+    {
+      "type": "file",
+      "name": "IMPLEMENTATION_SUMMARY_revision_workflow.md"
     },
     {
       "type": "file",

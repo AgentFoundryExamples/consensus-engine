@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 62
+Total files: 63
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -119,9 +119,9 @@ Total files: 62
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 12.24 KB  
-**LOC:** 316  
-**TODOs/FIXMEs:** 0  
+**Size:** 24.72 KB  
+**LOC:** 590  
+**TODOs/FIXMEs:** 1  
 
 ## src/consensus_engine/app.py
 **Language:** Python  
@@ -254,8 +254,8 @@ Total files: 62
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 19.86 KB  
-**LOC:** 417  
+**Size:** 23.86 KB  
+**LOC:** 510  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -290,8 +290,8 @@ Total files: 62
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 4.16 KB  
-**LOC:** 70  
+**Size:** 8.70 KB  
+**LOC:** 166  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/orchestrator.py
@@ -299,8 +299,8 @@ Total files: 62
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 9.50 KB  
-**LOC:** 160  
+**Size:** 22.71 KB  
+**LOC:** 431  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/review.py
@@ -420,6 +420,15 @@ Total files: 62
 **LOC:** 300  
 **TODOs/FIXMEs:** 0  
 
+## tests/integration/test_revision_endpoint.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 11.56 KB  
+**LOC:** 300  
+**TODOs/FIXMEs:** 0  
+
 ## tests/integration/test_runs_endpoint.py
 **Language:** Python  
 **Role:** test  
@@ -506,8 +515,8 @@ Total files: 62
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 11.83 KB  
-**LOC:** 250  
+**Size:** 16.82 KB  
+**LOC:** 374  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_personas.py
