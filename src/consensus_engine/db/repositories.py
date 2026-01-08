@@ -628,10 +628,11 @@ class StepProgressRepository:
                     existing.completed_at = completed_at
 
                 # If an error message is provided, set it.
-                # Otherwise, clear it for non-failed statuses.
                 if error_message is not None:
                     existing.error_message = error_message
-                elif status != StepStatus.FAILED:
+
+                # If the new status is not FAILED, always clear any old error message.
+                if status != StepStatus.FAILED:
                     existing.error_message = None
 
                 session.flush()

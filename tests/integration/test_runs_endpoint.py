@@ -927,6 +927,96 @@ class TestStepProgressInRuns:
             
         finally:
             session.close()
+    
+    def test_partial_step_progress_returns_complete_list(self, test_client, test_session_factory):
+        """Test that runs with partial StepProgress records return all 7 steps."""
+        session = test_session_factory()
+        
+        try:
+            # Create a run with only 2 StepProgress records (expand and review_architect)
+            run_id = uuid.uuid4()
+            now = datetime.now(UTC)
+            
+            run = Run(
+                id=run_id,
+                status=RunStatus.RUNNING,
+                queued_at=now - timedelta(minutes=5),
+                started_at=now - timedelta(minutes=4),
+                input_idea="Partial progress test",
+                extra_context=None,
+                run_type=RunType.INITIAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            
+            # Only add 2 steps
+            step1 = StepProgress(
+                run_id=run_id,
+                step_name="expand",
+                step_order=0,
+                status=StepStatus.COMPLETED,
+                started_at=now - timedelta(minutes=4),
+                completed_at=now - timedelta(minutes=3),
+            )
+            session.add(step1)
+            
+            step2 = StepProgress(
+                run_id=run_id,
+                step_name="review_architect",
+                step_order=1,
+                status=StepStatus.RUNNING,
+                started_at=now - timedelta(minutes=3),
+                completed_at=None,
+            )
+            session.add(step2)
+            
+            session.commit()
+            
+            # Query the run via API
+            response = test_client.get(f"/v1/runs/{str(run_id)}")
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Should return all 7 steps (2 actual + 5 default)
+            assert len(data["step_progress"]) == 7
+            
+            # First step should be completed
+            assert data["step_progress"][0]["step_name"] == "expand"
+            assert data["step_progress"][0]["status"] == "completed"
+            assert data["step_progress"][0]["started_at"] is not None
+            assert data["step_progress"][0]["completed_at"] is not None
+            
+            # Second step should be running
+            assert data["step_progress"][1]["step_name"] == "review_architect"
+            assert data["step_progress"][1]["status"] == "running"
+            assert data["step_progress"][1]["started_at"] is not None
+            assert data["step_progress"][1]["completed_at"] is None
+            
+            # Remaining 5 steps should be pending
+            for i in range(2, 7):
+                step = data["step_progress"][i]
+                assert step["status"] == "pending"
+                assert step["started_at"] is None
+                assert step["completed_at"] is None
+                assert step["error_message"] is None
+            
+            # Verify all step names are present in correct order
+            expected_names = [
+                "expand",
+                "review_architect",
+                "review_critic",
+                "review_optimist",
+                "review_security",
+                "review_user_advocate",
+                "aggregate_decision",
+            ]
+            actual_names = [s["step_name"] for s in data["step_progress"]]
+            assert actual_names == expected_names
+            
+        finally:
+            session.close()
 
 
 class TestRunsEndpointNoLLMCalls:

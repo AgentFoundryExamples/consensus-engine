@@ -58,8 +58,8 @@ router = APIRouter(prefix="/v1", tags=["runs"])
 def _build_step_progress_summaries(run: Run) -> list[StepProgressSummary]:
     """Build ordered step progress summaries for a run.
 
-    If the run has StepProgress records, use them. Otherwise, generate default
-    pending steps for all canonical steps.
+    Merges actual StepProgress records with default pending steps to ensure
+    a complete, ordered list of all canonical steps is always returned.
 
     Args:
         run: Run instance with step_progress relationship loaded
@@ -67,11 +67,15 @@ def _build_step_progress_summaries(run: Run) -> list[StepProgressSummary]:
     Returns:
         List of StepProgressSummary objects ordered by step_order
     """
-    if run.step_progress:
-        # Use actual step progress records, sorted by step_order
-        sorted_steps = sorted(run.step_progress, key=lambda s: s.step_order)
-        summaries = []
-        for step in sorted_steps:
+    # Create a dictionary of actual steps, keyed by step_name
+    actual_steps = {step.step_name: step for step in run.step_progress}
+    summaries = []
+
+    # Iterate through all canonical steps to build a complete list
+    for i, step_name in enumerate(StepProgressRepository.VALID_STEP_NAMES):
+        if step_name in actual_steps:
+            # Use the actual step progress if it exists
+            step = actual_steps[step_name]
             summary = StepProgressSummary(
                 step_name=step.step_name,
                 step_order=step.step_order,
@@ -80,12 +84,8 @@ def _build_step_progress_summaries(run: Run) -> list[StepProgressSummary]:
                 completed_at=step.completed_at.isoformat() if step.completed_at else None,
                 error_message=step.error_message,
             )
-            summaries.append(summary)
-        return summaries
-    else:
-        # Generate default pending steps for runs without StepProgress records
-        summaries = []
-        for i, step_name in enumerate(StepProgressRepository.VALID_STEP_NAMES):
+        else:
+            # Generate a default pending step if it's missing
             summary = StepProgressSummary(
                 step_name=step_name,
                 step_order=i,
@@ -94,8 +94,9 @@ def _build_step_progress_summaries(run: Run) -> list[StepProgressSummary]:
                 completed_at=None,
                 error_message=None,
             )
-            summaries.append(summary)
-        return summaries
+        summaries.append(summary)
+
+    return summaries
 
 
 @router.get(
