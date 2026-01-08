@@ -1,14 +1,16 @@
 # Consensus Engine
 
-A FastAPI-based backend service with LLM integration for consensus building. This project provides a production-ready Python API with OpenAI integration, configuration management, and comprehensive testing.
+A FastAPI-based backend service with LLM integration for consensus building. This project provides a production-ready Python API with OpenAI integration, asynchronous job processing, configuration management, and comprehensive testing.
 
 ## Features
 
 - **FastAPI Backend**: Modern async Python web framework
 - **LLM Integration**: OpenAI GPT-5.1 support with configurable parameters
 - **Multi-Persona Consensus**: Five specialized personas for comprehensive proposal review
+- **Asynchronous Processing**: Pub/Sub-based worker for background job execution
 - **Configuration Management**: Pydantic-based settings with validation
-- **Structured Logging**: Environment-aware logging configuration
+- **Structured Logging**: Environment-aware logging configuration with lifecycle events
+- **Database Persistence**: PostgreSQL with versioned run tracking and step progress
 - **Dependency Injection**: Clean separation of concerns
 - **Comprehensive Testing**: Unit and integration tests with pytest
 
@@ -71,17 +73,53 @@ consensus-engine/
 ├── src/
 │   └── consensus_engine/
 │       ├── api/          # API route handlers
+│       ├── clients/      # External service clients (OpenAI, Pub/Sub)
 │       ├── config/       # Configuration and settings
+│       ├── db/           # Database models and repositories
 │       ├── schemas/      # Pydantic models for validation
 │       ├── services/     # Business logic services
+│       ├── workers/      # Background workers (pipeline processor)
 │       └── app.py        # FastAPI application factory
 ├── tests/
 │   ├── unit/            # Unit tests
 │   └── integration/     # Integration tests
+├── docs/                # Documentation
+├── migrations/          # Alembic database migrations
 ├── pyproject.toml       # Project metadata and dependencies
 ├── .env.example         # Example environment configuration
 └── README.md
 ```
+
+## Architecture
+
+The Consensus Engine uses an asynchronous architecture with separate API and worker components:
+
+```
+┌─────────────┐     ┌─────────────┐     ┌──────────────────┐
+│   Client    │────▶│  API Server │────▶│    Pub/Sub       │
+│             │◀────│  (FastAPI)  │     │     Queue        │
+└─────────────┘     └─────────────┘     └──────────────────┘
+                           │                      │
+                           ▼                      ▼
+                    ┌─────────────┐     ┌──────────────────┐
+                    │  PostgreSQL │◀────│ Pipeline Worker  │
+                    │   Database  │     │   (Background)   │
+                    └─────────────┘     └──────────────────┘
+```
+
+### API Server
+- Handles HTTP requests (expand, review, full-review, runs)
+- Validates inputs and enqueues jobs to Pub/Sub
+- Returns job status and run details
+- Serves health checks and metrics
+
+### Pipeline Worker
+- Consumes messages from Pub/Sub subscription
+- Executes full consensus pipeline (expand → reviews → aggregation)
+- Updates database with progress and results
+- Handles retries, failures, and idempotency
+
+See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for deployment details.
 
 ## Quick Start
 
@@ -167,9 +205,19 @@ ENV=development
 |----------|----------|---------|-------------|
 | `PUBSUB_PROJECT_ID` | Production | - | Google Cloud project ID for Pub/Sub (required for production) |
 | `PUBSUB_TOPIC` | No | `consensus-engine-jobs` | Pub/Sub topic name for job queue |
+| `PUBSUB_SUBSCRIPTION` | No | `consensus-engine-jobs-sub` | Pub/Sub subscription name for worker |
 | `PUBSUB_CREDENTIALS_FILE` | Local Dev | - | Path to service account JSON credentials file |
 | `PUBSUB_EMULATOR_HOST` | No | - | Pub/Sub emulator host (e.g., localhost:8085) for local testing |
 | `PUBSUB_USE_MOCK` | No | `false` | Use mock publisher for testing (no-op that logs messages) |
+
+**Worker Configuration:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `WORKER_MAX_CONCURRENCY` | No | `10` | Maximum concurrent message handlers (1-1000) |
+| `WORKER_ACK_DEADLINE_SECONDS` | No | `600` | Pub/Sub ack deadline in seconds (60-3600) |
+| `WORKER_STEP_TIMEOUT_SECONDS` | No | `300` | Per-step timeout in seconds (10-1800) |
+| `WORKER_JOB_TIMEOUT_SECONDS` | No | `1800` | Overall job timeout in seconds (60-7200) |
 
 **Pub/Sub Deployment Modes:**
 
@@ -369,7 +417,11 @@ Clients should poll `GET /v1/runs/{run_id}` to check job status and retrieve res
 
 **Note**: Worker implementation is not yet complete. This release focuses on job enqueueing; worker processing will be added in a future release.
 
-### Running the Server
+### Running the Application
+
+The Consensus Engine consists of two components:
+
+#### 1. API Server
 
 Start the development server:
 ```bash
@@ -380,6 +432,39 @@ The API will be available at:
 - API: http://localhost:8000
 - Interactive docs: http://localhost:8000/docs
 - Alternative docs: http://localhost:8000/redoc
+
+#### 2. Pipeline Worker
+
+Start the background worker to process jobs:
+```bash
+python -m consensus_engine.workers.pipeline_worker
+```
+
+The worker will consume messages from the configured Pub/Sub subscription and process them asynchronously.
+
+**Worker Modes:**
+
+- **Local Development** (with emulator):
+  ```bash
+  # Start Pub/Sub emulator first
+  docker run -d -p 8085:8085 \
+    gcr.io/google.com/cloudsdktool/cloud-sdk:emulators \
+    gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
+  
+  # Set environment
+  export PUBSUB_EMULATOR_HOST=localhost:8085
+  
+  # Run worker
+  python -m consensus_engine.workers.pipeline_worker
+  ```
+
+- **Production** (with real Pub/Sub):
+  ```bash
+  # Worker automatically uses Application Default Credentials
+  python -m consensus_engine.workers.pipeline_worker
+  ```
+
+See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for detailed deployment instructions.
 
 ### Running Tests
 
