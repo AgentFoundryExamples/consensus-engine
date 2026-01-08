@@ -204,15 +204,18 @@ def check_version_consistency(
         error_details = {
             **context,
         }
-        
+        message = []
+
         if inconsistent_schemas:
             error_details["inconsistent_schemas"] = {
                 name: list(versions)
                 for name, versions in inconsistent_schemas.items()
             }
+            message.append("Mixed schema versions detected")
         
         if has_mixed_prompts:
             error_details["mixed_prompt_versions"] = list(prompt_set_versions)
+            message.append("Mixed prompt versions detected")
             # Provide detailed context for debugging mixed prompt versions
             affected_sources = [
                 info.get("source", "unknown") 
@@ -231,12 +234,10 @@ def check_version_consistency(
                 },
             )
         
-        if inconsistent_schemas:
-            raise SchemaValidationError(
-                "Mixed schema versions detected within deployment. "
-                "All schemas must use the same version within a single run/deployment.",
-                details=error_details,
-            )
+        raise SchemaValidationError(
+            f"{' and '.join(message)} within deployment.",
+            details=error_details,
+        )
 
     logger.debug(
         "Schema version consistency check passed",

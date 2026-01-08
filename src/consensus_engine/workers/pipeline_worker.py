@@ -352,7 +352,7 @@ class PipelineWorker:
             step_config = llm_config.aggregate
         
         metadata = {
-            "schema_version": run.schema_version or "1.0.0",
+            "schema_version": run.schema_version or llm_config.schema_version,
             "prompt_set_version": run.prompt_set_version or llm_config.prompt_set_version,
         }
         

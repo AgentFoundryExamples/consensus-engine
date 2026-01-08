@@ -117,7 +117,7 @@ async def full_review_endpoint(
 
     # Get schema and prompt versions from settings
     llm_config = settings.get_llm_steps_config()
-    schema_version = "1.0.0"  # Default schema version
+    schema_version = llm_config.schema_version  # Get from config
     prompt_set_version = llm_config.prompt_set_version
 
     try:
