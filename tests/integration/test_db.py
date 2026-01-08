@@ -850,6 +850,72 @@ class TestStepProgressRepository:
             assert step2.completed_at == completed
             assert step2.started_at == started
 
+    def test_upsert_step_progress_clears_error_on_success(self, clean_database, test_session_factory):
+        """Test that error messages are cleared when step succeeds after failure."""
+        from datetime import UTC, datetime
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create step progress that fails
+            started = datetime.now(UTC)
+            step1 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.FAILED,
+                started_at=started,
+                error_message="API timeout",
+            )
+            session.commit()
+            step_id = step1.id
+
+            # Verify error message is set
+            assert step1.error_message == "API timeout"
+
+            # Retry and succeed - error message should be cleared
+            completed = datetime.now(UTC)
+            step2 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.COMPLETED,
+                completed_at=completed,
+            )
+            session.commit()
+
+            # Should be the same record with error cleared
+            assert step2.id == step_id
+            assert step2.status == StepStatus.COMPLETED
+            assert step2.error_message is None
+
+            # Test that error message is preserved when status is FAILED
+            step3 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.FAILED,
+                error_message="New error",
+            )
+            session.commit()
+
+            assert step3.id == step_id
+            assert step3.error_message == "New error"
+
     def test_upsert_step_progress_invalid_step_name(self, clean_database, test_session_factory):
         """Test that invalid step names are rejected."""
         from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus

@@ -536,7 +536,7 @@ class StepProgressRepository:
     """Repository for StepProgress model operations."""
 
     # Canonical step names in order
-    VALID_STEP_NAMES = [
+    VALID_STEP_NAMES = (
         "expand",
         "review_architect",
         "review_critic",
@@ -544,7 +544,7 @@ class StepProgressRepository:
         "review_security",
         "review_user_advocate",
         "aggregate_decision",
-    ]
+    )
 
     @staticmethod
     def get_step_order(step_name: str) -> int:
@@ -619,8 +619,12 @@ class StepProgressRepository:
                     existing.started_at = started_at
                 if completed_at is not None:
                     existing.completed_at = completed_at
+                
+                # If an error message is provided, set it. Otherwise, clear it for non-failed statuses.
                 if error_message is not None:
                     existing.error_message = error_message
+                elif status != StepStatus.FAILED:
+                    existing.error_message = None
                 
                 session.flush()
                 
