@@ -273,6 +273,7 @@
           "fastapi.Request",
           "fastapi.Response",
           "fastapi.exceptions.RequestValidationError",
+          "fastapi.middleware.cors.CORSMiddleware",
           "fastapi.responses.JSONResponse",
           "fastapi.status",
           "pydantic.ValidationError"
@@ -403,7 +404,8 @@
           "enum.Enum",
           "functools.lru_cache",
           "typing.TYPE_CHECKING",
-          "urllib.parse.quote_plus"
+          "urllib.parse.quote_plus",
+          "urllib.parse.urlparse"
         ],
         "third-party": [
           "pydantic.Field",
@@ -1381,6 +1383,424 @@
         "third-party": [
           "pytest",
           "sqlalchemy.orm.Session"
+        ]
+      }
+    },
+    {
+      "id": "webapp/eslint.config.js",
+      "path": "webapp/eslint.config.js",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "@eslint/js",
+          "eslint-plugin-prettier/recommended",
+          "eslint-plugin-react-hooks",
+          "eslint-plugin-react-refresh",
+          "globals",
+          "typescript-eslint"
+        ]
+      }
+    },
+    {
+      "id": "webapp/postcss.config.js",
+      "path": "webapp/postcss.config.js",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/client.ts",
+      "path": "webapp/src/api/client.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/core/ApiError.ts",
+      "path": "webapp/src/api/generated/core/ApiError.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/core/ApiRequestOptions.ts",
+      "path": "webapp/src/api/generated/core/ApiRequestOptions.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/core/ApiResult.ts",
+      "path": "webapp/src/api/generated/core/ApiResult.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/core/CancelablePromise.ts",
+      "path": "webapp/src/api/generated/core/CancelablePromise.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/core/OpenAPI.ts",
+      "path": "webapp/src/api/generated/core/OpenAPI.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/core/request.ts",
+      "path": "webapp/src/api/generated/core/request.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "axios",
+          "form-data"
+        ]
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/index.ts",
+      "path": "webapp/src/api/generated/index.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/BlockingIssue.ts",
+      "path": "webapp/src/api/generated/models/BlockingIssue.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/Concern.ts",
+      "path": "webapp/src/api/generated/models/Concern.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/CreateRevisionRequest.ts",
+      "path": "webapp/src/api/generated/models/CreateRevisionRequest.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "path": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/DecisionEnum.ts",
+      "path": "webapp/src/api/generated/models/DecisionEnum.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/DetailedScoreBreakdown.ts",
+      "path": "webapp/src/api/generated/models/DetailedScoreBreakdown.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/ExpandIdeaRequest.ts",
+      "path": "webapp/src/api/generated/models/ExpandIdeaRequest.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/ExpandIdeaResponse.ts",
+      "path": "webapp/src/api/generated/models/ExpandIdeaResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/FullReviewRequest.ts",
+      "path": "webapp/src/api/generated/models/FullReviewRequest.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/HTTPValidationError.ts",
+      "path": "webapp/src/api/generated/models/HTTPValidationError.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/HealthResponse.ts",
+      "path": "webapp/src/api/generated/models/HealthResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/JobEnqueuedResponse.ts",
+      "path": "webapp/src/api/generated/models/JobEnqueuedResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/MinorityReport.ts",
+      "path": "webapp/src/api/generated/models/MinorityReport.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/PersonaReview.ts",
+      "path": "webapp/src/api/generated/models/PersonaReview.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/PersonaReviewSummary.ts",
+      "path": "webapp/src/api/generated/models/PersonaReviewSummary.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/PersonaScoreBreakdown.ts",
+      "path": "webapp/src/api/generated/models/PersonaScoreBreakdown.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/ReviewIdeaRequest.ts",
+      "path": "webapp/src/api/generated/models/ReviewIdeaRequest.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/ReviewIdeaResponse.ts",
+      "path": "webapp/src/api/generated/models/ReviewIdeaResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/RunDetailResponse.ts",
+      "path": "webapp/src/api/generated/models/RunDetailResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/RunDiffResponse.ts",
+      "path": "webapp/src/api/generated/models/RunDiffResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/RunListItemResponse.ts",
+      "path": "webapp/src/api/generated/models/RunListItemResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/RunListResponse.ts",
+      "path": "webapp/src/api/generated/models/RunListResponse.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/StepProgressSummary.ts",
+      "path": "webapp/src/api/generated/models/StepProgressSummary.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/models/ValidationError.ts",
+      "path": "webapp/src/api/generated/models/ValidationError.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/services/ExpandService.ts",
+      "path": "webapp/src/api/generated/services/ExpandService.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/services/FullReviewService.ts",
+      "path": "webapp/src/api/generated/services/FullReviewService.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/services/HealthService.ts",
+      "path": "webapp/src/api/generated/services/HealthService.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/services/ReviewService.ts",
+      "path": "webapp/src/api/generated/services/ReviewService.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/services/RootService.ts",
+      "path": "webapp/src/api/generated/services/RootService.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/api/generated/services/RunsService.ts",
+      "path": "webapp/src/api/generated/services/RunsService.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/components/layout/index.ts",
+      "path": "webapp/src/components/layout/index.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/components/ui/index.ts",
+      "path": "webapp/src/components/ui/index.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/src/config/index.ts",
+      "path": "webapp/src/config/index.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/tailwind.config.js",
+      "path": "webapp/tailwind.config.js",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "webapp/vite.config.ts",
+      "path": "webapp/vite.config.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "@vitejs/plugin-react",
+          "vite"
         ]
       }
     }
@@ -2449,6 +2869,218 @@
     {
       "source": "tests/unit/test_version_tracking.py",
       "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
+      "source": "webapp/src/api/client.ts",
+      "target": "webapp/src/api/generated/index.ts"
+    },
+    {
+      "source": "webapp/src/api/client.ts",
+      "target": "webapp/src/config/index.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/ApiError.ts",
+      "target": "webapp/src/api/generated/core/ApiRequestOptions.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/ApiError.ts",
+      "target": "webapp/src/api/generated/core/ApiResult.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/OpenAPI.ts",
+      "target": "webapp/src/api/generated/core/ApiRequestOptions.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/request.ts",
+      "target": "webapp/src/api/generated/core/ApiError.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/request.ts",
+      "target": "webapp/src/api/generated/core/ApiRequestOptions.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/request.ts",
+      "target": "webapp/src/api/generated/core/ApiResult.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/request.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/core/request.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "target": "webapp/src/api/generated/models/DecisionEnum.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "target": "webapp/src/api/generated/models/DetailedScoreBreakdown.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "target": "webapp/src/api/generated/models/MinorityReport.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "target": "webapp/src/api/generated/models/PersonaScoreBreakdown.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/HTTPValidationError.ts",
+      "target": "webapp/src/api/generated/models/ValidationError.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/PersonaReview.ts",
+      "target": "webapp/src/api/generated/models/BlockingIssue.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/PersonaReview.ts",
+      "target": "webapp/src/api/generated/models/Concern.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/ReviewIdeaResponse.ts",
+      "target": "webapp/src/api/generated/models/DecisionAggregation.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/ReviewIdeaResponse.ts",
+      "target": "webapp/src/api/generated/models/ExpandIdeaResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/ReviewIdeaResponse.ts",
+      "target": "webapp/src/api/generated/models/PersonaReview.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/RunDetailResponse.ts",
+      "target": "webapp/src/api/generated/models/PersonaReviewSummary.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/RunDetailResponse.ts",
+      "target": "webapp/src/api/generated/models/StepProgressSummary.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/models/RunListResponse.ts",
+      "target": "webapp/src/api/generated/models/RunListItemResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ExpandService.ts",
+      "target": "webapp/src/api/generated/models/ExpandIdeaRequest.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ExpandService.ts",
+      "target": "webapp/src/api/generated/models/ExpandIdeaResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ExpandService.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ExpandService.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ExpandService.ts",
+      "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/FullReviewService.ts",
+      "target": "webapp/src/api/generated/models/FullReviewRequest.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/FullReviewService.ts",
+      "target": "webapp/src/api/generated/models/JobEnqueuedResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/FullReviewService.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/FullReviewService.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/FullReviewService.ts",
+      "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/HealthService.ts",
+      "target": "webapp/src/api/generated/models/HealthResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/HealthService.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/HealthService.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/HealthService.ts",
+      "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ReviewService.ts",
+      "target": "webapp/src/api/generated/models/ReviewIdeaRequest.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ReviewService.ts",
+      "target": "webapp/src/api/generated/models/ReviewIdeaResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ReviewService.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ReviewService.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/ReviewService.ts",
+      "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RootService.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RootService.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RootService.ts",
+      "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/models/CreateRevisionRequest.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/models/JobEnqueuedResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/models/RunDetailResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/models/RunDiffResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/models/RunListResponse.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/core/CancelablePromise.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/core/OpenAPI.ts"
+    },
+    {
+      "source": "webapp/src/api/generated/services/RunsService.ts",
+      "target": "webapp/src/api/generated/core/request.ts"
     }
   ],
   "external_dependencies_summary": {
@@ -2489,14 +3121,21 @@
       "unittest.mock.call",
       "unittest.mock.patch",
       "urllib.parse.quote_plus",
+      "urllib.parse.urlparse",
       "uuid",
       "uuid.UUID"
     ],
     "third-party": [
+      "@eslint/js",
+      "@vitejs/plugin-react",
       "alembic.command",
       "alembic.config.Config",
       "alembic.context",
       "alembic.op",
+      "axios",
+      "eslint-plugin-prettier/recommended",
+      "eslint-plugin-react-hooks",
+      "eslint-plugin-react-refresh",
       "fastapi.APIRouter",
       "fastapi.Depends",
       "fastapi.FastAPI",
@@ -2506,9 +3145,12 @@
       "fastapi.Request",
       "fastapi.Response",
       "fastapi.exceptions.RequestValidationError",
+      "fastapi.middleware.cors.CORSMiddleware",
       "fastapi.responses.JSONResponse",
       "fastapi.status",
       "fastapi.testclient.TestClient",
+      "form-data",
+      "globals",
       "google.api_core.exceptions.GoogleAPIError",
       "google.api_core.retry",
       "google.cloud.pubsub_v1",
@@ -2565,9 +3207,11 @@
       "sqlalchemy.pool",
       "sqlalchemy.pool.NullPool",
       "sqlalchemy.select",
-      "sqlalchemy.text"
+      "sqlalchemy.text",
+      "typescript-eslint",
+      "vite"
     ],
-    "stdlib_count": 38,
-    "third-party_count": 73
+    "stdlib_count": 39,
+    "third-party_count": 84
   }
 }

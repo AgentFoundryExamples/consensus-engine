@@ -100,6 +100,10 @@
         },
         {
           "type": "file",
+          "name": "WEB_FRONTEND.md"
+        },
+        {
+          "type": "file",
           "name": "WORKER_DEPLOYMENT.md"
         }
       ]
@@ -155,6 +159,16 @@
         {
           "type": "file",
           "name": "script.py.mako"
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "scripts",
+      "children": [
+        {
+          "type": "file",
+          "name": "generate-api-client.sh"
         }
       ]
     },
@@ -605,6 +619,352 @@
         {
           "type": "file",
           "name": "README.md"
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "webapp",
+      "children": [
+        {
+          "type": "directory",
+          "name": "public",
+          "children": [
+            {
+              "type": "file",
+              "name": "vite.svg"
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "src",
+          "children": [
+            {
+              "type": "directory",
+              "name": "api",
+              "children": [
+                {
+                  "type": "directory",
+                  "name": "generated",
+                  "children": [
+                    {
+                      "type": "directory",
+                      "name": "core",
+                      "children": [
+                        {
+                          "type": "file",
+                          "name": "ApiError.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ApiRequestOptions.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ApiResult.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "CancelablePromise.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "OpenAPI.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "request.ts"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directory",
+                      "name": "models",
+                      "children": [
+                        {
+                          "type": "file",
+                          "name": "BlockingIssue.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "Concern.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "CreateRevisionRequest.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "DecisionAggregation.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "DecisionEnum.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "DetailedScoreBreakdown.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ExpandIdeaRequest.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ExpandIdeaResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "FullReviewRequest.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "HealthResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "HTTPValidationError.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "JobEnqueuedResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "MinorityReport.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "PersonaReview.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "PersonaReviewSummary.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "PersonaScoreBreakdown.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ReviewIdeaRequest.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ReviewIdeaResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "RunDetailResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "RunDiffResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "RunListItemResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "RunListResponse.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "StepProgressSummary.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ValidationError.ts"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "directory",
+                      "name": "services",
+                      "children": [
+                        {
+                          "type": "file",
+                          "name": "ExpandService.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "FullReviewService.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "HealthService.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "ReviewService.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "RootService.ts"
+                        },
+                        {
+                          "type": "file",
+                          "name": "RunsService.ts"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "file",
+                      "name": "index.ts"
+                    }
+                  ]
+                },
+                {
+                  "type": "file",
+                  "name": "client.ts"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "assets",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "react.svg"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "components",
+              "children": [
+                {
+                  "type": "directory",
+                  "name": "layout",
+                  "children": [
+                    {
+                      "type": "file",
+                      "name": "Container.tsx"
+                    },
+                    {
+                      "type": "file",
+                      "name": "Header.tsx"
+                    },
+                    {
+                      "type": "file",
+                      "name": "index.ts"
+                    }
+                  ]
+                },
+                {
+                  "type": "directory",
+                  "name": "ui",
+                  "children": [
+                    {
+                      "type": "file",
+                      "name": "Button.tsx"
+                    },
+                    {
+                      "type": "file",
+                      "name": "index.ts"
+                    },
+                    {
+                      "type": "file",
+                      "name": "StatusBadge.tsx"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "config",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "index.ts"
+                }
+              ]
+            },
+            {
+              "type": "file",
+              "name": "App.css"
+            },
+            {
+              "type": "file",
+              "name": "App.tsx"
+            },
+            {
+              "type": "file",
+              "name": "index.css"
+            },
+            {
+              "type": "file",
+              "name": "main.tsx"
+            }
+          ]
+        },
+        {
+          "type": "file",
+          "name": ".env.example"
+        },
+        {
+          "type": "file",
+          "name": ".gitignore"
+        },
+        {
+          "type": "file",
+          "name": ".prettierignore"
+        },
+        {
+          "type": "file",
+          "name": ".prettierrc.json"
+        },
+        {
+          "type": "file",
+          "name": "eslint.config.js"
+        },
+        {
+          "type": "file",
+          "name": "index.html"
+        },
+        {
+          "type": "file",
+          "name": "openapi.json"
+        },
+        {
+          "type": "file",
+          "name": "package-lock.json"
+        },
+        {
+          "type": "file",
+          "name": "package.json"
+        },
+        {
+          "type": "file",
+          "name": "postcss.config.js"
+        },
+        {
+          "type": "file",
+          "name": "README.md"
+        },
+        {
+          "type": "file",
+          "name": "tailwind.config.js"
+        },
+        {
+          "type": "file",
+          "name": "tsconfig.app.json"
+        },
+        {
+          "type": "file",
+          "name": "tsconfig.json"
+        },
+        {
+          "type": "file",
+          "name": "tsconfig.node.json"
+        },
+        {
+          "type": "file",
+          "name": "vite.config.ts"
         }
       ]
     },

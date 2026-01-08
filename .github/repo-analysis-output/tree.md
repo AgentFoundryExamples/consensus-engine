@@ -22,6 +22,7 @@
   ├── SCHEMA_REGISTRY.md
   ├── SCHEMA_VERSIONING.md
   ├── VERSION_TRACKING.md
+  ├── WEB_FRONTEND.md
   └── WORKER_DEPLOYMENT.md
 ├── examples
   └── test_full_review.py
@@ -35,6 +36,8 @@
   ├── env.py
   ├── README
   └── script.py.mako
+├── scripts
+  └── generate-api-client.sh
 ├── src
   └── consensus_engine
     ├── api
@@ -140,6 +143,86 @@
   ├── __init__.py
   ├── conftest.py
   └── README.md
+├── webapp
+  ├── public
+    └── vite.svg
+  ├── src
+    ├── api
+      ├── generated
+        ├── core
+          ├── ApiError.ts
+          ├── ApiRequestOptions.ts
+          ├── ApiResult.ts
+          ├── CancelablePromise.ts
+          ├── OpenAPI.ts
+          └── request.ts
+        ├── models
+          ├── BlockingIssue.ts
+          ├── Concern.ts
+          ├── CreateRevisionRequest.ts
+          ├── DecisionAggregation.ts
+          ├── DecisionEnum.ts
+          ├── DetailedScoreBreakdown.ts
+          ├── ExpandIdeaRequest.ts
+          ├── ExpandIdeaResponse.ts
+          ├── FullReviewRequest.ts
+          ├── HealthResponse.ts
+          ├── HTTPValidationError.ts
+          ├── JobEnqueuedResponse.ts
+          ├── MinorityReport.ts
+          ├── PersonaReview.ts
+          ├── PersonaReviewSummary.ts
+          ├── PersonaScoreBreakdown.ts
+          ├── ReviewIdeaRequest.ts
+          ├── ReviewIdeaResponse.ts
+          ├── RunDetailResponse.ts
+          ├── RunDiffResponse.ts
+          ├── RunListItemResponse.ts
+          ├── RunListResponse.ts
+          ├── StepProgressSummary.ts
+          └── ValidationError.ts
+        ├── services
+          ├── ExpandService.ts
+          ├── FullReviewService.ts
+          ├── HealthService.ts
+          ├── ReviewService.ts
+          ├── RootService.ts
+          └── RunsService.ts
+        └── index.ts
+      └── client.ts
+    ├── assets
+      └── react.svg
+    ├── components
+      ├── layout
+        ├── Container.tsx
+        ├── Header.tsx
+        └── index.ts
+      └── ui
+        ├── Button.tsx
+        ├── index.ts
+        └── StatusBadge.tsx
+    ├── config
+      └── index.ts
+    ├── App.css
+    ├── App.tsx
+    ├── index.css
+    └── main.tsx
+  ├── .env.example
+  ├── .gitignore
+  ├── .prettierignore
+  ├── .prettierrc.json
+  ├── eslint.config.js
+  ├── index.html
+  ├── openapi.json
+  ├── package-lock.json
+  ├── package.json
+  ├── postcss.config.js
+  ├── README.md
+  ├── tailwind.config.js
+  ├── tsconfig.app.json
+  ├── tsconfig.json
+  ├── tsconfig.node.json
+  └── vite.config.ts
 ├── .env.example
 ├── .gitignore
 ├── alembic.ini

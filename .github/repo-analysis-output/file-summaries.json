@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 90,
+  "total_files": 135,
   "files": [
     {
       "schema_version": "2.0",
@@ -249,8 +249,8 @@
       "summary": "Python main entry point (role: entry-point)",
       "summary_text": "Python main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 10784,
-        "loc": 256,
+        "size_bytes": 11176,
+        "loc": 266,
         "todo_count": 0
       }
     },
@@ -375,8 +375,8 @@
       "summary": "Python configuration file (role: configuration)",
       "summary_text": "Python configuration file (role: configuration)",
       "metrics": {
-        "size_bytes": 16480,
-        "loc": 417,
+        "size_bytes": 18925,
+        "loc": 466,
         "todo_count": 0
       }
     },
@@ -1259,6 +1259,636 @@
       "metrics": {
         "size_bytes": 5942,
         "loc": 118,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/eslint.config.js",
+      "language": "JavaScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "JavaScript module for eslint.config",
+      "summary_text": "JavaScript module for eslint.config",
+      "metrics": {
+        "size_bytes": 1365,
+        "loc": 27,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/postcss.config.js",
+      "language": "JavaScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "JavaScript module for postcss.config",
+      "summary_text": "JavaScript module for postcss.config",
+      "metrics": {
+        "size_bytes": 672,
+        "loc": 6,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/client.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for client",
+      "summary_text": "TypeScript module for client",
+      "metrics": {
+        "size_bytes": 2385,
+        "loc": 48,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/core/ApiError.ts",
+      "language": "TypeScript",
+      "role": "api",
+      "role_justification": "filename contains 'api'",
+      "summary": "TypeScript API implementation (role: api)",
+      "summary_text": "TypeScript API implementation (role: api)",
+      "metrics": {
+        "size_bytes": 1353,
+        "loc": 22,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/core/ApiRequestOptions.ts",
+      "language": "TypeScript",
+      "role": "api",
+      "role_justification": "filename contains 'api'",
+      "summary": "TypeScript API implementation (role: api)",
+      "summary_text": "TypeScript API implementation (role: api)",
+      "metrics": {
+        "size_bytes": 1210,
+        "loc": 17,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/core/ApiResult.ts",
+      "language": "TypeScript",
+      "role": "api",
+      "role_justification": "filename contains 'api'",
+      "summary": "TypeScript API implementation (role: api)",
+      "summary_text": "TypeScript API implementation (role: api)",
+      "metrics": {
+        "size_bytes": 881,
+        "loc": 11,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/core/CancelablePromise.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for CancelablePromise",
+      "summary_text": "TypeScript module for CancelablePromise",
+      "metrics": {
+        "size_bytes": 4176,
+        "loc": 107,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/core/OpenAPI.ts",
+      "language": "TypeScript",
+      "role": "api",
+      "role_justification": "filename contains 'api'",
+      "summary": "TypeScript API implementation (role: api)",
+      "summary_text": "TypeScript API implementation (role: api)",
+      "metrics": {
+        "size_bytes": 1543,
+        "loc": 29,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/core/request.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for request",
+      "summary_text": "TypeScript module for request",
+      "metrics": {
+        "size_bytes": 10071,
+        "loc": 306,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/index.ts",
+      "language": "TypeScript",
+      "role": "entry-point",
+      "role_justification": "common entry point name 'index'",
+      "summary": "TypeScript main entry point (role: entry-point)",
+      "summary_text": "TypeScript main entry point (role: entry-point)",
+      "metrics": {
+        "size_bytes": 2925,
+        "loc": 38,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/BlockingIssue.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for BlockingIssue",
+      "summary_text": "TypeScript module for BlockingIssue",
+      "metrics": {
+        "size_bytes": 1194,
+        "loc": 22,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/Concern.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for Concern",
+      "summary_text": "TypeScript module for Concern",
+      "metrics": {
+        "size_bytes": 1051,
+        "loc": 21,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/CreateRevisionRequest.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for CreateRevisionRequest",
+      "summary_text": "TypeScript module for CreateRevisionRequest",
+      "metrics": {
+        "size_bytes": 2222,
+        "loc": 46,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/DecisionAggregation.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for DecisionAggregation",
+      "summary_text": "TypeScript module for DecisionAggregation",
+      "metrics": {
+        "size_bytes": 2828,
+        "loc": 55,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/DecisionEnum.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for DecisionEnum",
+      "summary_text": "TypeScript module for DecisionEnum",
+      "metrics": {
+        "size_bytes": 872,
+        "loc": 12,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/DetailedScoreBreakdown.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for DetailedScoreBreakdown",
+      "summary_text": "TypeScript module for DetailedScoreBreakdown",
+      "metrics": {
+        "size_bytes": 1709,
+        "loc": 34,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/ExpandIdeaRequest.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ExpandIdeaRequest",
+      "summary_text": "TypeScript module for ExpandIdeaRequest",
+      "metrics": {
+        "size_bytes": 1170,
+        "loc": 21,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/ExpandIdeaResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ExpandIdeaResponse",
+      "summary_text": "TypeScript module for ExpandIdeaResponse",
+      "metrics": {
+        "size_bytes": 2536,
+        "loc": 66,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/FullReviewRequest.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for FullReviewRequest",
+      "summary_text": "TypeScript module for FullReviewRequest",
+      "metrics": {
+        "size_bytes": 1210,
+        "loc": 21,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/HTTPValidationError.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for HTTPValidationError",
+      "summary_text": "TypeScript module for HTTPValidationError",
+      "metrics": {
+        "size_bytes": 856,
+        "loc": 8,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/HealthResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for HealthResponse",
+      "summary_text": "TypeScript module for HealthResponse",
+      "metrics": {
+        "size_bytes": 1610,
+        "loc": 46,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/JobEnqueuedResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for JobEnqueuedResponse",
+      "summary_text": "TypeScript module for JobEnqueuedResponse",
+      "metrics": {
+        "size_bytes": 1940,
+        "loc": 50,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/MinorityReport.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for MinorityReport",
+      "summary_text": "TypeScript module for MinorityReport",
+      "metrics": {
+        "size_bytes": 2011,
+        "loc": 46,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/PersonaReview.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for PersonaReview",
+      "summary_text": "TypeScript module for PersonaReview",
+      "metrics": {
+        "size_bytes": 2870,
+        "loc": 67,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/PersonaReviewSummary.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for PersonaReviewSummary",
+      "summary_text": "TypeScript module for PersonaReviewSummary",
+      "metrics": {
+        "size_bytes": 1608,
+        "loc": 36,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/PersonaScoreBreakdown.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for PersonaScoreBreakdown",
+      "summary_text": "TypeScript module for PersonaScoreBreakdown",
+      "metrics": {
+        "size_bytes": 1263,
+        "loc": 24,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/ReviewIdeaRequest.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ReviewIdeaRequest",
+      "summary_text": "TypeScript module for ReviewIdeaRequest",
+      "metrics": {
+        "size_bytes": 1192,
+        "loc": 21,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/ReviewIdeaResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ReviewIdeaResponse",
+      "summary_text": "TypeScript module for ReviewIdeaResponse",
+      "metrics": {
+        "size_bytes": 1888,
+        "loc": 39,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/RunDetailResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for RunDetailResponse",
+      "summary_text": "TypeScript module for RunDetailResponse",
+      "metrics": {
+        "size_bytes": 4423,
+        "loc": 133,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/RunDiffResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for RunDiffResponse",
+      "summary_text": "TypeScript module for RunDiffResponse",
+      "metrics": {
+        "size_bytes": 1747,
+        "loc": 31,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/RunListItemResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for RunListItemResponse",
+      "summary_text": "TypeScript module for RunListItemResponse",
+      "metrics": {
+        "size_bytes": 2727,
+        "loc": 81,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/RunListResponse.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for RunListResponse",
+      "summary_text": "TypeScript module for RunListResponse",
+      "metrics": {
+        "size_bytes": 1284,
+        "loc": 32,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/StepProgressSummary.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for StepProgressSummary",
+      "summary_text": "TypeScript module for StepProgressSummary",
+      "metrics": {
+        "size_bytes": 1767,
+        "loc": 41,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/models/ValidationError.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ValidationError",
+      "summary_text": "TypeScript module for ValidationError",
+      "metrics": {
+        "size_bytes": 821,
+        "loc": 9,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/services/ExpandService.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ExpandService",
+      "summary_text": "TypeScript module for ExpandService",
+      "metrics": {
+        "size_bytes": 2678,
+        "loc": 52,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/services/FullReviewService.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for FullReviewService",
+      "summary_text": "TypeScript module for FullReviewService",
+      "metrics": {
+        "size_bytes": 2540,
+        "loc": 49,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/services/HealthService.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for HealthService",
+      "summary_text": "TypeScript module for HealthService",
+      "metrics": {
+        "size_bytes": 1458,
+        "loc": 22,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/services/ReviewService.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for ReviewService",
+      "summary_text": "TypeScript module for ReviewService",
+      "metrics": {
+        "size_bytes": 2686,
+        "loc": 50,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/services/RootService.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for RootService",
+      "summary_text": "TypeScript module for RootService",
+      "metrics": {
+        "size_bytes": 1248,
+        "loc": 24,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/api/generated/services/RunsService.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for RunsService",
+      "summary_text": "TypeScript module for RunsService",
+      "metrics": {
+        "size_bytes": 6014,
+        "loc": 148,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/components/layout/index.ts",
+      "language": "TypeScript",
+      "role": "entry-point",
+      "role_justification": "common entry point name 'index'",
+      "summary": "TypeScript main entry point (role: entry-point)",
+      "summary_text": "TypeScript main entry point (role: entry-point)",
+      "metrics": {
+        "size_bytes": 667,
+        "loc": 2,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/components/ui/index.ts",
+      "language": "TypeScript",
+      "role": "entry-point",
+      "role_justification": "common entry point name 'index'",
+      "summary": "TypeScript main entry point (role: entry-point)",
+      "summary_text": "TypeScript main entry point (role: entry-point)",
+      "metrics": {
+        "size_bytes": 671,
+        "loc": 2,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/config/index.ts",
+      "language": "TypeScript",
+      "role": "entry-point",
+      "role_justification": "common entry point name 'index'",
+      "summary": "TypeScript main entry point (role: entry-point)",
+      "summary_text": "TypeScript main entry point (role: entry-point)",
+      "metrics": {
+        "size_bytes": 2748,
+        "loc": 54,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/tailwind.config.js",
+      "language": "JavaScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "JavaScript module for tailwind.config",
+      "summary_text": "JavaScript module for tailwind.config",
+      "metrics": {
+        "size_bytes": 761,
+        "loc": 8,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/vite.config.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for vite.config",
+      "summary_text": "TypeScript module for vite.config",
+      "metrics": {
+        "size_bytes": 755,
+        "loc": 5,
         "todo_count": 0
       }
     }

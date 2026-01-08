@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 90
-- **Intra-repo dependencies**: 266
-- **External stdlib dependencies**: 38
-- **External third-party dependencies**: 73
+- **Total files**: 135
+- **Intra-repo dependencies**: 319
+- **External stdlib dependencies**: 39
+- **External third-party dependencies**: 84
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 38 unique modules
+Total: 39 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -39,16 +39,22 @@ Total: 38 unique modules
 - `logging.config.fileConfig`
 - `os`
 - `pathlib.Path`
-- ... and 18 more (see JSON for full list)
+- ... and 19 more (see JSON for full list)
 
 ### Third-Party Packages
 
-Total: 73 unique packages
+Total: 84 unique packages
 
+- `@eslint/js`
+- `@vitejs/plugin-react`
 - `alembic.command`
 - `alembic.config.Config`
 - `alembic.context`
 - `alembic.op`
+- `axios`
+- `eslint-plugin-prettier/recommended`
+- `eslint-plugin-react-hooks`
+- `eslint-plugin-react-refresh`
 - `fastapi.APIRouter`
 - `fastapi.Depends`
 - `fastapi.FastAPI`
@@ -58,14 +64,8 @@ Total: 73 unique packages
 - `fastapi.Request`
 - `fastapi.Response`
 - `fastapi.exceptions.RequestValidationError`
-- `fastapi.responses.JSONResponse`
-- `fastapi.status`
-- `fastapi.testclient.TestClient`
-- `google.api_core.exceptions.GoogleAPIError`
-- `google.api_core.retry`
-- `google.cloud.pubsub_v1`
-- `google.cloud.sql.connector.Connector`
-- ... and 53 more (see JSON for full list)
+- `fastapi.middleware.cors.CORSMiddleware`
+- ... and 64 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 
@@ -88,7 +88,7 @@ Total: 73 unique packages
 - `src/consensus_engine/api/routes/full_review.py` (9 dependencies)
 - `src/consensus_engine/api/routes/review.py` (8 dependencies)
 - `src/consensus_engine/services/orchestrator.py` (8 dependencies)
+- `webapp/src/api/generated/services/RunsService.ts` (8 dependencies)
 - `src/consensus_engine/api/routes/expand.py` (7 dependencies)
 - `src/consensus_engine/services/review.py` (7 dependencies)
 - `tests/integration/test_pipeline_worker.py` (7 dependencies)
-- `tests/integration/test_revision_endpoint.py` (7 dependencies)

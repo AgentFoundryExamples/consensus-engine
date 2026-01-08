@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 90
+Total files: 135
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -164,8 +164,8 @@ Total files: 90
 **Role:** entry-point  
 **Role Justification:** common entry point name 'app'  
 **Summary:** Python main entry point (role: entry-point)  
-**Size:** 10.53 KB  
-**LOC:** 256  
+**Size:** 10.91 KB  
+**LOC:** 266  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/__init__.py
@@ -245,8 +245,8 @@ Total files: 90
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 16.09 KB  
-**LOC:** 417  
+**Size:** 18.48 KB  
+**LOC:** 466  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -814,4 +814,409 @@ Total files: 90
 **Summary:** Python test file (role: test)  
 **Size:** 5.80 KB  
 **LOC:** 118  
+**TODOs/FIXMEs:** 0  
+
+## webapp/eslint.config.js
+**Language:** JavaScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** JavaScript module for eslint.config  
+**Size:** 1.33 KB  
+**LOC:** 27  
+**TODOs/FIXMEs:** 0  
+
+## webapp/postcss.config.js
+**Language:** JavaScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** JavaScript module for postcss.config  
+**Size:** 0.66 KB  
+**LOC:** 6  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/client.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for client  
+**Size:** 2.33 KB  
+**LOC:** 48  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/core/ApiError.ts
+**Language:** TypeScript  
+**Role:** api  
+**Role Justification:** filename contains 'api'  
+**Summary:** TypeScript API implementation (role: api)  
+**Size:** 1.32 KB  
+**LOC:** 22  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/core/ApiRequestOptions.ts
+**Language:** TypeScript  
+**Role:** api  
+**Role Justification:** filename contains 'api'  
+**Summary:** TypeScript API implementation (role: api)  
+**Size:** 1.18 KB  
+**LOC:** 17  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/core/ApiResult.ts
+**Language:** TypeScript  
+**Role:** api  
+**Role Justification:** filename contains 'api'  
+**Summary:** TypeScript API implementation (role: api)  
+**Size:** 0.86 KB  
+**LOC:** 11  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/core/CancelablePromise.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for CancelablePromise  
+**Size:** 4.08 KB  
+**LOC:** 107  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/core/OpenAPI.ts
+**Language:** TypeScript  
+**Role:** api  
+**Role Justification:** filename contains 'api'  
+**Summary:** TypeScript API implementation (role: api)  
+**Size:** 1.51 KB  
+**LOC:** 29  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/core/request.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for request  
+**Size:** 9.83 KB  
+**LOC:** 306  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/index.ts
+**Language:** TypeScript  
+**Role:** entry-point  
+**Role Justification:** common entry point name 'index'  
+**Summary:** TypeScript main entry point (role: entry-point)  
+**Size:** 2.86 KB  
+**LOC:** 38  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/BlockingIssue.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for BlockingIssue  
+**Size:** 1.17 KB  
+**LOC:** 22  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/Concern.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for Concern  
+**Size:** 1.03 KB  
+**LOC:** 21  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/CreateRevisionRequest.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for CreateRevisionRequest  
+**Size:** 2.17 KB  
+**LOC:** 46  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/DecisionAggregation.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for DecisionAggregation  
+**Size:** 2.76 KB  
+**LOC:** 55  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/DecisionEnum.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for DecisionEnum  
+**Size:** 0.85 KB  
+**LOC:** 12  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/DetailedScoreBreakdown.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for DetailedScoreBreakdown  
+**Size:** 1.67 KB  
+**LOC:** 34  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/ExpandIdeaRequest.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ExpandIdeaRequest  
+**Size:** 1.14 KB  
+**LOC:** 21  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/ExpandIdeaResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ExpandIdeaResponse  
+**Size:** 2.48 KB  
+**LOC:** 66  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/FullReviewRequest.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for FullReviewRequest  
+**Size:** 1.18 KB  
+**LOC:** 21  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/HTTPValidationError.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for HTTPValidationError  
+**Size:** 0.84 KB  
+**LOC:** 8  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/HealthResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for HealthResponse  
+**Size:** 1.57 KB  
+**LOC:** 46  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/JobEnqueuedResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for JobEnqueuedResponse  
+**Size:** 1.89 KB  
+**LOC:** 50  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/MinorityReport.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for MinorityReport  
+**Size:** 1.96 KB  
+**LOC:** 46  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/PersonaReview.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for PersonaReview  
+**Size:** 2.80 KB  
+**LOC:** 67  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/PersonaReviewSummary.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for PersonaReviewSummary  
+**Size:** 1.57 KB  
+**LOC:** 36  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/PersonaScoreBreakdown.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for PersonaScoreBreakdown  
+**Size:** 1.23 KB  
+**LOC:** 24  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/ReviewIdeaRequest.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ReviewIdeaRequest  
+**Size:** 1.16 KB  
+**LOC:** 21  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/ReviewIdeaResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ReviewIdeaResponse  
+**Size:** 1.84 KB  
+**LOC:** 39  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/RunDetailResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for RunDetailResponse  
+**Size:** 4.32 KB  
+**LOC:** 133  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/RunDiffResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for RunDiffResponse  
+**Size:** 1.71 KB  
+**LOC:** 31  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/RunListItemResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for RunListItemResponse  
+**Size:** 2.66 KB  
+**LOC:** 81  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/RunListResponse.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for RunListResponse  
+**Size:** 1.25 KB  
+**LOC:** 32  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/StepProgressSummary.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for StepProgressSummary  
+**Size:** 1.73 KB  
+**LOC:** 41  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/models/ValidationError.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ValidationError  
+**Size:** 0.80 KB  
+**LOC:** 9  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/services/ExpandService.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ExpandService  
+**Size:** 2.62 KB  
+**LOC:** 52  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/services/FullReviewService.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for FullReviewService  
+**Size:** 2.48 KB  
+**LOC:** 49  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/services/HealthService.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for HealthService  
+**Size:** 1.42 KB  
+**LOC:** 22  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/services/ReviewService.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for ReviewService  
+**Size:** 2.62 KB  
+**LOC:** 50  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/services/RootService.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for RootService  
+**Size:** 1.22 KB  
+**LOC:** 24  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/api/generated/services/RunsService.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for RunsService  
+**Size:** 5.87 KB  
+**LOC:** 148  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/components/layout/index.ts
+**Language:** TypeScript  
+**Role:** entry-point  
+**Role Justification:** common entry point name 'index'  
+**Summary:** TypeScript main entry point (role: entry-point)  
+**Size:** 0.65 KB  
+**LOC:** 2  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/components/ui/index.ts
+**Language:** TypeScript  
+**Role:** entry-point  
+**Role Justification:** common entry point name 'index'  
+**Summary:** TypeScript main entry point (role: entry-point)  
+**Size:** 0.66 KB  
+**LOC:** 2  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/config/index.ts
+**Language:** TypeScript  
+**Role:** entry-point  
+**Role Justification:** common entry point name 'index'  
+**Summary:** TypeScript main entry point (role: entry-point)  
+**Size:** 2.68 KB  
+**LOC:** 54  
+**TODOs/FIXMEs:** 0  
+
+## webapp/tailwind.config.js
+**Language:** JavaScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** JavaScript module for tailwind.config  
+**Size:** 0.74 KB  
+**LOC:** 8  
+**TODOs/FIXMEs:** 0  
+
+## webapp/vite.config.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for vite.config  
+**Size:** 0.74 KB  
+**LOC:** 5  
 **TODOs/FIXMEs:** 0  
