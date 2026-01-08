@@ -152,7 +152,6 @@
       "type": "file",
       "external_dependencies": {
         "stdlib": [
-          "json",
           "time",
           "typing.Any",
           "uuid"
@@ -563,6 +562,22 @@
       }
     },
     {
+      "id": "src/consensus_engine/schemas/validation.py",
+      "path": "src/consensus_engine/schemas/validation.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "logging",
+          "typing.Any",
+          "typing.TypeVar"
+        ],
+        "third-party": [
+          "pydantic.BaseModel",
+          "pydantic.ValidationError"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/services/__init__.py",
       "path": "src/consensus_engine/services/__init__.py",
       "type": "file",
@@ -657,13 +672,10 @@
           "uuid"
         ],
         "third-party": [
-          "google.api_core.retry",
           "google.cloud.pubsub_v1",
           "pydantic.BaseModel",
           "pydantic.Field",
           "pydantic.ValidationError",
-          "sqlalchemy.exc.IntegrityError",
-          "sqlalchemy.exc.SQLAlchemyError",
           "sqlalchemy.orm.Session",
           "sqlalchemy.select"
         ]
@@ -1255,6 +1267,17 @@
       }
     },
     {
+      "id": "tests/unit/test_schema_validation.py",
+      "path": "tests/unit/test_schema_validation.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_validation.py",
       "path": "tests/unit/test_validation.py",
       "type": "file",
@@ -1490,6 +1513,10 @@
     },
     {
       "source": "src/consensus_engine/clients/openai_client.py",
+      "target": "src/consensus_engine/schemas/validation.py"
+    },
+    {
+      "source": "src/consensus_engine/clients/openai_client.py",
       "target": "src/consensus_engine/config/instruction_builder.py"
     },
     {
@@ -1577,6 +1604,14 @@
       "target": "src/consensus_engine/schemas/review.py"
     },
     {
+      "source": "src/consensus_engine/schemas/validation.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/schemas/validation.py",
+      "target": "src/consensus_engine/schemas/registry.py"
+    },
+    {
       "source": "src/consensus_engine/services/__init__.py",
       "target": "src/consensus_engine/services/aggregator.py"
     },
@@ -1602,7 +1637,15 @@
     },
     {
       "source": "src/consensus_engine/services/aggregator.py",
+      "target": "src/consensus_engine/schemas/registry.py"
+    },
+    {
+      "source": "src/consensus_engine/services/aggregator.py",
       "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "src/consensus_engine/services/aggregator.py",
+      "target": "src/consensus_engine/schemas/validation.py"
     },
     {
       "source": "src/consensus_engine/services/diff.py",
@@ -1698,15 +1741,7 @@
     },
     {
       "source": "src/consensus_engine/workers/pipeline_worker.py",
-      "target": "src/consensus_engine/clients/openai_client.py"
-    },
-    {
-      "source": "src/consensus_engine/workers/pipeline_worker.py",
       "target": "src/consensus_engine/config/logging.py"
-    },
-    {
-      "source": "src/consensus_engine/workers/pipeline_worker.py",
-      "target": "src/consensus_engine/config/personas.py"
     },
     {
       "source": "src/consensus_engine/workers/pipeline_worker.py",
@@ -1731,6 +1766,10 @@
     {
       "source": "src/consensus_engine/workers/pipeline_worker.py",
       "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/schemas/validation.py"
     },
     {
       "source": "src/consensus_engine/workers/pipeline_worker.py",
@@ -2199,6 +2238,26 @@
     {
       "source": "tests/unit/test_schema_registry.py",
       "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "tests/unit/test_schema_validation.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "tests/unit/test_schema_validation.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/unit/test_schema_validation.py",
+      "target": "src/consensus_engine/schemas/registry.py"
+    },
+    {
+      "source": "tests/unit/test_schema_validation.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "tests/unit/test_schema_validation.py",
+      "target": "src/consensus_engine/schemas/validation.py"
     },
     {
       "source": "tests/unit/test_validation.py",

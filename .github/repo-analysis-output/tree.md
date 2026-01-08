@@ -19,6 +19,7 @@
   ├── async_run_persistence.md
   ├── MULTI_PERSONA_ORCHESTRATION.md
   ├── SCHEMA_REGISTRY.md
+  ├── SCHEMA_VERSIONING.md
   └── WORKER_DEPLOYMENT.md
 ├── examples
   └── test_full_review.py
@@ -65,7 +66,8 @@
       ├── proposal.py
       ├── registry.py
       ├── requests.py
-      └── review.py
+      ├── review.py
+      └── validation.py
     ├── services
       ├── __init__.py
       ├── aggregator.py
@@ -118,6 +120,7 @@
     ├── test_review_schemas.py
     ├── test_review_service.py
     ├── test_schema_registry.py
+    ├── test_schema_validation.py
     └── test_validation.py
   ├── __init__.py
   └── conftest.py

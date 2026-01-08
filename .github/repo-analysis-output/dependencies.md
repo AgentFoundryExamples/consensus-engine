@@ -8,8 +8,8 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 82
-- **Intra-repo dependencies**: 236
+- **Total files**: 84
+- **Intra-repo dependencies**: 245
 - **External stdlib dependencies**: 38
 - **External third-party dependencies**: 72
 
@@ -69,10 +69,10 @@ Total: 72 unique packages
 
 ## Most Depended Upon Files (Intra-Repo)
 
-- `src/consensus_engine/schemas/proposal.py` (26 dependents)
-- `src/consensus_engine/schemas/review.py` (23 dependents)
+- `src/consensus_engine/schemas/proposal.py` (27 dependents)
+- `src/consensus_engine/schemas/review.py` (24 dependents)
 - `src/consensus_engine/config/settings.py` (20 dependents)
-- `src/consensus_engine/exceptions.py` (16 dependents)
+- `src/consensus_engine/exceptions.py` (18 dependents)
 - `src/consensus_engine/db/models.py` (16 dependents)
 - `src/consensus_engine/config/__init__.py` (15 dependents)
 - `src/consensus_engine/config/logging.py` (15 dependents)
@@ -82,7 +82,7 @@ Total: 72 unique packages
 
 ## Files with Most Dependencies (Intra-Repo)
 
-- `src/consensus_engine/workers/pipeline_worker.py` (12 dependencies)
+- `src/consensus_engine/workers/pipeline_worker.py` (11 dependencies)
 - `src/consensus_engine/app.py` (10 dependencies)
 - `src/consensus_engine/api/routes/runs.py` (8 dependencies)
 - `src/consensus_engine/services/orchestrator.py` (8 dependencies)

@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 82,
+  "total_files": 84,
   "files": [
     {
       "schema_version": "2.0",
@@ -151,8 +151,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9197,
-        "loc": 221,
+        "size_bytes": 9948,
+        "loc": 234,
         "todo_count": 0
       }
     },
@@ -165,8 +165,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9684,
-        "loc": 207,
+        "size_bytes": 9672,
+        "loc": 206,
         "todo_count": 0
       }
     },
@@ -193,8 +193,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 19747,
-        "loc": 455,
+        "size_bytes": 20026,
+        "loc": 459,
         "todo_count": 0
       }
     },
@@ -207,8 +207,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 31625,
-        "loc": 730,
+        "size_bytes": 32263,
+        "loc": 739,
         "todo_count": 0
       }
     },
@@ -249,8 +249,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 18475,
-        "loc": 352,
+        "size_bytes": 22119,
+        "loc": 418,
         "todo_count": 0
       }
     },
@@ -263,7 +263,7 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 11786,
+        "size_bytes": 11774,
         "loc": 259,
         "todo_count": 0
       }
@@ -473,8 +473,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 30131,
-        "loc": 627,
+        "size_bytes": 30891,
+        "loc": 643,
         "todo_count": 0
       }
     },
@@ -489,6 +489,20 @@
       "metrics": {
         "size_bytes": 17121,
         "loc": 440,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/schemas/validation.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 7477,
+        "loc": 162,
         "todo_count": 0
       }
     },
@@ -515,8 +529,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9745,
-        "loc": 195,
+        "size_bytes": 10734,
+        "loc": 216,
         "todo_count": 0
       }
     },
@@ -543,8 +557,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 10191,
-        "loc": 183,
+        "size_bytes": 10395,
+        "loc": 187,
         "todo_count": 0
       }
     },
@@ -571,8 +585,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9511,
-        "loc": 166,
+        "size_bytes": 9610,
+        "loc": 168,
         "todo_count": 0
       }
     },
@@ -599,8 +613,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 35930,
-        "loc": 787,
+        "size_bytes": 38126,
+        "loc": 840,
         "todo_count": 0
       }
     },
@@ -1133,6 +1147,20 @@
       "metrics": {
         "size_bytes": 19989,
         "loc": 422,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_schema_validation.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 13226,
+        "loc": 251,
         "todo_count": 0
       }
     },
