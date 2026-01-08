@@ -30,20 +30,38 @@ export const config: AppConfig = {
 
 /**
  * Validate configuration at startup
+ *
+ * @throws Error if required configuration is missing or invalid
  */
 export function validateConfig(): void {
   if (!config.apiBaseUrl) {
     throw new Error('VITE_API_BASE_URL must be set');
   }
 
+  // Validate API base URL format
+  try {
+    new URL(config.apiBaseUrl);
+  } catch {
+    throw new Error(`Invalid VITE_API_BASE_URL: ${config.apiBaseUrl}. Must be a valid URL.`);
+  }
+
   if (config.pollingIntervalMs < 1000 || config.pollingIntervalMs > 60000) {
     console.warn('VITE_POLLING_INTERVAL_MS should be between 1000 and 60000ms');
   }
 
+  // Log configuration (without exposing sensitive data like tokens)
   console.log('App configuration:', {
     apiBaseUrl: config.apiBaseUrl,
     environment: config.environment,
     pollingIntervalMs: config.pollingIntervalMs,
     hasIamToken: !!config.iamToken,
   });
+
+  // Warn if IAM token is present in development
+  if (config.iamToken && config.environment === 'development') {
+    console.warn(
+      'WARNING: IAM token is configured in development environment. ' +
+        'Ensure this is intentional and the token is not committed to version control.'
+    );
+  }
 }

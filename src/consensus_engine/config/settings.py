@@ -170,10 +170,12 @@ class Settings(BaseSettings):
 
     # CORS Configuration
     cors_origins: str = Field(
-        default="http://localhost:5173,http://localhost:3000",
+        default="http://localhost:5173",
         description=(
             "Comma-separated list of allowed CORS origins for the web frontend. "
-            "Example: http://localhost:5173,https://app.example.com"
+            "Default is localhost:5173 for Vite dev server. "
+            "Add additional origins as needed (e.g., http://localhost:3000,https://app.example.com). "
+            "NEVER use wildcard (*) for security reasons."
         ),
     )
 
@@ -390,6 +392,54 @@ class Settings(BaseSettings):
                     "DB_INSTANCE_CONNECTION_NAME must be in format 'project:region:instance'"
                 )
             return v.strip()
+        return v
+
+    @field_validator("cors_origins")
+    @classmethod
+    def validate_cors_origins(cls, v: str) -> str:
+        """Validate CORS origins format and security.
+
+        Args:
+            v: Comma-separated list of CORS origins
+
+        Returns:
+            The validated CORS origins string
+
+        Raises:
+            ValueError: If CORS origins contain wildcard in production or invalid URLs
+        """
+        if not v.strip():
+            raise ValueError("CORS_ORIGINS cannot be empty")
+
+        # Check for wildcard
+        if "*" in v:
+            raise ValueError(
+                "Wildcard (*) CORS origins are not allowed for security reasons. "
+                "Specify explicit origins instead."
+            )
+
+        # Validate each origin is a valid URL
+        origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+        
+        if not origins:
+            raise ValueError("CORS_ORIGINS must contain at least one valid origin")
+
+        for origin in origins:
+            # Allow localhost for development
+            if origin.startswith("http://localhost") or origin.startswith("http://127.0.0.1"):
+                continue
+            
+            # For non-localhost, validate URL format
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(origin)
+                if not parsed.scheme or not parsed.netloc:
+                    raise ValueError(f"Invalid CORS origin format: {origin}")
+                if parsed.scheme not in ["http", "https"]:
+                    raise ValueError(f"CORS origin must use http or https: {origin}")
+            except Exception as e:
+                raise ValueError(f"Invalid CORS origin '{origin}': {str(e)}")
+
         return v
 
     @property
