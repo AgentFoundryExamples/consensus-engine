@@ -38,7 +38,8 @@
       └── variables.tf
     ├── backend-service.yaml
     ├── frontend-service.yaml
-    └── README.md
+    ├── README.md
+    └── worker-service.yaml
 ├── migrations
   ├── versions
     ├── 1be7b272f496_add_analytics_index_for_decision_and_.py
@@ -240,10 +241,12 @@
     ├── App.tsx
     ├── index.css
     └── main.tsx
+  ├── .dockerignore
   ├── .env.example
   ├── .gitignore
   ├── .prettierignore
   ├── .prettierrc.json
+  ├── Dockerfile
   ├── eslint.config.js
   ├── index.html
   ├── openapi.json
@@ -256,11 +259,16 @@
   ├── tsconfig.json
   ├── tsconfig.node.json
   └── vite.config.ts
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
 ├── alembic.ini
 ├── docker-compose.yml
+├── DOCKER.md
+├── Dockerfile
+├── Dockerfile.worker
 ├── IMPLEMENTATION_SUMMARY.md
+├── IMPLEMENTATION_SUMMARY_dockerfiles.md
 ├── IMPLEMENTATION_SUMMARY_full_review_persistence.md
 ├── IMPLEMENTATION_SUMMARY_pipeline_worker.md
 ├── IMPLEMENTATION_SUMMARY_revision_workflow.md
