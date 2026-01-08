@@ -302,6 +302,7 @@ class RunRepository:
                     joinedload(Run.proposal_version),
                     selectinload(Run.persona_reviews),
                     joinedload(Run.decision),
+                    selectinload(Run.step_progress),
                 )
             )
 
