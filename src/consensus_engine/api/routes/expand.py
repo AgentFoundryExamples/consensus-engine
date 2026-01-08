@@ -21,9 +21,11 @@ import json
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from consensus_engine.api.dependencies import get_expand_service_with_settings
+from consensus_engine.api.validation import log_validation_failure, validate_version_headers
+from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
 from consensus_engine.exceptions import (
     ConsensusEngineError,
@@ -31,6 +33,8 @@ from consensus_engine.exceptions import (
     LLMRateLimitError,
     LLMTimeoutError,
     SchemaValidationError,
+    UnsupportedVersionError,
+    ValidationError,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
 from consensus_engine.schemas.requests import ExpandIdeaRequest, ExpandIdeaResponse
@@ -62,6 +66,22 @@ router = APIRouter(prefix="/v1", tags=["expand"])
                             "model": "gpt-5.1",
                             "temperature": 0.7,
                             "elapsed_time": 2.5,
+                        },
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Bad request - unsupported version",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "code": "UNSUPPORTED_VERSION",
+                        "message": "Schema version '0.9.0' is not supported. Current supported version: '1.0.0'. Please upgrade your client to use the supported API version.",
+                        "details": {
+                            "requested_schema_version": "0.9.0",
+                            "supported_schema_version": "1.0.0",
+                            "api_version": "v1",
                         },
                     }
                 }
@@ -112,7 +132,16 @@ router = APIRouter(prefix="/v1", tags=["expand"])
     description=(
         "Accepts a brief idea (1-10 sentences) with optional extra context "
         "and expands it into a comprehensive, structured proposal using LLM. "
-        "Returns problem statement, proposed solution, assumptions, and scope boundaries."
+        "Returns problem statement, proposed solution, assumptions, and scope boundaries. "
+        "\n\n"
+        "**Validation Rules:**\n"
+        "- Idea: 1-10 sentences, max 10,000 characters\n"
+        "- Extra context: max 50,000 characters (string or JSON)\n"
+        "\n\n"
+        "**Version Headers (Optional):**\n"
+        "- X-Schema-Version: Schema version (current: 1.0.0)\n"
+        "- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\n"
+        "If not provided, defaults to current deployment versions with a warning."
     ),
 )
 async def expand_idea_endpoint(
@@ -120,6 +149,9 @@ async def expand_idea_endpoint(
     expand_service: Callable[[IdeaInput], tuple[ExpandedProposal, dict[str, Any]]] = Depends(
         get_expand_service_with_settings
     ),
+    settings: Settings = Depends(get_settings),
+    x_schema_version: str | None = Header(default=None, alias="X-Schema-Version"),
+    x_prompt_set_version: str | None = Header(default=None, alias="X-Prompt-Set-Version"),
 ) -> ExpandIdeaResponse:
     """Expand an idea into a detailed proposal.
 
@@ -130,14 +162,43 @@ async def expand_idea_endpoint(
     Args:
         request: Validated request containing idea and optional extra_context
         expand_service: Injected expand_idea service with settings pre-applied
+        settings: Application settings injected via dependency
+        x_schema_version: Optional schema version header
+        x_prompt_set_version: Optional prompt set version header
 
     Returns:
         ExpandIdeaResponse with structured proposal and metadata
 
     Raises:
-        HTTPException: For validation errors (422), auth errors (401),
+        HTTPException: For validation errors (400, 422), auth errors (401),
                       rate limits (503), and service errors (500)
     """
+    try:
+        # Validate version headers
+        versions = validate_version_headers(
+            x_schema_version,
+            x_prompt_set_version,
+            settings,
+        )
+        schema_version = versions["schema_version"]
+        prompt_set_version = versions["prompt_set_version"]
+
+    except UnsupportedVersionError as e:
+        log_validation_failure(
+            field="version_headers",
+            rule="supported_version",
+            message=e.message,
+            metadata=e.details,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": e.code,
+                "message": e.message,
+                "details": e.details,
+            },
+        ) from e
+
     # Convert extra_context to string if it's a dict
     extra_context_str: str | None = None
     if request.extra_context is not None:
@@ -155,6 +216,8 @@ async def expand_idea_endpoint(
         "Processing expand-idea request",
         extra={
             "has_extra_context": extra_context_str is not None,
+            "schema_version": schema_version,
+            "prompt_set_version": prompt_set_version,
         },
     )
 
@@ -163,8 +226,9 @@ async def expand_idea_endpoint(
         proposal, metadata = expand_service(idea_input)
 
         # Extract version information from metadata
-        schema_version = metadata.get("schema_version", "1.0.0")
-        prompt_set_version = metadata.get("prompt_set_version", "1.0.0")
+        # Override with validated versions from headers
+        metadata["schema_version"] = schema_version
+        metadata["prompt_set_version"] = prompt_set_version
 
         # Build response
         response = ExpandIdeaResponse(

@@ -22,7 +22,7 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import JSONResponse
 
 from consensus_engine.config import Settings, get_settings
@@ -32,7 +32,10 @@ from consensus_engine.exceptions import (
     LLMAuthenticationError,
     LLMRateLimitError,
     LLMTimeoutError,
+    UnsupportedVersionError,
+    ValidationError,
 )
+from consensus_engine.api.validation import log_validation_failure, validate_version_headers
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
 from consensus_engine.schemas.requests import (
     ExpandIdeaResponse,
@@ -71,20 +74,22 @@ def _map_exception_to_status_code(exc: ConsensusEngineError) -> int:
 
 
 def _build_expand_response(
-    proposal: ExpandedProposal, metadata: dict[str, Any]
+    proposal: ExpandedProposal, metadata: dict[str, Any], schema_version: str, prompt_set_version: str
 ) -> ExpandIdeaResponse:
     """Build ExpandIdeaResponse from ExpandedProposal and metadata.
 
     Args:
         proposal: ExpandedProposal instance
         metadata: Metadata dictionary from expand service
+        schema_version: Validated schema version
+        prompt_set_version: Validated prompt set version
 
     Returns:
         ExpandIdeaResponse instance
     """
-    # Extract version information from metadata with defaults
-    schema_version = metadata.get("schema_version", "1.0.0")
-    prompt_set_version = metadata.get("prompt_set_version", "1.0.0")
+    # Override metadata with validated versions
+    metadata["schema_version"] = schema_version
+    metadata["prompt_set_version"] = prompt_set_version
 
     return ExpandIdeaResponse(
         problem_statement=proposal.problem_statement,
@@ -235,30 +240,44 @@ def _create_single_persona_decision(
         "(GenericReviewer), and aggregates a draft decision. Returns the expanded "
         "proposal, review, and decision with telemetry. Errors include failed_step "
         "and any partial results."
+        "\n\n"
+        "**Validation Rules:**\n"
+        "- Idea: 1-10 sentences, max 10,000 characters\n"
+        "- Extra context: max 50,000 characters (string or JSON)\n"
+        "\n\n"
+        "**Version Headers (Optional):**\n"
+        "- X-Schema-Version: Schema version (current: 1.0.0)\n"
+        "- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\n"
+        "If not provided, defaults to current deployment versions with a warning."
     ),
 )
 async def review_idea_endpoint(
     request_obj: Request,
     review_request: ReviewIdeaRequest,
     settings: Settings = Depends(get_settings),
+    x_schema_version: str | None = Header(default=None, alias="X-Schema-Version"),
+    x_prompt_set_version: str | None = Header(default=None, alias="X-Prompt-Set-Version"),
 ) -> ReviewIdeaResponse:
     """Review an idea through expand, review, and decision aggregation.
 
     This endpoint orchestrates the following steps synchronously:
-    1. Expand the idea into a detailed proposal
-    2. Review the proposal with a single persona (GenericReviewer)
-    3. Aggregate a draft decision from the review
+    1. Validate version headers
+    2. Expand the idea into a detailed proposal
+    3. Review the proposal with a single persona (GenericReviewer)
+    4. Aggregate a draft decision from the review
 
     Args:
         request_obj: FastAPI request object for accessing state
         review_request: Validated request containing idea and optional extra_context
         settings: Application settings injected via dependency
+        x_schema_version: Optional schema version header
+        x_prompt_set_version: Optional prompt set version header
 
     Returns:
         ReviewIdeaResponse with expanded proposal, reviews, and draft decision
 
     Raises:
-        JSONResponse: For validation errors (422) or service errors (500/503)
+        JSONResponse: For validation errors (400, 422) or service errors (500/503)
     """
     # Generate unique run_id for this orchestration
     run_id = str(uuid.uuid4())
@@ -267,12 +286,44 @@ async def review_idea_endpoint(
     # Get request_id from middleware if available
     request_id = getattr(request_obj.state, "request_id", "unknown")
 
+    try:
+        # Validate version headers
+        versions = validate_version_headers(
+            x_schema_version,
+            x_prompt_set_version,
+            settings,
+        )
+        schema_version = versions["schema_version"]
+        prompt_set_version = versions["prompt_set_version"]
+
+    except UnsupportedVersionError as e:
+        log_validation_failure(
+            field="version_headers",
+            rule="supported_version",
+            message=e.message,
+            metadata={**e.details, "run_id": run_id},
+        )
+        error_response = ReviewIdeaErrorResponse(
+            code=e.code,
+            message=e.message,
+            failed_step="validation",
+            run_id=run_id,
+            partial_results=None,
+            details=e.details,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=error_response.model_dump(),
+        )
+
     logger.info(
         "Starting review-idea orchestration",
         extra={
             "run_id": run_id,
             "request_id": request_id,
             "has_extra_context": review_request.extra_context is not None,
+            "schema_version": schema_version,
+            "prompt_set_version": prompt_set_version,
         },
     )
 
@@ -402,7 +453,9 @@ async def review_idea_endpoint(
         partial_results_data = None
         if expanded_proposal:
             # Build ExpandIdeaResponse from expanded_proposal for partial results
-            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            expand_response = _build_expand_response(
+                expanded_proposal, expand_metadata or {}, schema_version, prompt_set_version
+            )
             partial_results_data = {"expanded_proposal": expand_response.model_dump()}
 
         error_response = ReviewIdeaErrorResponse(
@@ -432,7 +485,9 @@ async def review_idea_endpoint(
         # Include partial results (expanded proposal)
         partial_results_data = None
         if expanded_proposal:
-            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            expand_response = _build_expand_response(
+                expanded_proposal, expand_metadata or {}, schema_version, prompt_set_version
+            )
             partial_results_data = {"expanded_proposal": expand_response.model_dump()}
 
         error_response = ReviewIdeaErrorResponse(
@@ -485,7 +540,9 @@ async def review_idea_endpoint(
         # Include partial results (expanded proposal and review)
         partial_results_data = {}
         if expanded_proposal:
-            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            expand_response = _build_expand_response(
+                expanded_proposal, expand_metadata or {}, schema_version, prompt_set_version
+            )
             partial_results_data["expanded_proposal"] = expand_response.model_dump()
         if persona_review:
             partial_results_data["reviews"] = [persona_review.model_dump()]
@@ -517,7 +574,9 @@ async def review_idea_endpoint(
         # Include partial results (expanded proposal and review)
         partial_results_data = {}
         if expanded_proposal:
-            expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+            expand_response = _build_expand_response(
+                expanded_proposal, expand_metadata or {}, schema_version, prompt_set_version
+            )
             partial_results_data["expanded_proposal"] = expand_response.model_dump()
         if persona_review:
             partial_results_data["reviews"] = [persona_review.model_dump()]
@@ -540,7 +599,9 @@ async def review_idea_endpoint(
     elapsed_time = time.time() - start_time
 
     # Build ExpandIdeaResponse from expanded_proposal
-    expand_response = _build_expand_response(expanded_proposal, expand_metadata or {})
+    expand_response = _build_expand_response(
+        expanded_proposal, expand_metadata or {}, schema_version, prompt_set_version
+    )
 
     response = ReviewIdeaResponse(
         expanded_proposal=expand_response,
