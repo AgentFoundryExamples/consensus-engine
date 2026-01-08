@@ -245,7 +245,6 @@ def review_with_all_personas(
 
         # Construct developer instruction with persona context
         developer_instruction = (
-            f"Persona instructions: {persona_config.developer_instructions}\n\n"
             "Provide your review using the PersonaReview schema with the following fields:\n"
             f"- persona_name: Your assigned persona name ({persona_config.display_name})\n"
             f"- persona_id: Your assigned persona ID ({persona_id})\n"
@@ -453,7 +452,6 @@ def review_with_selective_personas(
 
             # Construct developer instruction with persona context
             developer_instruction = (
-                f"Persona instructions: {persona_config.developer_instructions}\n\n"
                 "Provide your review using the PersonaReview schema with the following fields:\n"
                 f"- persona_name: Your assigned persona name ({persona_config.display_name})\n"
                 f"- persona_id: Your assigned persona ID ({persona_id})\n"

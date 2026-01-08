@@ -8,7 +8,7 @@ All settings support environment variable overrides for flexible deployment conf
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # Prompt set version constant for tracking active prompt templates
 PROMPT_SET_VERSION = "1.0.0"
@@ -117,6 +117,29 @@ class LLMStepsConfig(BaseModel):
         description="Version identifier for prompt templates",
     )
 
+    @model_validator(mode="after")
+    def validate_step_configs(self) -> "LLMStepsConfig":
+        """Validate that all step configs are consistent.
+
+        Raises:
+            ValueError: If configurations are inconsistent or invalid
+        """
+        # Ensure step names match
+        if self.expand.step_name != StepName.EXPAND:
+            raise ValueError(
+                f"Expand config has wrong step_name: {self.expand.step_name}, expected 'expand'"
+            )
+        if self.review.step_name != StepName.REVIEW:
+            raise ValueError(
+                f"Review config has wrong step_name: {self.review.step_name}, expected 'review'"
+            )
+        if self.aggregate.step_name != StepName.AGGREGATE:
+            raise ValueError(
+                f"Aggregate config has wrong step_name: {self.aggregate.step_name}, "
+                "expected 'aggregate'"
+            )
+        return self
+
     def get_step_config(self, step_name: StepName | str) -> StepConfig:
         """Get configuration for a specific step.
 
@@ -149,34 +172,6 @@ class LLMStepsConfig(BaseModel):
         else:
             # Should never reach here due to enum validation
             raise ValueError(f"Unhandled step name: {step_name}")
-
-    @classmethod
-    def validate_step_configs(cls, expand: StepConfig, review: StepConfig,
-                              aggregate: StepConfig) -> None:
-        """Validate that all step configs are consistent.
-
-        Args:
-            expand: Expand step configuration
-            review: Review step configuration
-            aggregate: Aggregate step configuration
-
-        Raises:
-            ValueError: If configurations are inconsistent or invalid
-        """
-        # Ensure step names match
-        if expand.step_name != StepName.EXPAND:
-            raise ValueError(
-                f"Expand config has wrong step_name: {expand.step_name}, expected 'expand'"
-            )
-        if review.step_name != StepName.REVIEW:
-            raise ValueError(
-                f"Review config has wrong step_name: {review.step_name}, expected 'review'"
-            )
-        if aggregate.step_name != StepName.AGGREGATE:
-            raise ValueError(
-                f"Aggregate config has wrong step_name: {aggregate.step_name}, "
-                "expected 'aggregate'"
-            )
 
 
 def create_default_llm_steps_config() -> LLMStepsConfig:

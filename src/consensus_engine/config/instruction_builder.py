@@ -182,13 +182,12 @@ class InstructionBuilder:
         if not self._user_content:
             raise ValueError("User content is required")
 
-        # Build combined instruction
-        combined_instruction = self._system_instruction
+        # Build combined instruction with all parts
+        parts = [self._system_instruction]
 
-        # Add developer instruction if present
+        # Prepare developer instruction with persona
         developer_instruction = self._developer_instruction
         if self._persona_name and self._persona_instructions:
-            # Inject persona context into developer instruction
             persona_context = (
                 f"You are reviewing from the perspective of: {self._persona_name}\n\n"
                 f"Persona instructions: {self._persona_instructions}"
@@ -199,7 +198,12 @@ class InstructionBuilder:
                 developer_instruction = persona_context
 
         if developer_instruction:
-            combined_instruction = f"{combined_instruction}\n\n{developer_instruction}"
+            parts.append(developer_instruction)
+
+        # Add user content
+        parts.append(self._user_content)
+
+        combined_instruction = "\n\n".join(parts)
 
         # Add metadata
         if self._persona_name:

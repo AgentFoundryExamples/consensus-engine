@@ -57,6 +57,7 @@ class TestInstructionBuilder:
         assert payload.user_content == "User content"
         assert "System instruction" in payload.combined_instruction
         assert "Developer instruction" in payload.combined_instruction
+        assert "User content" in payload.combined_instruction
         assert payload.metadata["prompt_set_version"] == PROMPT_SET_VERSION
 
     def test_instruction_builder_without_developer_instruction(self) -> None:
@@ -71,7 +72,7 @@ class TestInstructionBuilder:
         assert payload.system_instruction == "System instruction"
         assert payload.developer_instruction is None
         assert payload.user_content == "User content"
-        assert payload.combined_instruction == "System instruction"
+        assert payload.combined_instruction == "System instruction\n\nUser content"
 
     def test_instruction_builder_with_persona(self) -> None:
         """Test InstructionBuilder with persona injection."""

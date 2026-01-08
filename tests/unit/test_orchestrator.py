@@ -313,8 +313,9 @@ class TestReviewWithAllPersonas:
         # Check that each call has different persona instructions
         persona_names = ["Architect", "Critic", "Optimist", "SecurityGuardian", "UserAdvocate"]
         for i, call in enumerate(calls):
-            developer_instruction = call[1]["developer_instruction"]
-            assert persona_names[i] in developer_instruction
+            instruction_payload = call[1]["instruction_payload"]
+            # The persona name should be in the combined instruction (via with_persona)
+            assert persona_names[i] in instruction_payload.combined_instruction
 
 
 class TestDeterminePersonasToRerun:
