@@ -754,3 +754,298 @@ class TestVersionedRunModels:
             )
             assert len(high_confidence) == 1
             assert float(high_confidence[0].overall_weighted_confidence) == 0.95
+
+
+class TestStepProgressRepository:
+    """Test StepProgressRepository functionality with database."""
+
+    def test_upsert_step_progress_create(self, clean_database, test_session_factory):
+        """Test creating a new step progress record."""
+        from datetime import UTC, datetime
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run first
+            run = Run(
+                status=RunStatus.QUEUED,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create step progress
+            started = datetime.now(UTC)
+            step = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.RUNNING,
+                started_at=started,
+            )
+
+            session.commit()
+
+            assert step.run_id == run_id
+            assert step.step_name == "expand"
+            assert step.step_order == 0
+            assert step.status == StepStatus.RUNNING
+            assert step.started_at == started
+            assert step.completed_at is None
+            assert step.error_message is None
+
+    def test_upsert_step_progress_update(self, clean_database, test_session_factory):
+        """Test updating an existing step progress record (idempotent)."""
+        from datetime import UTC, datetime
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create initial step progress
+            started = datetime.now(UTC)
+            step1 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.RUNNING,
+                started_at=started,
+            )
+            session.commit()
+            step_id = step1.id
+
+            # Update the same step (idempotent)
+            completed = datetime.now(UTC)
+            step2 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.COMPLETED,
+                completed_at=completed,
+            )
+            session.commit()
+
+            # Should be the same record, not a duplicate
+            assert step2.id == step_id
+            assert step2.status == StepStatus.COMPLETED
+            assert step2.completed_at == completed
+            assert step2.started_at == started
+
+    def test_upsert_step_progress_clears_error_on_success(self, clean_database, test_session_factory):
+        """Test that error messages are cleared when step succeeds after failure."""
+        from datetime import UTC, datetime
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create step progress that fails
+            started = datetime.now(UTC)
+            step1 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.FAILED,
+                started_at=started,
+                error_message="API timeout",
+            )
+            session.commit()
+            step_id = step1.id
+
+            # Verify error message is set
+            assert step1.error_message == "API timeout"
+
+            # Retry and succeed - error message should be cleared
+            completed = datetime.now(UTC)
+            step2 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.COMPLETED,
+                completed_at=completed,
+            )
+            session.commit()
+
+            # Should be the same record with error cleared
+            assert step2.id == step_id
+            assert step2.status == StepStatus.COMPLETED
+            assert step2.error_message is None
+
+            # Test that error message is preserved when status is FAILED
+            step3 = StepProgressRepository.upsert_step_progress(
+                session=session,
+                run_id=run_id,
+                step_name="expand",
+                status=StepStatus.FAILED,
+                error_message="New error",
+            )
+            session.commit()
+
+            assert step3.id == step_id
+            assert step3.error_message == "New error"
+
+    def test_upsert_step_progress_invalid_step_name(self, clean_database, test_session_factory):
+        """Test that invalid step names are rejected."""
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+
+            # Try to create step with invalid name
+            with pytest.raises(ValueError, match="Invalid step_name"):
+                StepProgressRepository.upsert_step_progress(
+                    session=session,
+                    run_id=run.id,
+                    step_name="invalid_step",
+                    status=StepStatus.PENDING,
+                )
+
+    def test_get_run_steps(self, clean_database, test_session_factory):
+        """Test retrieving all steps for a run in order."""
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create multiple steps out of order
+            StepProgressRepository.upsert_step_progress(
+                session, run_id, "aggregate_decision", StepStatus.PENDING
+            )
+            StepProgressRepository.upsert_step_progress(
+                session, run_id, "expand", StepStatus.COMPLETED
+            )
+            StepProgressRepository.upsert_step_progress(
+                session, run_id, "review_architect", StepStatus.RUNNING
+            )
+            session.commit()
+
+            # Retrieve steps - should be ordered by step_order
+            steps = StepProgressRepository.get_run_steps(session, run_id)
+
+            assert len(steps) == 3
+            assert steps[0].step_name == "expand"
+            assert steps[0].step_order == 0
+            assert steps[1].step_name == "review_architect"
+            assert steps[1].step_order == 1
+            assert steps[2].step_name == "aggregate_decision"
+            assert steps[2].step_order == 6
+
+    def test_step_progress_cascade_delete(self, clean_database, test_session_factory):
+        """Test that step progress records are deleted when run is deleted."""
+        from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepProgress, StepStatus
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        for session in get_session(test_session_factory):
+            # Create a run with steps
+            run = Run(
+                status=RunStatus.RUNNING,
+                input_idea="Test idea",
+                run_type=RunType.INITIAL,
+                priority=RunPriority.NORMAL,
+                model="gpt-5.1",
+                temperature=0.7,
+                parameters_json={},
+            )
+            session.add(run)
+            session.commit()
+            run_id = run.id
+
+            # Create step progress
+            StepProgressRepository.upsert_step_progress(
+                session, run_id, "expand", StepStatus.COMPLETED
+            )
+            session.commit()
+
+            # Verify step exists
+            steps_before = session.query(StepProgress).filter_by(run_id=run_id).all()
+            assert len(steps_before) == 1
+
+            # Delete run
+            session.delete(run)
+            session.commit()
+
+            # Verify steps were cascade deleted
+            steps_after = session.query(StepProgress).filter_by(run_id=run_id).all()
+            assert len(steps_after) == 0
+
+    def test_valid_step_names(self):
+        """Test that all expected step names are in the valid list."""
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        valid_steps = StepProgressRepository.VALID_STEP_NAMES
+        assert "expand" in valid_steps
+        assert "review_architect" in valid_steps
+        assert "review_critic" in valid_steps
+        assert "review_optimist" in valid_steps
+        assert "review_security" in valid_steps
+        assert "review_user_advocate" in valid_steps
+        assert "aggregate_decision" in valid_steps
+
+    def test_get_step_order(self):
+        """Test getting step order for valid step names."""
+        from consensus_engine.db.repositories import StepProgressRepository
+
+        assert StepProgressRepository.get_step_order("expand") == 0
+        assert StepProgressRepository.get_step_order("review_architect") == 1
+        assert StepProgressRepository.get_step_order("aggregate_decision") == 6
+
+        with pytest.raises(ValueError):
+            StepProgressRepository.get_step_order("invalid_step")
+

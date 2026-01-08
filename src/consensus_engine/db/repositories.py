@@ -31,8 +31,11 @@ from consensus_engine.db.models import (
     PersonaReview,
     ProposalVersion,
     Run,
+    RunPriority,
     RunStatus,
     RunType,
+    StepProgress,
+    StepStatus,
 )
 from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.review import DecisionAggregation
@@ -56,8 +59,10 @@ class RunRepository:
         parameters_json: dict[str, Any],
         parent_run_id: uuid.UUID | None = None,
         user_id: uuid.UUID | None = None,
+        priority: RunPriority = RunPriority.NORMAL,
+        status: RunStatus = RunStatus.QUEUED,
     ) -> Run:
-        """Create a new Run record with status='running'.
+        """Create a new Run record with status='queued' by default.
 
         Args:
             session: Database session
@@ -70,6 +75,8 @@ class RunRepository:
             parameters_json: Additional LLM parameters
             parent_run_id: Optional parent run ID for revisions
             user_id: Optional user ID
+            priority: Priority level for run execution (default: NORMAL)
+            status: Initial status (default: QUEUED)
 
         Returns:
             Created Run instance
@@ -78,12 +85,16 @@ class RunRepository:
             SQLAlchemyError: If database operation fails
         """
         try:
+            now = datetime.now(UTC)
             run = Run(
                 id=run_id,
-                status=RunStatus.RUNNING,
+                status=status,
+                queued_at=now if status == RunStatus.QUEUED else None,
+                started_at=now if status == RunStatus.RUNNING else None,
                 input_idea=input_idea,
                 extra_context=extra_context,
                 run_type=run_type,
+                priority=priority,
                 model=model,
                 temperature=temperature,
                 parameters_json=parameters_json,
@@ -94,8 +105,8 @@ class RunRepository:
             session.add(run)
 
             logger.info(
-                f"Created Run object with id={run.id}, status={run.status.value}",
-                extra={"run_id": str(run.id), "status": run.status.value},
+                f"Created Run object with id={run.id}, status={run.status.value}, priority={run.priority.value}",
+                extra={"run_id": str(run.id), "status": run.status.value, "priority": run.priority.value},
             )
 
             return run
@@ -519,4 +530,186 @@ class DecisionRepository:
         except SQLAlchemyError as e:
             logger.error(f"Failed to create Decision for run_id={run_id}: {e}", exc_info=True)
             raise
+
+
+class StepProgressRepository:
+    """Repository for StepProgress model operations."""
+
+    # Canonical step names in order
+    VALID_STEP_NAMES = (
+        "expand",
+        "review_architect",
+        "review_critic",
+        "review_optimist",
+        "review_security",
+        "review_user_advocate",
+        "aggregate_decision",
+    )
+
+    @staticmethod
+    def get_step_order(step_name: str) -> int:
+        """Get the order index for a step name.
+
+        Args:
+            step_name: The step name to look up
+
+        Returns:
+            Integer order index (0-based)
+
+        Raises:
+            ValueError: If step_name is not recognized
+        """
+        try:
+            return StepProgressRepository.VALID_STEP_NAMES.index(step_name)
+        except ValueError:
+            raise ValueError(
+                f"Invalid step_name '{step_name}'. Must be one of: {', '.join(StepProgressRepository.VALID_STEP_NAMES)}"
+            )
+
+    @staticmethod
+    def upsert_step_progress(
+        session: Session,
+        run_id: uuid.UUID,
+        step_name: str,
+        status: StepStatus,
+        started_at: datetime | None = None,
+        completed_at: datetime | None = None,
+        error_message: str | None = None,
+    ) -> StepProgress:
+        """Create or update a step progress record (idempotent).
+
+        This method ensures idempotent updates - calling it multiple times
+        with the same run_id and step_name will update the existing record
+        rather than creating duplicates.
+
+        Args:
+            session: Database session
+            run_id: Parent run ID
+            step_name: Canonical step name (must be in VALID_STEP_NAMES)
+            status: Current status of the step
+            started_at: Optional timestamp when step started
+            completed_at: Optional timestamp when step completed/failed
+            error_message: Optional error message if step failed
+
+        Returns:
+            StepProgress instance (created or updated)
+
+        Raises:
+            ValueError: If step_name is not recognized
+            SQLAlchemyError: If database operation fails
+        """
+        from sqlalchemy import select
+
+        try:
+            # Validate step_name and get order
+            step_order = StepProgressRepository.get_step_order(step_name)
+
+            # Try to find existing record
+            query = select(StepProgress).where(
+                StepProgress.run_id == run_id,
+                StepProgress.step_name == step_name
+            )
+            existing = session.execute(query).scalar_one_or_none()
+
+            if existing:
+                # Update existing record
+                existing.status = status
+                existing.step_order = step_order
+                if started_at is not None:
+                    existing.started_at = started_at
+                if completed_at is not None:
+                    existing.completed_at = completed_at
+                
+                # If an error message is provided, set it. Otherwise, clear it for non-failed statuses.
+                if error_message is not None:
+                    existing.error_message = error_message
+                elif status != StepStatus.FAILED:
+                    existing.error_message = None
+                
+                session.flush()
+                
+                logger.info(
+                    f"Updated StepProgress id={existing.id} for run_id={run_id}, step={step_name}, status={status.value}",
+                    extra={
+                        "step_progress_id": str(existing.id),
+                        "run_id": str(run_id),
+                        "step_name": step_name,
+                        "status": status.value,
+                    },
+                )
+                
+                return existing
+            else:
+                # Create new record
+                step_progress = StepProgress(
+                    run_id=run_id,
+                    step_name=step_name,
+                    step_order=step_order,
+                    status=status,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                    error_message=error_message,
+                )
+
+                session.add(step_progress)
+                session.flush()
+
+                logger.info(
+                    f"Created StepProgress id={step_progress.id} for run_id={run_id}, step={step_name}",
+                    extra={
+                        "step_progress_id": str(step_progress.id),
+                        "run_id": str(run_id),
+                        "step_name": step_name,
+                        "status": status.value,
+                    },
+                )
+
+                return step_progress
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Failed to upsert StepProgress for run_id={run_id}, step={step_name}: {e}",
+                exc_info=True,
+            )
+            raise
+
+    @staticmethod
+    def get_run_steps(session: Session, run_id: uuid.UUID) -> list[StepProgress]:
+        """Get all step progress records for a run, ordered by step_order.
+
+        Args:
+            session: Database session
+            run_id: Run ID
+
+        Returns:
+            List of StepProgress instances ordered by step_order
+
+        Raises:
+            SQLAlchemyError: If database query fails
+        """
+        from sqlalchemy import select
+
+        try:
+            query = (
+                select(StepProgress)
+                .where(StepProgress.run_id == run_id)
+                .order_by(StepProgress.step_order)
+            )
+
+            steps = list(session.execute(query).scalars().all())
+
+            logger.info(
+                f"Retrieved {len(steps)} step progress records for run_id={run_id}",
+                extra={"run_id": str(run_id), "step_count": len(steps)},
+            )
+
+            return steps
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Failed to get step progress for run_id={run_id}: {e}",
+                exc_info=True,
+            )
+            raise
+
 
