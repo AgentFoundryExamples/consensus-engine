@@ -102,6 +102,18 @@ class Settings(BaseSettings):
         description="Temperature for review (0.0-1.0, default: 0.2 for deterministic reviews)",
     )
 
+    # Aggregation Configuration
+    aggregate_model: str = Field(
+        default="gpt-5.1",
+        description="Model for aggregation step (default: gpt-5.1)",
+    )
+    aggregate_temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Temperature for aggregation (0.0-1.0, default: 0.0 for deterministic aggregation)",
+    )
+
     # Persona Configuration
     default_persona_name: str = Field(
         default="GenericReviewer",
@@ -392,6 +404,46 @@ class Settings(BaseSettings):
             # Mask database password for safe logging
             data["db_password"] = "***MASKED***"
         return data
+
+    def get_llm_steps_config(self) -> "LLMStepsConfig":
+        """Get centralized LLM steps configuration from settings.
+
+        Creates an LLMStepsConfig instance populated with step-specific
+        settings from environment variables. This provides a unified
+        configuration surface for all LLM pipeline steps.
+
+        Returns:
+            LLMStepsConfig instance with expand, review, and aggregate configs
+
+        Raises:
+            ValidationError: If any step configuration is invalid
+        """
+        from consensus_engine.config.llm_steps import LLMStepsConfig, StepConfig, StepName
+
+        return LLMStepsConfig(
+            expand=StepConfig(
+                step_name=StepName.EXPAND,
+                model=self.expand_model,
+                temperature=self.expand_temperature,
+                max_retries=self.max_retries_per_persona,
+                timeout_seconds=self.worker_step_timeout_seconds,
+            ),
+            review=StepConfig(
+                step_name=StepName.REVIEW,
+                model=self.review_model,
+                temperature=self.review_temperature,
+                max_retries=self.max_retries_per_persona,
+                timeout_seconds=self.worker_step_timeout_seconds,
+            ),
+            aggregate=StepConfig(
+                step_name=StepName.AGGREGATE,
+                model=self.aggregate_model,
+                temperature=self.aggregate_temperature,
+                max_retries=self.max_retries_per_persona,
+                timeout_seconds=self.worker_step_timeout_seconds,
+            ),
+            prompt_set_version=self.persona_template_version,
+        )
 
 
 @lru_cache

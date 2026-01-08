@@ -20,7 +20,7 @@ retry logic with exponential backoff, and logging.
 
 import time
 import uuid
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from openai import APIConnectionError, APITimeoutError, AuthenticationError, OpenAI, RateLimitError
 from pydantic import BaseModel
@@ -34,6 +34,9 @@ from consensus_engine.exceptions import (
     LLMTimeoutError,
     SchemaValidationError,
 )
+
+if TYPE_CHECKING:
+    from consensus_engine.config.instruction_builder import InstructionPayload
 
 logger = get_logger(__name__)
 
@@ -377,3 +380,59 @@ class OpenAIClientWrapper:
                     "attempt": max_retries_count,
                 },
             )
+
+    def create_structured_response_with_payload(
+        self,
+        instruction_payload: "InstructionPayload",
+        response_model: type[T],
+        step_name: str = "llm_call",
+        model_override: str | None = None,
+        temperature_override: float | None = None,
+        max_retries: int | None = None,
+    ) -> tuple[T, dict[str, Any]]:
+        """Create a structured response using an InstructionPayload.
+
+        This method is a convenience wrapper around create_structured_response
+        that accepts an InstructionPayload from the InstructionBuilder.
+
+        Args:
+            instruction_payload: InstructionPayload with system, developer, and user content
+            response_model: Pydantic model defining the expected response structure
+            step_name: Name of the step for telemetry logging (default: "llm_call")
+            model_override: Override the default model for this call
+            temperature_override: Override the default temperature for this call
+            max_retries: Maximum retry attempts (default: from settings)
+
+        Returns:
+            Tuple of (parsed response model instance, metadata dict with request_id, timing, etc.)
+
+        Raises:
+            LLMAuthenticationError: If API authentication fails
+            LLMRateLimitError: If rate limit is exceeded after all retries
+            LLMTimeoutError: If request times out after all retries
+            LLMServiceError: For other API errors
+            SchemaValidationError: If response doesn't match expected schema
+        """
+        # Extract prompt_set_version from payload metadata
+        prompt_set_version = instruction_payload.metadata.get("prompt_set_version")
+
+        # Call the main method
+        parsed_response, metadata = self.create_structured_response(
+            system_instruction=instruction_payload.system_instruction,
+            user_prompt=instruction_payload.user_content,
+            response_model=response_model,
+            developer_instruction=instruction_payload.developer_instruction,
+            step_name=step_name,
+            model_override=model_override,
+            temperature_override=temperature_override,
+            max_retries=max_retries,
+        )
+
+        # Add prompt_set_version to metadata
+        if prompt_set_version:
+            metadata["prompt_set_version"] = prompt_set_version
+
+        # Add payload metadata to response metadata
+        metadata["instruction_payload_metadata"] = instruction_payload.metadata
+
+        return parsed_response, metadata
