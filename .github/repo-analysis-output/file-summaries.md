@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 68
+Total files: 69
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -40,6 +40,15 @@ Total files: 68
 **Summary:** Python module for 453a79c83bde add versioned run tables  
 **Size:** 6.33 KB  
 **LOC:** 113  
+**TODOs/FIXMEs:** 0  
+
+## migrations/versions/77563d1e925b_add_async_run_and_step_progress.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python module for 77563d1e925b add async run and step progress  
+**Size:** 4.58 KB  
+**LOC:** 64  
 **TODOs/FIXMEs:** 0  
 
 ## migrations/versions/9a73090ad792_initial_empty_migration.py
@@ -218,8 +227,8 @@ Total files: 68
 **Role:** model  
 **Role Justification:** model/schema name 'models'  
 **Summary:** Python data models (role: model)  
-**Size:** 11.73 KB  
-**LOC:** 238  
+**Size:** 15.83 KB  
+**LOC:** 329  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/repositories.py
@@ -227,8 +236,8 @@ Total files: 68
 **Role:** data-access  
 **Role Justification:** data access name 'repositories'  
 **Summary:** Python data access layer (role: data-access)  
-**Size:** 17.25 KB  
-**LOC:** 410  
+**Size:** 23.75 KB  
+**LOC:** 564  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py
@@ -263,8 +272,8 @@ Total files: 68
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 25.14 KB  
-**LOC:** 544  
+**Size:** 28.11 KB  
+**LOC:** 603  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -380,8 +389,8 @@ Total files: 68
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 26.54 KB  
-**LOC:** 554  
+**Size:** 37.76 KB  
+**LOC:** 787  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_diff_endpoint.py
@@ -542,8 +551,8 @@ Total files: 68
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 16.13 KB  
-**LOC:** 387  
+**Size:** 20.99 KB  
+**LOC:** 508  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_openai_client.py

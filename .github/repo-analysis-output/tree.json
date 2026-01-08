@@ -76,6 +76,10 @@
       "children": [
         {
           "type": "file",
+          "name": "async_run_persistence.md"
+        },
+        {
+          "type": "file",
           "name": "MULTI_PERSONA_ORCHESTRATION.md"
         }
       ]
@@ -105,6 +109,10 @@
             {
               "type": "file",
               "name": "453a79c83bde_add_versioned_run_tables.py"
+            },
+            {
+              "type": "file",
+              "name": "77563d1e925b_add_async_run_and_step_progress.py"
             },
             {
               "type": "file",

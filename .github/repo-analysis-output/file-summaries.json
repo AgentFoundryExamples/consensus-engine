@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 68,
+  "total_files": 69,
   "files": [
     {
       "schema_version": "2.0",
@@ -55,6 +55,20 @@
       "metrics": {
         "size_bytes": 6486,
         "loc": 113,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "migrations/versions/77563d1e925b_add_async_run_and_step_progress.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python module for 77563d1e925b add async run and step progress",
+      "summary_text": "Python module for 77563d1e925b add async run and step progress",
+      "metrics": {
+        "size_bytes": 4687,
+        "loc": 64,
         "todo_count": 0
       }
     },
@@ -333,8 +347,8 @@
       "summary": "Python data models (role: model)",
       "summary_text": "Python data models (role: model)",
       "metrics": {
-        "size_bytes": 12009,
-        "loc": 238,
+        "size_bytes": 16208,
+        "loc": 329,
         "todo_count": 0
       }
     },
@@ -347,8 +361,8 @@
       "summary": "Python data access layer (role: data-access)",
       "summary_text": "Python data access layer (role: data-access)",
       "metrics": {
-        "size_bytes": 17666,
-        "loc": 410,
+        "size_bytes": 24315,
+        "loc": 564,
         "todo_count": 0
       }
     },
@@ -403,8 +417,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 25740,
-        "loc": 544,
+        "size_bytes": 28788,
+        "loc": 603,
         "todo_count": 0
       }
     },
@@ -585,8 +599,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 27180,
-        "loc": 554,
+        "size_bytes": 38666,
+        "loc": 787,
         "todo_count": 0
       }
     },
@@ -837,8 +851,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 16513,
-        "loc": 387,
+        "size_bytes": 21492,
+        "loc": 508,
         "todo_count": 0
       }
     },
