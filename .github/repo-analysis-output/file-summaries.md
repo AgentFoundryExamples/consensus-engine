@@ -164,8 +164,8 @@ Total files: 139
 **Role:** entry-point  
 **Role Justification:** common entry point name 'app'  
 **Summary:** Python main entry point (role: entry-point)  
-**Size:** 10.91 KB  
-**LOC:** 266  
+**Size:** 11.02 KB  
+**LOC:** 267  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/__init__.py
@@ -245,8 +245,8 @@ Total files: 139
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 18.48 KB  
-**LOC:** 466  
+**Size:** 19.24 KB  
+**LOC:** 484  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -614,8 +614,8 @@ Total files: 139
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 9.48 KB  
-**LOC:** 180  
+**Size:** 17.01 KB  
+**LOC:** 333  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_db.py

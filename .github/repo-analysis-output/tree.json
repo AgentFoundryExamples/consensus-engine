@@ -124,6 +124,56 @@
     },
     {
       "type": "directory",
+      "name": "infra",
+      "children": [
+        {
+          "type": "directory",
+          "name": "cloudrun",
+          "children": [
+            {
+              "type": "directory",
+              "name": "terraform",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "main.tf"
+                },
+                {
+                  "type": "file",
+                  "name": "outputs.tf"
+                },
+                {
+                  "type": "file",
+                  "name": "README.md"
+                },
+                {
+                  "type": "file",
+                  "name": "terraform.tfvars.example"
+                },
+                {
+                  "type": "file",
+                  "name": "variables.tf"
+                }
+              ]
+            },
+            {
+              "type": "file",
+              "name": "backend-service.yaml"
+            },
+            {
+              "type": "file",
+              "name": "frontend-service.yaml"
+            },
+            {
+              "type": "file",
+              "name": "README.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "directory",
       "name": "migrations",
       "children": [
         {

@@ -27,6 +27,17 @@
   └── WORKER_DEPLOYMENT.md
 ├── examples
   └── test_full_review.py
+├── infra
+  └── cloudrun
+    ├── terraform
+      ├── main.tf
+      ├── outputs.tf
+      ├── README.md
+      ├── terraform.tfvars.example
+      └── variables.tf
+    ├── backend-service.yaml
+    ├── frontend-service.yaml
+    └── README.md
 ├── migrations
   ├── versions
     ├── 1be7b272f496_add_analytics_index_for_decision_and_.py
