@@ -17,6 +17,63 @@ infra/
 └── README.md                    # This file
 ```
 
+## Deployment Options
+
+You have two options for deploying the Consensus Engine to Google Cloud:
+
+### Option 1: Terraform (Infrastructure as Code) - **Recommended**
+
+Use Terraform for automated, repeatable deployments with version control and state management.
+
+**When to use Terraform:**
+- ✅ Team environments with multiple developers
+- ✅ Need to deploy multiple environments (dev, staging, prod)
+- ✅ Want infrastructure versioned in Git
+- ✅ Need repeatable, auditable deployments
+- ✅ Planning to make frequent infrastructure changes
+- ✅ Want to manage drift and ensure consistency
+
+**Quick Start:**
+```bash
+cd infra/cloudrun/terraform
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your values
+terraform init
+terraform plan
+terraform apply
+```
+
+**📖 See [Terraform README](terraform/README.md) for complete documentation.**
+
+### Option 2: Manual Deployment (gcloud commands)
+
+Use manual gcloud commands for one-off deployments or learning the platform.
+
+**When to use manual deployment:**
+- ✅ First time deploying to learn GCP services
+- ✅ One-off or temporary deployments
+- ✅ Need fine-grained control over each step
+- ✅ Troubleshooting or debugging deployment issues
+- ✅ Quick prototypes or demos
+
+**Quick Start:** See [Quick Start](#quick-start) section below.
+
+### Comparison
+
+| Feature | Terraform | Manual (gcloud) |
+|---------|-----------|-----------------|
+| **Setup Time** | 10 minutes | 30-60 minutes |
+| **Repeatability** | Excellent | Manual effort |
+| **Version Control** | Yes | Scripts only |
+| **State Management** | Automatic | Manual tracking |
+| **Team Collaboration** | Built-in | Coordination needed |
+| **Rollback** | `terraform apply` previous version | Manual steps |
+| **Drift Detection** | `terraform plan` | Manual inspection |
+| **Learning Curve** | Terraform + GCP | GCP only |
+| **Best For** | Production, teams | Learning, prototypes |
+
+---
+
 ## Overview
 
 The Consensus Engine consists of three main components:
