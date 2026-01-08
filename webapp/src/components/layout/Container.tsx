@@ -2,7 +2,7 @@
  * Container component with responsive max-width and padding
  */
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface ContainerProps {
   children: ReactNode;

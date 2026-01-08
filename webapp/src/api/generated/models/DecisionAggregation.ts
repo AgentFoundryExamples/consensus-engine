@@ -14,7 +14,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { DecisionEnum } from './DecisionEnum';
 import type { DetailedScoreBreakdown } from './DetailedScoreBreakdown';
 import type { MinorityReport } from './MinorityReport';

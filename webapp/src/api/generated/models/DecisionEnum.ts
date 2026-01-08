@@ -18,8 +18,10 @@
 /**
  * Enumeration of possible decision outcomes.
  */
-export enum DecisionEnum {
-  APPROVE = 'approve',
-  REVISE = 'revise',
-  REJECT = 'reject',
-}
+export const DecisionEnum = {
+  APPROVE: 'approve',
+  REVISE: 'revise',
+  REJECT: 'reject',
+} as const;
+
+export type DecisionEnum = typeof DecisionEnum[keyof typeof DecisionEnum];
