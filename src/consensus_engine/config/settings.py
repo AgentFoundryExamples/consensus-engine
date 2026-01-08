@@ -20,7 +20,7 @@ It handles environment variable loading, validation, and provides sensible defau
 from enum import Enum
 from functools import lru_cache
 from typing import TYPE_CHECKING
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -431,7 +431,6 @@ class Settings(BaseSettings):
             
             # For non-localhost, validate URL format
             try:
-                from urllib.parse import urlparse
                 parsed = urlparse(origin)
                 if not parsed.scheme or not parsed.netloc:
                     raise ValueError(f"Invalid CORS origin format: {origin}")
