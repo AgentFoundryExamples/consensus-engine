@@ -152,6 +152,8 @@ class TestExpandIdeaResponse:
             summary="Test Summary",
             raw_idea="Original idea",
             raw_expanded_proposal="Full proposal",
+            schema_version="1.0.0",
+            prompt_set_version="1.0.0",
             metadata={"request_id": "test-123"},
         )
         assert response.problem_statement == "Problem"
@@ -162,6 +164,8 @@ class TestExpandIdeaResponse:
         assert response.summary == "Test Summary"
         assert response.raw_idea == "Original idea"
         assert response.metadata["request_id"] == "test-123"
+        assert response.schema_version == "1.0.0"
+        assert response.prompt_set_version == "1.0.0"
 
     def test_minimal_response(self) -> None:
         """Test minimal response with required fields only."""
@@ -170,6 +174,8 @@ class TestExpandIdeaResponse:
             proposed_solution="Solution",
             assumptions=[],
             scope_non_goals=[],
+            schema_version="1.0.0",
+            prompt_set_version="1.0.0",
             metadata={"request_id": "test-456"},
         )
         assert response.assumptions == []
@@ -178,6 +184,8 @@ class TestExpandIdeaResponse:
         assert response.summary is None
         assert response.raw_idea is None
         assert response.raw_expanded_proposal is None
+        assert response.schema_version == "1.0.0"
+        assert response.prompt_set_version == "1.0.0"
 
     def test_json_serializable(self) -> None:
         """Test that response is JSON serializable."""
@@ -186,11 +194,15 @@ class TestExpandIdeaResponse:
             proposed_solution="Solution",
             assumptions=[],
             scope_non_goals=[],
+            schema_version="1.0.0",
+            prompt_set_version="1.0.0",
             metadata={"request_id": "test-789"},
         )
         json_data = response.model_dump()
         assert json_data["problem_statement"] == "Problem"
         assert json_data["metadata"]["request_id"] == "test-789"
+        assert json_data["schema_version"] == "1.0.0"
+        assert json_data["prompt_set_version"] == "1.0.0"
 
 
 class TestErrorResponse:
