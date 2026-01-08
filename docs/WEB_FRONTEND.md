@@ -21,10 +21,29 @@ webapp/
 │   │   ├── generated/        # Auto-generated OpenAPI client (DO NOT EDIT)
 │   │   └── client.ts         # API client wrapper with auth configuration
 │   ├── components/
+│   │   ├── DiffView.tsx      # Component for comparing two runs
+│   │   ├── IdeaForm.tsx      # Form for submitting new ideas
+│   │   ├── JsonToggle.tsx    # Component for toggling JSON view
+│   │   ├── MinorityReport.tsx # Component for displaying minority reports
+│   │   ├── PersonaReviewModal.tsx # Modal for viewing persona reviews
+│   │   ├── RevisionModal.tsx # Modal for creating revisions
+│   │   ├── RoadmapPacket.tsx # Component for displaying completed runs
+│   │   ├── RunHistoryList.tsx # Component for displaying run history
+│   │   ├── Timeline.tsx      # Component for displaying step progress
 │   │   ├── layout/           # Layout components (Header, Container)
 │   │   └── ui/               # UI primitives (Button, StatusBadge)
 │   ├── config/
 │   │   └── index.ts          # Environment configuration
+│   ├── hooks/
+│   │   ├── useRunHistory.ts  # Hook for fetching run history
+│   │   └── useRunPolling.ts  # Hook for polling run status
+│   ├── pages/
+│   │   └── RunDashboard.tsx  # Main dashboard page
+│   ├── state/
+│   │   ├── runs.ts           # Zustand store for run management
+│   │   └── selectors.ts      # Selectors for extracting run data
+│   ├── styles/
+│   │   └── roadmap.css       # Custom styles for roadmap components
 │   ├── App.tsx               # Main application component
 │   ├── main.tsx              # Application entry point
 │   └── index.css             # Global styles with Tailwind directives
@@ -890,3 +909,279 @@ To provide full persona review details in the modal, the backend API would need 
 - Estimated effort and dependency risks not included in summary
 
 Consider adding a `/v1/runs/{run_id}/reviews/{persona_id}` endpoint or including full review JSON in the run detail response.
+
+## Revision Workflow
+
+The Consensus Engine frontend supports creating revisions of completed runs, allowing users to iterate on proposals and spawn new runs with edited content.
+
+### Core Features
+
+1. **Revision Modal**: Edit and resubmit proposals from completed runs
+2. **Run History List**: View and navigate through run history with parent/child relationships
+3. **Run Diff View**: Compare two runs to see changes in proposals, scores, and decisions
+4. **Run Linkage**: Track parent-child relationships between original and revision runs
+
+### Components
+
+#### RevisionModal
+
+Located at `src/components/RevisionModal.tsx`, this component allows users to create revisions of existing runs.
+
+**Props:**
+- `isOpen`: Whether the modal is visible
+- `onClose`: Callback when modal should close
+- `parentRun`: The run to revise (RunDetailResponse)
+- `onRevisionSubmitted`: Callback when revision is successfully created
+
+**Features:**
+- Pre-fills form with parent run's proposal text
+- Supports editing proposal text or providing edit notes
+- Calls `POST /v1/runs/{run_id}/revisions` endpoint
+- Handles loading states and error feedback
+- Caches edits locally if submission fails
+
+**Usage:**
+```tsx
+import { RevisionModal } from './components/RevisionModal';
+
+function MyComponent() {
+  const [isOpen, setIsOpen] = useState(false);
+  const parentRun = useRunsStore((s) => s.activeRunDetails);
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(true)}>Revise</button>
+      <RevisionModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        parentRun={parentRun}
+        onRevisionSubmitted={(revisionRunId) => {
+          console.log('Revision created:', revisionRunId);
+        }}
+      />
+    </>
+  );
+}
+```
+
+#### RunHistoryList
+
+Located at `src/components/RunHistoryList.tsx`, this component displays a list of runs with status badges and revision indicators.
+
+**Props:**
+- `runs`: Array of runs to display (RunListItemResponse[])
+- `isLoading`: Whether data is loading
+- `onSelectRun`: Callback when a run is selected
+- `selectedRunId`: Currently selected run ID
+- `hasMore`: Whether there are more pages to load
+- `onLoadMore`: Callback to load more runs
+
+**Features:**
+- Groups runs by parent/child relationships
+- Shows revision badges and version numbers
+- Displays status and decision badges with color coding
+- Supports pagination with "Load More" button
+- Highlights selected run
+
+**Usage:**
+```tsx
+import { RunHistoryList } from './components/RunHistoryList';
+import { useRunHistory } from './hooks/useRunHistory';
+
+function MyComponent() {
+  const { runs, isLoading, hasMore, loadMore } = useRunHistory();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  return (
+    <RunHistoryList
+      runs={runs}
+      isLoading={isLoading}
+      onSelectRun={setSelectedId}
+      selectedRunId={selectedId}
+      hasMore={hasMore}
+      onLoadMore={loadMore}
+    />
+  );
+}
+```
+
+#### DiffView
+
+Located at `src/components/DiffView.tsx`, this component compares two runs and displays the differences.
+
+**Props:**
+- `runId`: First run ID to compare
+- `otherRunId`: Second run ID to compare
+- `className`: Optional CSS class name
+
+**Features:**
+- Fetches diff data from `GET /v1/runs/{run_id}/diff/{other_run_id}`
+- Displays proposal changes with unified diff format
+- Shows persona score deltas in a table
+- Visualizes decision confidence changes
+- Gracefully degrades if diff endpoint is unavailable
+
+**Usage:**
+```tsx
+import { DiffView } from './components/DiffView';
+
+function MyComponent() {
+  const currentRunId = 'uuid-1';
+  const parentRunId = 'uuid-2';
+
+  return (
+    <DiffView runId={currentRunId} otherRunId={parentRunId} />
+  );
+}
+```
+
+### Hooks
+
+#### useRunHistory
+
+Located at `src/hooks/useRunHistory.ts`, this hook fetches and manages run history from the API.
+
+**Options:**
+- `autoFetch`: Whether to fetch on mount (default: true)
+- `limit`: Items per page (default: 30)
+- `status`: Filter by status ('queued' | 'running' | 'completed' | 'failed')
+- `runType`: Filter by type ('initial' | 'revision')
+- `parentRunId`: Filter by parent run ID
+- `onFetchComplete`: Callback when fetch completes
+- `onError`: Callback when error occurs
+
+**Returns:**
+- `runs`: Combined list of runs (from API and session)
+- `total`: Total count from API
+- `isLoading`: Whether data is being fetched
+- `error`: Error from last fetch
+- `refetch`: Manually trigger a fetch
+- `loadMore`: Load next page
+- `hasMore`: Whether there are more pages
+
+**Features:**
+- Fetches runs from `GET /v1/runs` API endpoint
+- Merges with session-only runs from store
+- Supports pagination
+- Handles loading and error states
+- Deduplicates runs by ID
+
+**Usage:**
+```tsx
+import { useRunHistory } from './hooks/useRunHistory';
+
+function MyComponent() {
+  const {
+    runs,
+    total,
+    isLoading,
+    error,
+    refetch,
+    loadMore,
+    hasMore
+  } = useRunHistory({
+    limit: 10,
+    status: 'completed',
+    runType: 'revision'
+  });
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  return (
+    <div>
+      <p>Showing {runs.length} of {total} runs</p>
+      <ul>
+        {runs.map((run) => (
+          <li key={run.run_id}>{run.proposal_title}</li>
+        ))}
+      </ul>
+      {hasMore && <button onClick={loadMore}>Load More</button>}
+    </div>
+  );
+}
+```
+
+### State Management
+
+#### Extended RunsState
+
+The runs store (`src/state/runs.ts`) has been extended to support revision workflow:
+
+**New Fields:**
+- `run_type`: 'initial' | 'revision'
+- `parent_run_id`: UUID of parent run for revisions
+
+**New Helper Functions:**
+- `getChildRuns(parent_run_id)`: Get all child runs of a parent
+- `getParentRun(run_id)`: Get parent run of a revision
+- `getRunChain(run_id)`: Get full chain from root to current run
+
+**Usage:**
+```tsx
+import { useRunsStore } from './state/runs';
+
+function MyComponent() {
+  const { getChildRuns, getParentRun, getRunChain } = useRunsStore();
+
+  const runId = 'some-uuid';
+  const children = getChildRuns(runId); // Get all revisions
+  const parent = getParentRun(runId);   // Get parent run
+  const chain = getRunChain(runId);     // Get full lineage
+
+  return (
+    <div>
+      {parent && <p>Parent: {parent.run_id}</p>}
+      <p>Revisions: {children.length}</p>
+      <p>Chain length: {chain.length}</p>
+    </div>
+  );
+}
+```
+
+### Integration
+
+The revision workflow is integrated into the main RunDashboard:
+
+1. **RoadmapPacket**: Shows "Revise & Re-run" button for completed runs
+2. **RunDashboard**: Displays run history list with toggle between recent and full history
+3. **Polling**: Automatically tracks `run_type` and `parent_run_id` from API responses
+
+### API Endpoints Used
+
+1. **POST /v1/runs/{run_id}/revisions**: Create a revision run
+   - Request: `CreateRevisionRequest` with edited proposal and notes
+   - Response: `JobEnqueuedResponse` with new run_id
+
+2. **GET /v1/runs**: List runs with filtering
+   - Query params: limit, offset, status, run_type, parent_run_id, etc.
+   - Response: `RunListResponse` with paginated results
+
+3. **GET /v1/runs/{run_id}/diff/{other_run_id}**: Compare two runs
+   - Response: `RunDiffResponse` with proposal changes and score deltas
+
+### Validation Rules
+
+The backend enforces the following limits (from API documentation):
+
+- **edited_proposal**: max 100,000 characters
+- **edit_notes**: max 10,000 characters
+- **input_idea**: max 10,000 characters
+- **extra_context**: max 50,000 characters
+- At least one of `edited_proposal` or `edit_notes` must be provided
+
+### Edge Cases
+
+- **Multiple revisions**: Chains are displayed with version numbers (v1, v2, v3, etc.)
+- **Failed submission**: Edits are cached in the modal for retry
+- **Missing diff endpoint**: DiffView gracefully displays warning message
+- **No parent_run_id**: Run is treated as original (root) run
+- **Orphaned revisions**: Revisions whose parent isn't in the list are still displayed
+
+### Future Enhancements
+
+- Add side-by-side comparison view when diff endpoint is unavailable
+- Support bulk operations on revision chains
+- Add visual timeline/graph for complex revision trees
+- Cache revision history across page reloads
+- Add ability to branch from any revision (not just latest)

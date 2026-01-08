@@ -27,6 +27,8 @@ export interface RunSummary {
   decision_label?: string | null;
   overall_weighted_confidence?: number | null;
   error_message?: string | null;
+  run_type?: 'initial' | 'revision';
+  parent_run_id?: string | null;
 }
 
 interface RunsState {
@@ -45,9 +47,14 @@ interface RunsState {
   setActiveRun: (run_id: string | null) => void;
   setActiveRunDetails: (details: RunDetailResponse | null) => void;
   clearRuns: () => void;
+
+  // Helper functions for run relationships
+  getChildRuns: (parent_run_id: string) => RunSummary[];
+  getParentRun: (run_id: string) => RunSummary | null;
+  getRunChain: (run_id: string) => RunSummary[];
 }
 
-export const useRunsStore = create<RunsState>((set) => ({
+export const useRunsStore = create<RunsState>((set, get) => ({
   runs: [],
   activeRunId: null,
   activeRunDetails: null,
@@ -79,4 +86,30 @@ export const useRunsStore = create<RunsState>((set) => ({
       activeRunId: null,
       activeRunDetails: null,
     }),
+
+  getChildRuns: (parent_run_id) => {
+    return get().runs.filter((run) => run.parent_run_id === parent_run_id);
+  },
+
+  getParentRun: (run_id) => {
+    const runs = get().runs;
+    const run = runs.find((r) => r.run_id === run_id);
+    if (!run || !run.parent_run_id) return null;
+    return runs.find((r) => r.run_id === run.parent_run_id) || null;
+  },
+
+  getRunChain: (run_id) => {
+    const runs = get().runs;
+    const chain: RunSummary[] = [];
+    let current = runs.find((r) => r.run_id === run_id);
+
+    // Walk up the chain to find the root
+    while (current) {
+      chain.unshift(current);
+      if (!current.parent_run_id) break;
+      current = runs.find((r) => r.run_id === current!.parent_run_id);
+    }
+
+    return chain;
+  },
 }));

@@ -17,6 +17,8 @@ import {
 import { MinorityReport } from './MinorityReport';
 import { PersonaReviewModal } from './PersonaReviewModal';
 import { JsonToggle } from './JsonToggle';
+import { RevisionModal } from './RevisionModal';
+import { DiffView } from './DiffView';
 
 export interface RoadmapPacketProps {
   /**
@@ -36,6 +38,8 @@ export interface RoadmapPacketProps {
  */
 export function RoadmapPacket({ run, className = '' }: RoadmapPacketProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
 
   if (!run) {
     return (
@@ -127,7 +131,7 @@ export function RoadmapPacket({ run, className = '' }: RoadmapPacketProps) {
         )}
 
         {/* Quick actions */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
@@ -135,6 +139,22 @@ export function RoadmapPacket({ run, className = '' }: RoadmapPacketProps) {
           >
             View Detailed Proposal & Reviews
           </button>
+          <button
+            type="button"
+            onClick={() => setIsRevisionModalOpen(true)}
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Revise & Re-run
+          </button>
+          {run.parent_run_id && (
+            <button
+              type="button"
+              onClick={() => setShowDiff(!showDiff)}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {showDiff ? 'Hide Diff' : 'Compare with Parent'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -268,12 +288,27 @@ export function RoadmapPacket({ run, className = '' }: RoadmapPacketProps) {
         <JsonToggle data={run} label="Raw Run Data" />
       </div>
 
+      {/* Diff view (if comparing with parent) */}
+      {showDiff && run.parent_run_id && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow">
+          <DiffView runId={run.run_id} otherRunId={run.parent_run_id} />
+        </div>
+      )}
+
       {/* Modal for detailed view */}
       <PersonaReviewModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         proposal={proposal}
         reviews={reviews}
+      />
+
+      {/* Modal for creating revision */}
+      <RevisionModal
+        isOpen={isRevisionModalOpen}
+        onClose={() => setIsRevisionModalOpen(false)}
+        parentRun={run}
+        onRevisionSubmitted={() => setIsRevisionModalOpen(false)}
       />
     </div>
   );

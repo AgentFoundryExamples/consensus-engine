@@ -9,14 +9,18 @@ import { Button, ErrorBoundary } from '../components/ui';
 import { IdeaForm } from '../components/IdeaForm';
 import { Timeline } from '../components/Timeline';
 import { RoadmapPacket } from '../components/RoadmapPacket';
+import { RunHistoryList } from '../components/RunHistoryList';
 import { useRunPolling } from '../hooks/useRunPolling';
-import { useRunsStore } from '../state/runs';
+import { useRunHistory } from '../hooks/useRunHistory';
+import { useRunsStore, type RunSummary } from '../state/runs';
 import { FullReviewService } from '../api/client';
+import type { RunListItemResponse } from '../api/generated';
 
 export function RunDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
 
   const {
     runs,
@@ -27,6 +31,17 @@ export function RunDashboard() {
     setActiveRun,
     setActiveRunDetails,
   } = useRunsStore();
+
+  // Fetch run history from API
+  const {
+    runs: historyRuns,
+    isLoading: isLoadingHistory,
+    loadMore,
+    hasMore,
+  } = useRunHistory({
+    autoFetch: false, // Don't auto-fetch, let user trigger it
+    limit: 10,
+  });
 
   // Poll active run
   const { data: pollingData, error: pollingError } = useRunPolling(activeRunId, {
@@ -50,8 +65,13 @@ export function RunDashboard() {
   useEffect(() => {
     if (pollingData) {
       setActiveRunDetails(pollingData);
+      // Also update run_type and parent_run_id in the store
+      updateRun(pollingData.run_id, {
+        run_type: pollingData.run_type as 'initial' | 'revision',
+        parent_run_id: pollingData.parent_run_id || undefined,
+      });
     }
-  }, [pollingData, setActiveRunDetails]);
+  }, [pollingData, setActiveRunDetails, updateRun]);
 
   // Handle form submission
   const handleSubmit = useCallback(
@@ -89,7 +109,7 @@ export function RunDashboard() {
   // Retry failed run
   const handleRetry = useCallback(
     (runId: string) => {
-      const run = runs.find((r) => r.run_id === runId);
+      const run = runs.find((r: RunSummary) => r.run_id === runId);
       if (run) {
         // Re-submit with the same idea
         handleSubmit(run.input_idea);
@@ -108,6 +128,23 @@ export function RunDashboard() {
 
   const hasActiveRun = activeRunId !== null;
   const showTimeline = activeRunDetails && activeRunDetails.step_progress;
+
+  // Convert session runs to RunListItemResponse format
+  const sessionRunsAsListItems: RunListItemResponse[] = runs.slice(0, 5).map((run) => ({
+    run_id: run.run_id,
+    created_at: run.created_at,
+    status: run.status,
+    run_type: run.run_type || 'initial',
+    priority: 'normal',
+    parent_run_id: run.parent_run_id || null,
+    overall_weighted_confidence: run.overall_weighted_confidence || null,
+    decision_label: run.decision_label || null,
+    proposal_title: null,
+    proposal_summary: null,
+  }));
+
+  // Combine runs from session and history
+  const allRuns = showHistoryPanel ? historyRuns : sessionRunsAsListItems;
 
   return (
     <Container className="py-8">
@@ -207,11 +244,20 @@ export function RunDashboard() {
             </ErrorBoundary>
 
             {/* Run history */}
-            {runs.length > 0 && (
+            {!showHistoryPanel && runs.length > 0 && (
               <div className="mt-6 rounded-lg bg-white p-6 shadow">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">Recent Runs</h3>
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Runs</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowHistoryPanel(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    View All History
+                  </button>
+                </div>
                 <ul className="space-y-3">
-                  {runs.slice(0, 5).map((run) => (
+                  {runs.slice(0, 5).map((run: RunSummary) => (
                     <li
                       key={run.run_id}
                       className="flex items-center justify-between rounded-md border border-gray-200 p-3"
@@ -267,6 +313,30 @@ export function RunDashboard() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Full history panel */}
+            {showHistoryPanel && (
+              <div className="mt-6 rounded-lg bg-white p-6 shadow">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Run History</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowHistoryPanel(false)}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    Show Less
+                  </button>
+                </div>
+                <RunHistoryList
+                  runs={allRuns}
+                  isLoading={isLoadingHistory}
+                  onSelectRun={handleViewRun}
+                  selectedRunId={activeRunId}
+                  hasMore={hasMore}
+                  onLoadMore={loadMore}
+                />
               </div>
             )}
           </div>
