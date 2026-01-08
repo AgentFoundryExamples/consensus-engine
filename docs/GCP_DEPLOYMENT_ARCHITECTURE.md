@@ -4,6 +4,127 @@
 
 This document provides a comprehensive guide to deploying the Consensus Engine on Google Cloud Platform (GCP). It serves as the single source of truth for deployment requirements, architecture decisions, and operational considerations.
 
+## System Architecture Diagram
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph Users
+        User[User Browser]
+    end
+    
+    subgraph "Google Cloud Platform"
+        subgraph "Frontend (Cloud Run)"
+            IAP[Identity-Aware Proxy]
+            WebApp[React + nginx<br/>consensus-web]
+        end
+        
+        subgraph "Backend Services"
+            API[FastAPI API<br/>consensus-api]
+            Worker[Pipeline Worker<br/>consensus-worker]
+        end
+        
+        subgraph "Data Layer"
+            CloudSQL[(Cloud SQL<br/>PostgreSQL)]
+            PubSub[Pub/Sub<br/>Topic + Subscription]
+        end
+        
+        subgraph "External Services"
+            SecretMgr[Secret Manager<br/>OpenAI API Key]
+            OpenAI[OpenAI API<br/>GPT-5.1]
+        end
+    end
+    
+    User -->|HTTPS| IAP
+    IAP -->|User Auth| WebApp
+    WebApp -->|Service Token| API
+    API -->|Enqueue Jobs| PubSub
+    API -->|R/W| CloudSQL
+    Worker -->|Subscribe| PubSub
+    Worker -->|Update Status| CloudSQL
+    API -->|Get Secret| SecretMgr
+    Worker -->|Get Secret| SecretMgr
+    API -->|LLM Calls| OpenAI
+    Worker -->|LLM Calls| OpenAI
+    
+    style IAP fill:#e1f5ff
+    style WebApp fill:#fff3e0
+    style API fill:#f3e5f5
+    style Worker fill:#f3e5f5
+    style CloudSQL fill:#c8e6c9
+    style PubSub fill:#ffccbc
+    style SecretMgr fill:#d1c4e9
+    style OpenAI fill:#ffecb3
+```
+
+### Authentication and Authorization Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant IAP as Identity-Aware Proxy
+    participant Frontend as Frontend (Cloud Run)
+    participant API as API Service (Cloud Run)
+    participant CloudSQL as Cloud SQL
+    participant PubSub as Pub/Sub
+    
+    User->>IAP: Access Frontend
+    IAP->>User: Google OAuth Login
+    User->>IAP: Credentials
+    IAP->>Frontend: Authenticated Request + Identity Token
+    Frontend->>API: API Call + Service Account Token
+    API->>API: Validate Token
+    API->>CloudSQL: IAM Auth Connection
+    API->>PubSub: Publish Job
+    API-->>Frontend: 202 Accepted + run_id
+    Frontend-->>User: Display Status
+    
+    Note over User,PubSub: Worker processes job asynchronously
+```
+
+### Job Processing Flow
+
+```mermaid
+flowchart LR
+    subgraph "API Service"
+        A1[Receive Request]
+        A2[Validate Input]
+        A3[Create Run Record]
+        A4[Publish to Pub/Sub]
+        A5[Return run_id]
+    end
+    
+    subgraph "Pub/Sub Queue"
+        Q1[Topic: consensus-engine-jobs]
+        Q2[Subscription: consensus-engine-jobs-sub]
+    end
+    
+    subgraph "Worker Service"
+        W1[Pull Message]
+        W2[Check Idempotency]
+        W3[Expand Proposal]
+        W4[Review with Personas]
+        W5[Aggregate Decision]
+        W6[Update Run Status]
+        W7[Ack Message]
+    end
+    
+    A1 --> A2 --> A3 --> A4 --> A5
+    A4 --> Q1
+    Q1 --> Q2
+    Q2 --> W1
+    W1 --> W2
+    W2 -->|Not Processed| W3
+    W2 -->|Already Processed| W7
+    W3 --> W4 --> W5 --> W6 --> W7
+    
+    style A3 fill:#c8e6c9
+    style Q1 fill:#ffccbc
+    style Q2 fill:#ffccbc
+    style W6 fill:#c8e6c9
+```
+
 ## Deployable Components
 
 The Consensus Engine consists of four main deployable components:
@@ -252,6 +373,58 @@ The Consensus Engine consists of four main deployable components:
 
 ## IAM and Service Account Requirements
 
+### IAM Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Service Accounts"
+        APISA[API Service Account<br/>consensus-api-sa]
+        WorkerSA[Worker Service Account<br/>consensus-worker-sa]
+        WebSA[Frontend Service Account<br/>consensus-web-sa]
+    end
+    
+    subgraph "GCP Resources"
+        CloudSQL[(Cloud SQL)]
+        PubSubTopic[Pub/Sub Topic]
+        PubSubSub[Pub/Sub Subscription]
+        Secrets[Secret Manager]
+        APIService[API Service<br/>Cloud Run]
+    end
+    
+    subgraph "IAM Roles"
+        SQLClient[roles/cloudsql.client]
+        PubSubPub[roles/pubsub.publisher]
+        PubSubSub2[roles/pubsub.subscriber]
+        SecretAccess[roles/secretmanager.secretAccessor]
+        RunInvoker[roles/run.invoker]
+    end
+    
+    APISA -.->|has| SQLClient
+    APISA -.->|has| PubSubPub
+    APISA -.->|has| SecretAccess
+    
+    WorkerSA -.->|has| SQLClient
+    WorkerSA -.->|has| PubSubSub2
+    WorkerSA -.->|has| SecretAccess
+    
+    WebSA -.->|has| RunInvoker
+    
+    SQLClient -->|grants access to| CloudSQL
+    PubSubPub -->|grants access to| PubSubTopic
+    PubSubSub2 -->|grants access to| PubSubSub
+    SecretAccess -->|grants access to| Secrets
+    RunInvoker -->|grants access to| APIService
+    
+    style APISA fill:#f3e5f5
+    style WorkerSA fill:#f3e5f5
+    style WebSA fill:#fff3e0
+    style SQLClient fill:#c8e6c9
+    style PubSubPub fill:#ffccbc
+    style PubSubSub2 fill:#ffccbc
+    style SecretAccess fill:#d1c4e9
+    style RunInvoker fill:#e1f5ff
+```
+
 ### Service Accounts
 
 Create three service accounts for least-privilege access:
@@ -472,6 +645,65 @@ All services are deployed as Docker containers. Dockerfiles are provided for eac
 ## Deployment Prerequisites
 
 Before deploying to GCP, ensure the following prerequisites are met:
+
+### Deployment Order
+
+Follow this sequence for successful deployment:
+
+```mermaid
+flowchart TD
+    Start([Start Deployment])
+    
+    subgraph "Phase 1: Project Setup"
+        P1[Enable GCP APIs]
+        P2[Create Service Accounts]
+        P3[Assign IAM Roles]
+    end
+    
+    subgraph "Phase 2: Infrastructure"
+        I1[Create Cloud SQL Instance]
+        I2[Create Pub/Sub Topic/Subscription]
+        I3[Store Secrets in Secret Manager]
+        I4[Run Database Migrations]
+    end
+    
+    subgraph "Phase 3: Build Images"
+        B1[Build API Container]
+        B2[Build Worker Container]
+        B3[Build Frontend Container]
+        B4[Push to Registry]
+    end
+    
+    subgraph "Phase 4: Deploy Services"
+        D1[Deploy API Service]
+        D2[Deploy Worker Service]
+        D3[Deploy Frontend Service]
+        D4[Configure IAP for Frontend]
+    end
+    
+    subgraph "Phase 5: Verification"
+        V1[Test API Health]
+        V2[Test Worker Processing]
+        V3[Test Frontend Access]
+        V4[Monitor Logs]
+    end
+    
+    Start --> P1 --> P2 --> P3
+    P3 --> I1 --> I2 --> I3 --> I4
+    I4 --> B1 --> B2 --> B3 --> B4
+    B4 --> D1 --> D2 --> D3 --> D4
+    D4 --> V1 --> V2 --> V3 --> V4
+    
+    V4 --> Done([Deployment Complete])
+    
+    style Start fill:#e8f5e9
+    style Done fill:#e8f5e9
+    style P1 fill:#e3f2fd
+    style I1 fill:#fff3e0
+    style B1 fill:#f3e5f5
+    style D1 fill:#fce4ec
+    style V1 fill:#e0f2f1
+```
 
 ### GCP Project Setup
 
