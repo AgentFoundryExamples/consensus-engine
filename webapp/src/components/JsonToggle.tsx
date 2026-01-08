@@ -35,6 +35,19 @@ export function JsonToggle({ data, label = 'Show Raw JSON', className = '' }: Js
 
   const sanitizedData = sanitizeJsonForDisplay(data);
 
+  // Additional safety: ensure we have valid data to display
+  if (!sanitizedData) {
+    return null;
+  }
+
+  let jsonString: string;
+  try {
+    jsonString = JSON.stringify(sanitizedData, null, 2);
+  } catch (error) {
+    console.error('Failed to stringify JSON:', error);
+    jsonString = 'Error: Unable to display JSON';
+  }
+
   return (
     <div className={className}>
       <button
@@ -64,7 +77,7 @@ export function JsonToggle({ data, label = 'Show Raw JSON', className = '' }: Js
           aria-label="Raw JSON data"
         >
           <pre className="text-xs text-gray-800">
-            <code>{JSON.stringify(sanitizedData, null, 2)}</code>
+            <code>{jsonString}</code>
           </pre>
         </div>
       )}

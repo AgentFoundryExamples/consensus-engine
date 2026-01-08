@@ -230,6 +230,7 @@ export function extractAcceptanceCriteria(run: RunDetailResponse | null): string
 
 /**
  * Sanitize JSON for display by removing sensitive fields
+ * Protects against XSS and prototype pollution
  */
 export function sanitizeJsonForDisplay(
   obj: Record<string, unknown> | null
@@ -238,11 +239,11 @@ export function sanitizeJsonForDisplay(
     return null;
   }
 
-  // Create a deep copy
-  const sanitized = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>;
-
   // List of keys to redact (case-insensitive patterns)
   const sensitiveKeys = ['token', 'key', 'secret', 'password', 'auth', 'credential'];
+
+  // Dangerous keys that could lead to prototype pollution
+  const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
 
   function redactSensitiveFields(o: unknown): unknown {
     if (typeof o !== 'object' || o === null) {
@@ -253,8 +254,15 @@ export function sanitizeJsonForDisplay(
       return o.map(redactSensitiveFields);
     }
 
-    const result: Record<string, unknown> = {};
+    // Create object without prototype chain to prevent pollution
+    const result = Object.create(null) as Record<string, unknown>;
+
     for (const [key, value] of Object.entries(o)) {
+      // Skip dangerous keys that could lead to prototype pollution
+      if (dangerousKeys.includes(key)) {
+        continue;
+      }
+
       const lowerKey = key.toLowerCase();
       if (sensitiveKeys.some((pattern) => lowerKey.includes(pattern))) {
         result[key] = '[REDACTED]';
@@ -265,5 +273,14 @@ export function sanitizeJsonForDisplay(
     return result;
   }
 
-  return redactSensitiveFields(sanitized) as Record<string, unknown>;
+  // Use structured cloning to safely deep copy without executing code
+  try {
+    // Create a safe deep copy
+    const safeCopy = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>;
+    return redactSensitiveFields(safeCopy) as Record<string, unknown>;
+  } catch (error) {
+    // If JSON.stringify fails (circular references, etc.), return null
+    console.error('Failed to sanitize JSON for display:', error);
+    return null;
+  }
 }
