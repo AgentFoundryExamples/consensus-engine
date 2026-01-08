@@ -85,7 +85,7 @@ class TestReviewProposal:
         }
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
@@ -107,8 +107,8 @@ class TestReviewProposal:
         assert metadata["temperature"] == 0.2
 
         # Verify client was called correctly
-        mock_client.create_structured_response.assert_called_once()
-        call_args = mock_client.create_structured_response.call_args
+        mock_client.create_structured_response_with_payload.assert_called_once()
+        call_args = mock_client.create_structured_response_with_payload.call_args
         assert "Build a scalable API" in call_args[1]["user_prompt"]
         assert call_args[1]["response_model"] == PersonaReview
         assert call_args[1]["step_name"] == "review"
@@ -136,7 +136,7 @@ class TestReviewProposal:
         mock_metadata = {"request_id": "test-request-456", "step_name": "review"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service with custom persona
@@ -149,8 +149,8 @@ class TestReviewProposal:
 
         # Verify custom persona was used
         assert result.persona_name == "SecurityExpert"
-        call_args = mock_client.create_structured_response.call_args
-        developer_instruction = call_args[1]["developer_instruction"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; developer_instruction = instruction_payload.developer_instruction
         assert "SecurityExpert" in developer_instruction
         assert "Focus on security aspects" in developer_instruction
 
@@ -176,14 +176,14 @@ class TestReviewProposal:
         mock_metadata = {"request_id": "test-request-789"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service without persona params
         result, metadata = review_proposal(sample_proposal, mock_settings)
 
         # Verify settings defaults were used
-        call_args = mock_client.create_structured_response.call_args
+        call_args = mock_client.create_structured_response_with_payload.call_args
         assert mock_settings.default_persona_name in call_args[1]["developer_instruction"]
         assert mock_settings.default_persona_instructions in call_args[1]["developer_instruction"]
 
@@ -209,15 +209,15 @@ class TestReviewProposal:
         mock_metadata = {"request_id": "test-request-xyz"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
         review_proposal(sample_proposal, mock_settings)
 
         # Verify system instruction was provided
-        call_args = mock_client.create_structured_response.call_args
-        system_instruction = call_args[1]["system_instruction"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; system_instruction = instruction_payload.system_instruction
         assert len(system_instruction) > 0
         assert "review" in system_instruction.lower()
         assert "json" in system_instruction.lower()
@@ -244,15 +244,15 @@ class TestReviewProposal:
         mock_metadata = {"request_id": "test-request-dev"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
         review_proposal(sample_proposal, mock_settings)
 
         # Verify developer instruction was provided
-        call_args = mock_client.create_structured_response.call_args
-        developer_instruction = call_args[1]["developer_instruction"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; developer_instruction = instruction_payload.developer_instruction
         assert developer_instruction is not None
         assert len(developer_instruction) > 0
         assert "PersonaReview" in developer_instruction
@@ -283,14 +283,14 @@ class TestReviewProposal:
         }
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
         review_proposal(sample_proposal, mock_settings)
 
         # Verify review-specific config was used
-        call_args = mock_client.create_structured_response.call_args
+        call_args = mock_client.create_structured_response_with_payload.call_args
         assert call_args[1]["model_override"] == mock_settings.review_model
         assert call_args[1]["temperature_override"] == mock_settings.review_temperature
         assert call_args[1]["step_name"] == "review"
@@ -323,15 +323,15 @@ class TestReviewProposal:
         mock_metadata = {"request_id": "test-request-truncate"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
         review_proposal(long_proposal, mock_settings)
 
         # Verify user prompt was constructed (truncation happens internally)
-        call_args = mock_client.create_structured_response.call_args
-        user_prompt = call_args[1]["user_prompt"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; user_prompt = instruction_payload.user_content
         # Problem and solution should be truncated to 2000 chars each
         # Plus assumptions and non-goals (first 10 items, each truncated to 500 chars)
         # This is reasonable as we limit both field length and list length
@@ -347,7 +347,7 @@ class TestReviewProposal:
         """Test that LLM errors are propagated correctly."""
         # Setup mock to raise error
         mock_client = MagicMock()
-        mock_client.create_structured_response.side_effect = LLMServiceError(
+        mock_client.create_structured_response_with_payload.side_effect = LLMServiceError(
             "API error", code="LLM_SERVICE_ERROR"
         )
         mock_client_class.return_value = mock_client
@@ -368,7 +368,7 @@ class TestReviewProposal:
         """Test that schema validation errors are propagated."""
         # Setup mock to raise schema error
         mock_client = MagicMock()
-        mock_client.create_structured_response.side_effect = SchemaValidationError(
+        mock_client.create_structured_response_with_payload.side_effect = SchemaValidationError(
             "Schema mismatch"
         )
         mock_client_class.return_value = mock_client
@@ -407,14 +407,14 @@ class TestReviewProposal:
         mock_metadata = {"request_id": "test-request-optionals"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_review, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_review, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
         review_proposal(proposal_with_optionals, mock_settings)
 
         # Verify optional fields are included in prompt
-        call_args = mock_client.create_structured_response.call_args
-        user_prompt = call_args[1]["user_prompt"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; user_prompt = instruction_payload.user_content
         assert "Test Title" in user_prompt
         assert "Test Summary" in user_prompt

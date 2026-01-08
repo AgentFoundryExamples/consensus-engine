@@ -57,7 +57,10 @@ class TestExpandIdea:
         }
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_proposal, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (
+            mock_proposal,
+            mock_metadata,
+        )
         mock_client_class.return_value = mock_client
 
         # Create input and call service
@@ -76,9 +79,9 @@ class TestExpandIdea:
         assert metadata["model"] == "gpt-5.1"
 
         # Verify client was called correctly
-        mock_client.create_structured_response.assert_called_once()
-        call_args = mock_client.create_structured_response.call_args
-        assert "Build a new API" in call_args[1]["user_prompt"]
+        mock_client.create_structured_response_with_payload.assert_called_once()
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        # Check that instruction_payload was passed
         assert call_args[1]["response_model"] == ExpandedProposal
 
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
@@ -96,7 +99,7 @@ class TestExpandIdea:
         mock_metadata = {"request_id": "test-request-456"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_proposal, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_proposal, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Create input with extra context
@@ -104,11 +107,11 @@ class TestExpandIdea:
         result, metadata = expand_idea(idea_input, mock_settings)
 
         # Verify extra context was included in prompt
-        call_args = mock_client.create_structured_response.call_args
-        user_prompt = call_args[1]["user_prompt"]
-        assert "Build a new API" in user_prompt
-        assert "Must support Python 3.11+" in user_prompt
-        assert "Additional Context" in user_prompt
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]
+        assert "Build a new API" in instruction_payload.user_content
+        assert "Must support Python 3.11+" in instruction_payload.user_content
+        assert "Additional Context" in instruction_payload.user_content
 
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_expand_idea_without_extra_context(
@@ -125,7 +128,7 @@ class TestExpandIdea:
         mock_metadata = {"request_id": "test-request-789"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_proposal, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_proposal, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Create input without extra context
@@ -133,10 +136,10 @@ class TestExpandIdea:
         result, metadata = expand_idea(idea_input, mock_settings)
 
         # Verify extra context was not included in prompt
-        call_args = mock_client.create_structured_response.call_args
-        user_prompt = call_args[1]["user_prompt"]
-        assert "Build a new API" in user_prompt
-        assert "Additional Context" not in user_prompt
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]
+        assert "Build a new API" in instruction_payload.user_content
+        assert "Additional Context" not in instruction_payload.user_content
 
     @patch("consensus_engine.services.expand.OpenAIClientWrapper")
     def test_expand_idea_system_instruction_present(
@@ -153,7 +156,7 @@ class TestExpandIdea:
         mock_metadata = {"request_id": "test-request-xyz"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_proposal, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_proposal, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
@@ -161,8 +164,8 @@ class TestExpandIdea:
         expand_idea(idea_input, mock_settings)
 
         # Verify system instruction was provided
-        call_args = mock_client.create_structured_response.call_args
-        system_instruction = call_args[1]["system_instruction"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; system_instruction = instruction_payload.system_instruction
         assert len(system_instruction) > 0
         assert "proposal" in system_instruction.lower()
         assert "json" in system_instruction.lower()
@@ -182,7 +185,7 @@ class TestExpandIdea:
         mock_metadata = {"request_id": "test-request-dev"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_proposal, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_proposal, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
@@ -190,8 +193,8 @@ class TestExpandIdea:
         expand_idea(idea_input, mock_settings)
 
         # Verify developer instruction was provided
-        call_args = mock_client.create_structured_response.call_args
-        developer_instruction = call_args[1]["developer_instruction"]
+        call_args = mock_client.create_structured_response_with_payload.call_args
+        instruction_payload = call_args[1]["instruction_payload"]; developer_instruction = instruction_payload.developer_instruction
         assert developer_instruction is not None
         assert len(developer_instruction) > 0
 
@@ -202,7 +205,7 @@ class TestExpandIdea:
         """Test that LLM errors are propagated correctly."""
         # Setup mock to raise error
         mock_client = MagicMock()
-        mock_client.create_structured_response.side_effect = LLMServiceError(
+        mock_client.create_structured_response_with_payload.side_effect = LLMServiceError(
             "API error", code="LLM_SERVICE_ERROR"
         )
         mock_client_class.return_value = mock_client
@@ -222,7 +225,7 @@ class TestExpandIdea:
         """Test that schema validation errors are propagated."""
         # Setup mock to raise schema error
         mock_client = MagicMock()
-        mock_client.create_structured_response.side_effect = SchemaValidationError(
+        mock_client.create_structured_response_with_payload.side_effect = SchemaValidationError(
             "Schema mismatch"
         )
         mock_client_class.return_value = mock_client
@@ -254,7 +257,7 @@ class TestExpandIdea:
         mock_metadata = {"request_id": "test-minimal"}
 
         mock_client = MagicMock()
-        mock_client.create_structured_response.return_value = (mock_proposal, mock_metadata)
+        mock_client.create_structured_response_with_payload.return_value = (mock_proposal, mock_metadata)
         mock_client_class.return_value = mock_client
 
         # Call service
