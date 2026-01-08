@@ -513,6 +513,82 @@ mypy src/
 
 ## API Endpoints
 
+### API Validation Rules
+
+All API endpoints enforce the following validation rules to ensure data quality and prevent malformed or malicious inputs:
+
+#### Input Size Limits
+
+- **Idea Text**: 1-10 sentences, maximum 10,000 characters
+- **Extra Context**: Maximum 50,000 characters (for both string and JSON formats)
+- **Edited Proposal**: Maximum 100,000 characters (for revision requests)
+- **Edit Notes**: Maximum 10,000 characters (for revision requests)
+
+#### Validation Behavior
+
+- **Request Validation**: All inputs are validated at the API boundary before enqueueing jobs
+- **Error Responses**: Invalid inputs return structured 4xx errors with:
+  - Machine-readable error code
+  - Human-readable message describing the violation
+  - Details about the violated rule (field, limit, actual value)
+- **Audit Logging**: Validation failures are logged with metadata for monitoring, without exposing sensitive content
+
+#### Version Headers (Optional)
+
+Clients can optionally specify API version headers to ensure compatibility:
+
+- `X-Schema-Version`: Schema version (current: 1.0.0)
+- `X-Prompt-Set-Version`: Prompt set version (current: 1.0.0)
+
+If headers are not provided, the API defaults to current deployment versions with a warning. Unsupported versions receive a `400 Bad Request` response with guidance to upgrade.
+
+**Example with version headers:**
+```bash
+curl -X POST http://localhost:8000/v1/expand-idea \
+  -H "Content-Type: application/json" \
+  -H "X-Schema-Version: 1.0.0" \
+  -H "X-Prompt-Set-Version: 1.0.0" \
+  -d '{"idea": "Build a REST API."}'
+```
+
+#### Validation Error Example
+
+```json
+{
+  "detail": [
+    {
+      "type": "value_error",
+      "loc": ["body", "idea"],
+      "msg": "Idea exceeds maximum length of 10000 characters (got 15000). Please shorten your input.",
+      "input": "..."
+    }
+  ]
+}
+```
+
+#### Unsupported Version Error Example
+
+```json
+{
+  "code": "UNSUPPORTED_VERSION",
+  "message": "Schema version '0.9.0' is not supported. Current supported version: '1.0.0'. Please upgrade your client to use the supported API version.",
+  "details": {
+    "requested_schema_version": "0.9.0",
+    "supported_schema_version": "1.0.0",
+    "api_version": "v1"
+  }
+}
+```
+
+#### Configuration
+
+Validation limits are configurable via environment variables for flexible deployment:
+
+- `MAX_IDEA_LENGTH`: Maximum character length for idea text (default: 10000)
+- `MAX_EXTRA_CONTEXT_LENGTH`: Maximum character length for extra_context (default: 50000)
+- `MAX_EDITED_PROPOSAL_LENGTH`: Maximum character length for edited_proposal (default: 100000)
+- `MAX_EDIT_NOTES_LENGTH`: Maximum character length for edit_notes (default: 10000)
+
 ### Review Idea (POST /v1/review-idea)
 
 Orchestrates idea expansion, review, and decision aggregation in a single synchronous request. This endpoint expands a brief idea into a detailed proposal, reviews it with a GenericReviewer persona, and aggregates a draft decision.

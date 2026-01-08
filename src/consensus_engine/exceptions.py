@@ -108,3 +108,39 @@ class SchemaValidationError(ConsensusEngineError):
             details: Optional additional error details
         """
         super().__init__(message, "SCHEMA_VALIDATION_ERROR", details)
+
+
+class ValidationError(ConsensusEngineError):
+    """Exception for request validation failures at API boundary.
+
+    Used when input data violates validation rules such as size limits,
+    format constraints, or business rules.
+    """
+
+    def __init__(self, message: str = "Request validation failed", details: dict | None = None):
+        """Initialize validation error.
+
+        Args:
+            message: Human-readable error message
+            details: Optional additional error details (field, rule, limit, actual)
+        """
+        super().__init__(message, "VALIDATION_ERROR", details)
+
+
+class UnsupportedVersionError(ConsensusEngineError):
+    """Exception for unsupported schema or prompt set versions.
+
+    Used when a client requests an API version that is not supported
+    by the current deployment.
+    """
+
+    def __init__(
+        self, message: str = "Unsupported API version", details: dict | None = None
+    ):
+        """Initialize unsupported version error.
+
+        Args:
+            message: Human-readable error message
+            details: Optional additional error details (requested_version, supported_versions)
+        """
+        super().__init__(message, "UNSUPPORTED_VERSION", details)

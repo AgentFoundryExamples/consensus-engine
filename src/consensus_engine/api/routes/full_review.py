@@ -22,17 +22,19 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from consensus_engine.api.validation import log_validation_failure, validate_version_headers
 from consensus_engine.clients.pubsub import PubSubPublishError, get_publisher
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
 from consensus_engine.db.dependencies import get_db_session
 from consensus_engine.db.models import RunPriority, RunStatus, RunType, StepStatus
 from consensus_engine.db.repositories import RunRepository, StepProgressRepository
+from consensus_engine.exceptions import UnsupportedVersionError, ValidationError
 from consensus_engine.schemas.requests import (
     FullReviewRequest,
     JobEnqueuedResponse,
@@ -54,6 +56,15 @@ router = APIRouter(prefix="/v1", tags=["full-review"])
         "publishes a job message to Pub/Sub, and returns run metadata immediately. "
         "Clients should poll GET /v1/runs/{run_id} to check status and retrieve "
         "results once processing completes."
+        "\n\n"
+        "**Validation Rules:**\n"
+        "- Idea: 1-10 sentences, max 10,000 characters\n"
+        "- Extra context: max 50,000 characters (string or JSON)\n"
+        "\n\n"
+        "**Version Headers (Optional):**\n"
+        "- X-Schema-Version: Schema version (current: 1.0.0)\n"
+        "- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\n"
+        "If not provided, defaults to current deployment versions with a warning."
     ),
 )
 async def full_review_endpoint(
@@ -61,36 +72,72 @@ async def full_review_endpoint(
     review_request: FullReviewRequest,
     settings: Settings = Depends(get_settings),
     db_session: Session = Depends(get_db_session),
+    x_schema_version: str | None = Header(default=None, alias="X-Schema-Version"),
+    x_prompt_set_version: str | None = Header(default=None, alias="X-Prompt-Set-Version"),
 ) -> JobEnqueuedResponse:
     """Enqueue a full review job and return run metadata immediately.
 
     This endpoint:
-    1. Creates a Run with status='queued'
-    2. Initializes StepProgress entries for all pipeline steps
-    3. Publishes a job message to Pub/Sub with run_id, run_type, priority, and payload
-    4. Returns run_id and metadata immediately
-    5. Rolls back database changes if Pub/Sub publish fails
+    1. Validates version headers
+    2. Creates a Run with status='queued'
+    3. Initializes StepProgress entries for all pipeline steps
+    4. Publishes a job message to Pub/Sub with run_id, run_type, priority, and payload
+    5. Returns run_id and metadata immediately
+    6. Rolls back database changes if Pub/Sub publish fails
 
     Args:
         request_obj: FastAPI request object for accessing state
         review_request: Validated request containing idea and optional extra_context
         settings: Application settings injected via dependency
         db_session: Database session injected via dependency
+        x_schema_version: Optional schema version header
+        x_prompt_set_version: Optional prompt set version header
 
     Returns:
         JobEnqueuedResponse with run_id, status='queued', and timestamps
 
     Raises:
-        HTTPException: 500 if database or Pub/Sub operations fail
+        HTTPException: 400 for invalid version, 500 if database or Pub/Sub operations fail
     """
     # Pre-generate run_id for atomic failure handling
     run_id = uuid.uuid4()
     start_time = time.time()
     request_id = getattr(request_obj.state, "request_id", "unknown")
 
+    try:
+        # Validate version headers
+        versions = validate_version_headers(
+            x_schema_version,
+            x_prompt_set_version,
+            settings,
+        )
+        schema_version = versions["schema_version"]
+        prompt_set_version = versions["prompt_set_version"]
+
+    except UnsupportedVersionError as e:
+        log_validation_failure(
+            field="version_headers",
+            rule="supported_version",
+            message=e.message,
+            metadata={**e.details, "run_id": str(run_id)},
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "code": e.code,
+                "message": e.message,
+                "details": e.details,
+            },
+        )
+
     logger.info(
         "Enqueuing full-review job",
-        extra={"run_id": str(run_id), "request_id": request_id},
+        extra={
+            "run_id": str(run_id),
+            "request_id": request_id,
+            "schema_version": schema_version,
+            "prompt_set_version": prompt_set_version,
+        },
     )
 
     # Convert extra_context to dict for storage
@@ -115,11 +162,7 @@ async def full_review_endpoint(
     priority = RunPriority.NORMAL
     run_type = RunType.INITIAL
 
-    # Get schema and prompt versions from settings
-    llm_config = settings.get_llm_steps_config()
-    schema_version = llm_config.schema_version  # Get from config
-    prompt_set_version = llm_config.prompt_set_version
-
+    # Use validated schema and prompt versions from headers
     try:
         # Step 1: Create Run with status='queued'
         run = RunRepository.create_run(

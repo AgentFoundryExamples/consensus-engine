@@ -17,6 +17,7 @@ This module defines Pydantic models for API request validation and response
 serialization, including custom validators for sentence-level constraints.
 """
 
+import json
 import re
 from typing import Any
 
@@ -24,6 +25,13 @@ from pydantic import BaseModel, Field, field_validator
 
 # Import schemas for use in response models
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
+
+# Default validation limits (can be overridden by Settings at API route level)
+# These serve as schema-level hard limits to prevent parsing issues
+DEFAULT_MAX_IDEA_LENGTH = 10000
+DEFAULT_MAX_EXTRA_CONTEXT_LENGTH = 50000
+DEFAULT_MAX_EDITED_PROPOSAL_LENGTH = 100000
+DEFAULT_MAX_EDIT_NOTES_LENGTH = 10000
 
 
 def count_sentences(text: str) -> int:
@@ -48,6 +56,69 @@ def count_sentences(text: str) -> int:
     sentences = [s.strip() for s in sentences if s.strip()]
 
     return len(sentences)
+
+
+def validate_text_length(
+    text: str | None,
+    field_name: str,
+    max_length: int,
+    min_length: int = 1,
+) -> None:
+    """Validate text length against configured limits.
+
+    Args:
+        text: Text to validate (can be None)
+        field_name: Name of the field for error messages
+        max_length: Maximum allowed character length
+        min_length: Minimum allowed character length (default: 1)
+
+    Raises:
+        ValueError: If text length violates the limits
+    """
+    if text is None:
+        return
+
+    text_len = len(text)
+    if text_len < min_length:
+        raise ValueError(
+            f"{field_name} must be at least {min_length} characters (got {text_len})"
+        )
+
+    if text_len > max_length:
+        raise ValueError(
+            f"{field_name} exceeds maximum length of {max_length} characters "
+            f"(got {text_len}). Please shorten your input."
+        )
+
+
+def validate_dict_json_size(
+    data: dict[str, Any] | None,
+    field_name: str,
+    max_length: int,
+) -> None:
+    """Validate that a dict's JSON serialization is within size limits.
+
+    Args:
+        data: Dictionary to validate (can be None)
+        field_name: Name of the field for error messages
+        max_length: Maximum allowed character length for JSON serialization
+
+    Raises:
+        ValueError: If JSON size exceeds the limit
+    """
+    if data is None:
+        return
+
+    try:
+        json_str = json.dumps(data)
+        json_len = len(json_str)
+        if json_len > max_length:
+            raise ValueError(
+                f"{field_name} JSON exceeds maximum size of {max_length} characters "
+                f"(got {json_len}). Please reduce the data size."
+            )
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"{field_name} contains non-serializable data: {str(e)}") from e
 
 
 class ExpandIdeaRequest(BaseModel):
@@ -75,8 +146,8 @@ class ExpandIdeaRequest(BaseModel):
 
     @field_validator("idea")
     @classmethod
-    def validate_sentence_count(cls, v: str) -> str:
-        """Validate that idea contains 1-10 sentences.
+    def validate_idea(cls, v: str) -> str:
+        """Validate that idea is within length limits and contains 1-10 sentences.
 
         Args:
             v: The idea text to validate
@@ -85,15 +156,47 @@ class ExpandIdeaRequest(BaseModel):
             The validated idea text
 
         Raises:
-            ValueError: If sentence count is outside 1-10 range
+            ValueError: If idea violates validation rules
         """
+        # Validate sentence count
         sentence_count = count_sentences(v)
 
         if sentence_count < 1:
             raise ValueError("Idea must contain at least 1 sentence")
 
         if sentence_count > 10:
-            raise ValueError(f"Idea must contain at most 10 sentences (found {sentence_count})")
+            raise ValueError(
+                f"Idea must contain at most 10 sentences (found {sentence_count}). "
+                "Please provide a more concise description."
+            )
+
+        # Validate length (uses default constant, actual limit enforced at API route level)
+        validate_text_length(v, "idea", max_length=DEFAULT_MAX_IDEA_LENGTH)
+
+        return v
+
+    @field_validator("extra_context")
+    @classmethod
+    def validate_extra_context(cls, v: dict[str, Any] | str | None) -> dict[str, Any] | str | None:
+        """Validate that extra_context is within size limits.
+
+        Args:
+            v: The extra_context value to validate
+
+        Returns:
+            The validated extra_context value
+
+        Raises:
+            ValueError: If extra_context exceeds size limits
+        """
+        if v is None:
+            return v
+
+        # Validate based on type (uses default constant, actual limit enforced at API route level)
+        if isinstance(v, str):
+            validate_text_length(v, "extra_context", max_length=DEFAULT_MAX_EXTRA_CONTEXT_LENGTH)
+        elif isinstance(v, dict):
+            validate_dict_json_size(v, "extra_context", max_length=DEFAULT_MAX_EXTRA_CONTEXT_LENGTH)
 
         return v
 
@@ -215,8 +318,8 @@ class ReviewIdeaRequest(BaseModel):
 
     @field_validator("idea")
     @classmethod
-    def validate_sentence_count(cls, v: str) -> str:
-        """Validate that idea contains 1-10 sentences.
+    def validate_idea(cls, v: str) -> str:
+        """Validate that idea is within length limits and contains 1-10 sentences.
 
         Args:
             v: The idea text to validate
@@ -225,15 +328,50 @@ class ReviewIdeaRequest(BaseModel):
             The validated idea text
 
         Raises:
-            ValueError: If sentence count is outside 1-10 range
+            ValueError: If idea violates validation rules
         """
+        # Validate sentence count
         sentence_count = count_sentences(v)
 
         if sentence_count < 1:
             raise ValueError("Idea must contain at least 1 sentence")
 
         if sentence_count > 10:
-            raise ValueError(f"Idea must contain at most 10 sentences (found {sentence_count})")
+            raise ValueError(
+                f"Idea must contain at most 10 sentences (found {sentence_count}). "
+                "Please provide a more concise description."
+            )
+
+        # Validate length
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_IDEA_LENGTH
+        validate_text_length(v, "idea", max_length=max_length)
+
+        return v
+
+    @field_validator("extra_context")
+    @classmethod
+    def validate_extra_context(cls, v: dict[str, Any] | str | None) -> dict[str, Any] | str | None:
+        """Validate that extra_context is within size limits.
+
+        Args:
+            v: The extra_context value to validate
+
+        Returns:
+            The validated extra_context value
+
+        Raises:
+            ValueError: If extra_context exceeds size limits
+        """
+        if v is None:
+            return v
+
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EXTRA_CONTEXT_LENGTH
+        if isinstance(v, str):
+            validate_text_length(v, "extra_context", max_length=max_length)
+        elif isinstance(v, dict):
+            validate_dict_json_size(v, "extra_context", max_length=max_length)
 
         return v
 
@@ -322,8 +460,8 @@ class FullReviewRequest(BaseModel):
 
     @field_validator("idea")
     @classmethod
-    def validate_sentence_count(cls, v: str) -> str:
-        """Validate that idea contains 1-10 sentences.
+    def validate_idea(cls, v: str) -> str:
+        """Validate that idea is within length limits and contains 1-10 sentences.
 
         Args:
             v: The idea text to validate
@@ -332,15 +470,50 @@ class FullReviewRequest(BaseModel):
             The validated idea text
 
         Raises:
-            ValueError: If sentence count is outside 1-10 range
+            ValueError: If idea violates validation rules
         """
+        # Validate sentence count
         sentence_count = count_sentences(v)
 
         if sentence_count < 1:
             raise ValueError("Idea must contain at least 1 sentence")
 
         if sentence_count > 10:
-            raise ValueError(f"Idea must contain at most 10 sentences (found {sentence_count})")
+            raise ValueError(
+                f"Idea must contain at most 10 sentences (found {sentence_count}). "
+                "Please provide a more concise description."
+            )
+
+        # Validate length
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_IDEA_LENGTH
+        validate_text_length(v, "idea", max_length=max_length)
+
+        return v
+
+    @field_validator("extra_context")
+    @classmethod
+    def validate_extra_context(cls, v: dict[str, Any] | str | None) -> dict[str, Any] | str | None:
+        """Validate that extra_context is within size limits.
+
+        Args:
+            v: The extra_context value to validate
+
+        Returns:
+            The validated extra_context value
+
+        Raises:
+            ValueError: If extra_context exceeds size limits
+        """
+        if v is None:
+            return v
+
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EXTRA_CONTEXT_LENGTH
+        if isinstance(v, str):
+            validate_text_length(v, "extra_context", max_length=max_length)
+        elif isinstance(v, dict):
+            validate_dict_json_size(v, "extra_context", max_length=max_length)
 
         return v
 
@@ -659,22 +832,102 @@ class CreateRevisionRequest(BaseModel):
         description="Optional new LLM parameters (overrides parent)",
     )
 
-    @field_validator("edited_proposal", "edit_notes")
+    @field_validator("edited_proposal")
     @classmethod
-    def require_at_least_one_edit_field(cls, v: Any, info: Any) -> Any:
-        """Validate that at least one of edited_proposal or edit_notes is provided.
+    def validate_edited_proposal(cls, v: dict[str, Any] | str | None) -> dict[str, Any] | str | None:
+        """Validate that edited_proposal is within size limits.
 
         Args:
-            v: Field value
-            info: Field info with context
+            v: The edited_proposal value to validate
 
         Returns:
-            The validated field value
+            The validated edited_proposal value
 
-        Note:
-            This validator runs per-field. Use the class-level validation in the
-            endpoint to ensure at least one edit field is provided.
+        Raises:
+            ValueError: If edited_proposal exceeds size limits
         """
+        if v is None:
+            return v
+
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EDITED_PROPOSAL_LENGTH
+        if isinstance(v, str):
+            validate_text_length(v, "edited_proposal", max_length=max_length)
+        elif isinstance(v, dict):
+            validate_dict_json_size(v, "edited_proposal", max_length=max_length)
+
+        return v
+
+    @field_validator("edit_notes")
+    @classmethod
+    def validate_edit_notes(cls, v: str | None) -> str | None:
+        """Validate that edit_notes is within size limits.
+
+        Args:
+            v: The edit_notes value to validate
+
+        Returns:
+            The validated edit_notes value
+
+        Raises:
+            ValueError: If edit_notes exceeds size limits
+        """
+        if v is None:
+            return v
+
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EDIT_NOTES_LENGTH
+        validate_text_length(v, "edit_notes", max_length=max_length)
+
+        return v
+
+    @field_validator("input_idea")
+    @classmethod
+    def validate_input_idea(cls, v: str | None) -> str | None:
+        """Validate that input_idea is within size limits.
+
+        Args:
+            v: The input_idea value to validate
+
+        Returns:
+            The validated input_idea value
+
+        Raises:
+            ValueError: If input_idea exceeds size limits
+        """
+        if v is None:
+            return v
+
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_IDEA_LENGTH
+        validate_text_length(v, "input_idea", max_length=max_length)
+
+        return v
+
+    @field_validator("extra_context")
+    @classmethod
+    def validate_extra_context(cls, v: dict[str, Any] | str | None) -> dict[str, Any] | str | None:
+        """Validate that extra_context is within size limits.
+
+        Args:
+            v: The extra_context value to validate
+
+        Returns:
+            The validated extra_context value
+
+        Raises:
+            ValueError: If extra_context exceeds size limits
+        """
+        if v is None:
+            return v
+
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EXTRA_CONTEXT_LENGTH
+        if isinstance(v, str):
+            validate_text_length(v, "extra_context", max_length=max_length)
+        elif isinstance(v, dict):
+            validate_dict_json_size(v, "extra_context", max_length=max_length)
+
         return v
 
 
