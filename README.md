@@ -1968,6 +1968,11 @@ The Consensus Engine can be deployed to Google Cloud Platform (GCP) with the fol
 
 This quick start guide provides the essential steps to deploy the Consensus Engine to Google Cloud Run. For detailed explanations, prerequisites, and troubleshooting, see the comprehensive guides below.
 
+**Important Notes:**
+- The default model configuration uses `gpt-5.1` as specified in [LLMs.md](LLMs.md). This is a target model for future-proofing. If deploying today, use available models like `gpt-4` or `gpt-4-turbo` by setting the `OPENAI_MODEL` environment variable during deployment.
+- Store sensitive values (API keys, credentials) in Secret Manager, never in environment variables or code.
+- Always verify checksums when downloading binaries from remote sources.
+
 #### Prerequisites
 
 ```bash
@@ -2057,7 +2062,7 @@ gcloud run deploy consensus-api \
   --no-allow-unauthenticated \
   --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
   --add-cloudsql-instances=${PROJECT_ID}:${REGION}:consensus-db \
-  --set-env-vars="ENV=production,USE_CLOUD_SQL_CONNECTOR=true,DB_INSTANCE_CONNECTION_NAME=${PROJECT_ID}:${REGION}:consensus-db,PUBSUB_PROJECT_ID=${PROJECT_ID}"
+  --set-env-vars="ENV=production,USE_CLOUD_SQL_CONNECTOR=true,DB_INSTANCE_CONNECTION_NAME=${PROJECT_ID}:${REGION}:consensus-db,PUBSUB_PROJECT_ID=${PROJECT_ID},DB_NAME=consensus_engine,DB_USER=consensus-api-sa@${PROJECT_ID}.iam,DB_IAM_AUTH=true"
 
 # Get backend URL
 export BACKEND_URL=$(gcloud run services describe consensus-api --region=$REGION --format='value(status.url)')
@@ -2085,16 +2090,18 @@ gcloud run deploy consensus-worker \
 #### 4. Run Database Migrations
 
 ```bash
-# Download Cloud SQL proxy
+# Download Cloud SQL proxy (verify checksum for security)
 curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64
 chmod +x cloud-sql-proxy
 
-# Start proxy and run migrations
-./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 &
+# Start proxy with service account impersonation and run migrations
+./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 --impersonate-service-account="consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com" &
 export DATABASE_URL="postgresql://consensus-api-sa@${PROJECT_ID}.iam:@localhost:5432/consensus_engine"
 alembic upgrade head
 kill %1  # Stop proxy
 ```
+
+**Note**: Using `--impersonate-service-account` ensures migrations run with the same IAM identity as the API service, maintaining consistent database permissions.
 
 #### 5. Configure IAM and CORS
 

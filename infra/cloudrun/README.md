@@ -56,6 +56,12 @@ graph TB
 
 **For complete prerequisites including quotas, external services, and detailed requirements, see [GCP Deployment Architecture - Prerequisites](../../docs/GCP_DEPLOYMENT_ARCHITECTURE.md#deployment-prerequisites).**
 
+**Security and Model Configuration Notes:**
+- Default model is `gpt-5.1` as specified in [LLMs.md](../../LLMs.md). This is a target model. For current deployments, use available models like `gpt-4` or `gpt-4-turbo` by overriding `OPENAI_MODEL`, `EXPAND_MODEL`, and `REVIEW_MODEL` environment variables.
+- Always download binaries from official sources and verify checksums when possible.
+- Store all sensitive values (API keys, database passwords) in Secret Manager, not in environment variables.
+- Use IAM authentication for Cloud SQL instead of password-based authentication.
+
 ### Required Tools
 
 - [ ] **gcloud CLI** (latest version)
@@ -202,30 +208,81 @@ gcloud sql users create consensus-api-sa@$PROJECT_ID.iam \
 
 ### 4. Create Pub/Sub Topic and Subscription
 
+The Consensus Engine uses **pull subscriptions** for worker deployments. The worker actively pulls messages from the subscription.
+
 ```bash
 # Create topic
 gcloud pubsub topics create consensus-engine-jobs \
   --project=$PROJECT_ID
 
-# Create subscription for worker
+# Create pull subscription for worker (recommended for Cloud Run services)
 gcloud pubsub subscriptions create consensus-engine-jobs-sub \
   --topic=consensus-engine-jobs \
   --ack-deadline=600 \
   --project=$PROJECT_ID
+
+# Optional: Create dead-letter topic for failed messages
+gcloud pubsub topics create consensus-engine-jobs-dlq \
+  --project=$PROJECT_ID
+
+# Update subscription with dead-letter policy
+gcloud pubsub subscriptions update consensus-engine-jobs-sub \
+  --dead-letter-topic=consensus-engine-jobs-dlq \
+  --max-delivery-attempts=5 \
+  --project=$PROJECT_ID
 ```
+
+**Note on Subscription Types:**
+
+- **Pull Subscription (used here)**: Worker actively pulls messages. Best for Cloud Run services that need to control concurrency and processing rate.
+- **Push Subscription (alternative)**: Pub/Sub pushes messages to an HTTP endpoint. If using push subscriptions with Cloud Run:
+  ```bash
+  # Create push subscription pointing to worker service
+  gcloud pubsub subscriptions create consensus-engine-jobs-push \
+    --topic=consensus-engine-jobs \
+    --push-endpoint=https://consensus-worker-HASH-uc.a.run.app/push-handler \
+    --push-auth-service-account=consensus-worker-sa@${PROJECT_ID}.iam.gserviceaccount.com \
+    --ack-deadline=600 \
+    --project=$PROJECT_ID
+  
+  # Grant Pub/Sub permission to invoke worker service
+  gcloud run services add-iam-policy-binding consensus-worker \
+    --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com" \
+    --role="roles/run.invoker" \
+    --region=$REGION \
+    --project=$PROJECT_ID
+  ```
+  **Note**: Push subscriptions require implementing an HTTP endpoint in the worker to receive pushed messages. The current implementation uses pull subscriptions.
 
 ### 5. Store Secrets
 
+**Security Best Practice**: Never expose API keys in command history, scripts, or environment variables. Use Secret Manager for all sensitive values.
+
 ```bash
-# Store OpenAI API key in Secret Manager
-echo -n "your-openai-api-key" | gcloud secrets create openai-api-key \
-  --data-file=- \
+# Store OpenAI API key in Secret Manager (preferred: read from file)
+# Option 1: Read from file (recommended)
+echo -n "your-openai-api-key" > /tmp/api-key.txt
+gcloud secrets create openai-api-key \
+  --data-file=/tmp/api-key.txt \
   --replication-policy="automatic" \
   --project=$PROJECT_ID
+rm /tmp/api-key.txt  # Clean up immediately
+
+# Option 2: Pipe from echo (warning: may appear in shell history)
+# echo -n "your-openai-api-key" | gcloud secrets create openai-api-key \
+#   --data-file=- \
+#   --replication-policy="automatic" \
+#   --project=$PROJECT_ID
 
 # Grant backend service account access to secret
 gcloud secrets add-iam-policy-binding openai-api-key \
   --member="serviceAccount:consensus-api-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=$PROJECT_ID
+
+# Grant worker service account access to secret
+gcloud secrets add-iam-policy-binding openai-api-key \
+  --member="serviceAccount:consensus-worker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor" \
   --project=$PROJECT_ID
 ```
@@ -678,12 +735,14 @@ gcloud run jobs executions logs read \
 
 **Verification:**
 ```bash
-# Verify tables were created
-./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 &
+# Verify tables were created using the same IAM service account
+./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 --impersonate-service-account="consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com" &
 
-psql -h localhost -p 5432 -U postgres -d consensus_engine -c "\dt"
+# Connect with IAM authentication (no password needed)
+psql -h localhost -p 5432 -U "consensus-api-sa@${PROJECT_ID}.iam" -d consensus_engine -c "\dt"
 
 # Should show: runs, step_progress, alembic_version tables
+kill %1  # Stop proxy
 ```
 
 ### 11. Enable Identity-Aware Proxy (IAP) for Frontend
