@@ -24,11 +24,12 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi import status as http_status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from consensus_engine.api.validation import log_validation_failure, validate_version_headers
 from consensus_engine.clients.pubsub import PubSubPublishError, get_publisher
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
@@ -38,6 +39,7 @@ from consensus_engine.db.repositories import (
     RunRepository,
     StepProgressRepository,
 )
+from consensus_engine.exceptions import UnsupportedVersionError, ValidationError
 from consensus_engine.schemas.requests import (
     CreateRevisionRequest,
     JobEnqueuedResponse,
@@ -596,6 +598,18 @@ async def get_run_diff(
         "publishes a job message to Pub/Sub, and returns run metadata immediately. "
         "Clients should poll GET /v1/runs/{run_id} to check status and retrieve "
         "results once processing completes."
+        "\n\n"
+        "**Validation Rules:**\n"
+        "- edited_proposal: max 100,000 characters (string or JSON)\n"
+        "- edit_notes: max 10,000 characters\n"
+        "- input_idea: max 10,000 characters\n"
+        "- extra_context: max 50,000 characters (string or JSON)\n"
+        "- At least one of edited_proposal or edit_notes must be provided\n"
+        "\n\n"
+        "**Version Headers (Optional):**\n"
+        "- X-Schema-Version: Schema version (current: 1.0.0)\n"
+        "- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\n"
+        "If not provided, defaults to current deployment versions with a warning."
     ),
 )
 async def create_revision(
@@ -603,28 +617,33 @@ async def create_revision(
     request: CreateRevisionRequest,
     settings: Settings = Depends(get_settings),
     db_session: Session = Depends(get_db_session),
+    x_schema_version: str | None = Header(default=None, alias="X-Schema-Version"),
+    x_prompt_set_version: str | None = Header(default=None, alias="X-Prompt-Set-Version"),
 ) -> JobEnqueuedResponse:
     """Enqueue a revision job and return run metadata immediately.
 
     This endpoint:
-    1. Validates the parent run exists and completed successfully
-    2. Creates a Run with status='queued' and run_type='revision'
-    3. Initializes StepProgress entries for all pipeline steps
-    4. Publishes a job message to Pub/Sub with run_id, run_type='revision', priority, and payload
-    5. Returns run_id and metadata immediately
-    6. Rolls back database changes if Pub/Sub publish fails
+    1. Validates version headers
+    2. Validates the parent run exists and completed successfully
+    3. Creates a Run with status='queued' and run_type='revision'
+    4. Initializes StepProgress entries for all pipeline steps
+    5. Publishes a job message to Pub/Sub with run_id, run_type='revision', priority, and payload
+    6. Returns run_id and metadata immediately
+    7. Rolls back database changes if Pub/Sub publish fails
 
     Args:
         run_id: UUID of the parent run
         request: CreateRevisionRequest with edit inputs
         settings: Application settings
         db_session: Database session
+        x_schema_version: Optional schema version header
+        x_prompt_set_version: Optional prompt set version header
 
     Returns:
         JobEnqueuedResponse with run_id, status='queued', and timestamps
 
     Raises:
-        HTTPException: 400 for invalid input, 404 for missing run,
+        HTTPException: 400 for invalid input/version, 404 for missing run,
             409 for failed parent, 500 for errors
     """
     logger.info(
@@ -636,6 +655,32 @@ async def create_revision(
     new_run_id = uuid.uuid4()
     start_time = time.time()
     db_committed = False
+
+    try:
+        # Validate version headers
+        versions = validate_version_headers(
+            x_schema_version,
+            x_prompt_set_version,
+            settings,
+        )
+        schema_version = versions["schema_version"]
+        prompt_set_version = versions["prompt_set_version"]
+
+    except UnsupportedVersionError as e:
+        log_validation_failure(
+            field="version_headers",
+            rule="supported_version",
+            message=e.message,
+            metadata={**e.details, "parent_run_id": run_id, "new_run_id": str(new_run_id)},
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": e.code,
+                "message": e.message,
+                "details": e.details,
+            },
+        ) from e
 
     try:
         # Validate request has at least one edit input
@@ -726,11 +771,7 @@ async def create_revision(
         # Determine priority (inherit from parent or default to normal)
         priority = parent_run.priority if parent_run.priority else RunPriority.NORMAL
 
-        # Get schema and prompt versions from settings
-        llm_config = settings.get_llm_steps_config()
-        schema_version = llm_config.schema_version  # Get from config
-        prompt_set_version = llm_config.prompt_set_version
-
+        # Use validated schema and prompt versions from headers
         # Step 1: Create new Run with status='queued'
         new_run = RunRepository.create_run(
             session=db_session,
