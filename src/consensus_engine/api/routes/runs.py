@@ -35,17 +35,11 @@ from consensus_engine.config.logging import get_logger
 from consensus_engine.db.dependencies import get_db_session
 from consensus_engine.db.models import Run, RunPriority, RunStatus, RunType, StepStatus
 from consensus_engine.db.repositories import (
-    DecisionRepository,
-    PersonaReviewRepository,
-    ProposalVersionRepository,
     RunRepository,
     StepProgressRepository,
 )
-from consensus_engine.exceptions import ConsensusEngineError
-from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.requests import (
     CreateRevisionRequest,
-    CreateRevisionResponse,
     JobEnqueuedResponse,
     PersonaReviewSummary,
     RunDetailResponse,
@@ -54,13 +48,7 @@ from consensus_engine.schemas.requests import (
     RunListResponse,
     StepProgressSummary,
 )
-from consensus_engine.services.aggregator import aggregate_persona_reviews
 from consensus_engine.services.diff import compute_run_diff
-from consensus_engine.services.expand import expand_with_edits
-from consensus_engine.services.orchestrator import (
-    determine_personas_to_rerun,
-    review_with_selective_personas,
-)
 
 logger = get_logger(__name__)
 
@@ -69,13 +57,13 @@ router = APIRouter(prefix="/v1", tags=["runs"])
 
 def _build_step_progress_summaries(run: Run) -> list[StepProgressSummary]:
     """Build ordered step progress summaries for a run.
-    
+
     If the run has StepProgress records, use them. Otherwise, generate default
     pending steps for all canonical steps.
-    
+
     Args:
         run: Run instance with step_progress relationship loaded
-        
+
     Returns:
         List of StepProgressSummary objects ordered by step_order
     """
@@ -627,7 +615,8 @@ async def create_revision(
         JobEnqueuedResponse with run_id, status='queued', and timestamps
 
     Raises:
-        HTTPException: 400 for invalid input, 404 for missing run, 409 for failed parent, 500 for errors
+        HTTPException: 400 for invalid input, 404 for missing run,
+            409 for failed parent, 500 for errors
     """
     logger.info(
         f"Enqueuing revision job for run {run_id}",
@@ -865,7 +854,11 @@ async def create_revision(
         run_type=RunType.REVISION.value,
         priority=priority.value,
         created_at=new_run.created_at.isoformat(),
-        queued_at=new_run.queued_at.isoformat() if new_run.queued_at else new_run.created_at.isoformat(),
+        queued_at=(
+            new_run.queued_at.isoformat()
+            if new_run.queued_at
+            else new_run.created_at.isoformat()
+        ),
         message=f"Revision job enqueued successfully. Poll GET /v1/runs/{new_run_id} for status.",
     )
 
