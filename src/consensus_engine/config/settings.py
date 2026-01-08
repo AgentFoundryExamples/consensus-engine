@@ -178,6 +178,15 @@ class Settings(BaseSettings):
             "NEVER use wildcard (*) for security reasons."
         ),
     )
+    cors_allow_headers: str = Field(
+        default="*",
+        description=(
+            "Comma-separated list of allowed CORS headers. "
+            "Default is '*' to allow all headers. "
+            "For production, specify explicit headers like: "
+            "'Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version'"
+        ),
+    )
 
     # Database Configuration
     use_cloud_sql_connector: bool = Field(
@@ -472,6 +481,17 @@ class Settings(BaseSettings):
             List of allowed CORS origin URLs
         """
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def cors_allow_headers_list(self) -> list[str]:
+        """Parse CORS allowed headers from comma-separated string.
+
+        Returns:
+            List of allowed CORS header names, or ["*"] for all headers
+        """
+        if self.cors_allow_headers.strip() == "*":
+            return ["*"]
+        return [header.strip() for header in self.cors_allow_headers.split(",") if header.strip()]
 
     @property
     def database_url(self) -> str:

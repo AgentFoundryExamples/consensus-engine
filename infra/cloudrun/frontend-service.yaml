@@ -1,0 +1,73 @@
+# Example Cloud Run service configuration for Consensus Engine Web Frontend
+#
+# This file demonstrates how to deploy the web frontend as a separate Cloud Run service
+# protected by Identity-Aware Proxy (IAP) for user authentication.
+#
+# Usage:
+#   1. Replace placeholders with your actual values
+#   2. Deploy: gcloud run services replace frontend-service.yaml
+#   3. Enable IAP on the service via Console or gcloud
+#   4. Configure IAM bindings for users/groups
+#
+# Note: This is an example configuration. Adjust resource limits, scaling, and
+# environment variables based on your actual requirements.
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: consensus-web
+  namespace: 'PROJECT_ID'  # Replace with your GCP project ID
+  labels:
+    cloud.googleapis.com/location: us-central1
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+spec:
+  template:
+    metadata:
+      annotations:
+        # Scaling configuration
+        autoscaling.knative.dev/minScale: '0'
+        autoscaling.knative.dev/maxScale: '10'
+        
+        # CPU allocation (throttle when not serving requests)
+        run.googleapis.com/cpu-throttling: 'true'
+        
+        # Execution environment (Second generation recommended)
+        run.googleapis.com/execution-environment: gen2
+        
+        # Startup and request timeout
+        run.googleapis.com/startup-cpu-boost: 'true'
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      serviceAccountName: 'consensus-web-sa@PROJECT_ID.iam.gserviceaccount.com'  # Replace
+      containers:
+      - name: consensus-web
+        image: 'gcr.io/PROJECT_ID/consensus-web:latest'  # Replace with your image
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        # Frontend environment variables (built into image or configured at runtime)
+        - name: VITE_API_BASE_URL
+          value: 'https://consensus-api-HASH-uc.a.run.app'  # Replace with backend URL
+        - name: VITE_ENVIRONMENT
+          value: 'production'
+        - name: VITE_POLLING_INTERVAL_MS
+          value: '5000'
+        resources:
+          limits:
+            cpu: '1000m'
+            memory: '512Mi'
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+  traffic:
+  - percent: 100
+    latestRevision: true
