@@ -148,8 +148,12 @@ async def full_review_endpoint(
             extra={"run_id": str(run_id)},
         )
 
-        # Flush to ensure all database writes are persisted before publishing
-        db_session.flush()
+        # All database operations successful, commit the transaction first
+        db_session.commit()
+        logger.info(
+            "Run and StepProgress records committed to database",
+            extra={"run_id": str(run_id)},
+        )
 
         # Step 3: Publish job message to Pub/Sub
         # Build sanitized payload (exclude internal fields)
@@ -177,13 +181,15 @@ async def full_review_endpoint(
             )
 
         except PubSubPublishError as e:
-            # Rollback database changes if publish fails
-            db_session.rollback()
+            # The run is already committed, so we can't roll back.
+            # The API should return an error, and a background job
+            # could be used to find and retry publishing for such orphaned runs.
             logger.error(
-                "Failed to publish job message, rolling back database changes",
+                "Failed to publish job message after committing database changes",
                 extra={
                     "run_id": str(run_id),
                     "error": str(e),
+                    "mitigation": "A background job should retry publishing for this run_id.",
                 },
                 exc_info=True,
             )
@@ -191,18 +197,11 @@ async def full_review_endpoint(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 content={
                     "code": "PUBSUB_PUBLISH_ERROR",
-                    "message": "Failed to enqueue job: Pub/Sub publish failed",
+                    "message": "Failed to enqueue job: Pub/Sub publish failed after run creation",
                     "run_id": str(run_id),
                     "details": {"error": str(e)},
                 },
             )
-
-        # All operations successful, commit the transaction
-        db_session.commit()
-        logger.info(
-            "Job enqueued successfully, transaction committed",
-            extra={"run_id": str(run_id)},
-        )
 
     except SQLAlchemyError as e:
         # Database error, rollback

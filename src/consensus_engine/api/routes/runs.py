@@ -578,6 +578,7 @@ async def create_revision(
     # Pre-generate new run_id and start timing
     new_run_id = uuid.uuid4()
     start_time = time.time()
+    db_committed = False
 
     try:
         # Validate request has at least one edit input
@@ -596,8 +597,19 @@ async def create_revision(
                 detail=f"Invalid run_id UUID: {run_id}",
             ) from e
 
-        # Retrieve parent run (basic validation only - no need to load relations)
-        parent_run = RunRepository.get_run(db_session, parent_run_uuid)
+        # Retrieve parent run with all relations to validate it has required data
+        try:
+            parent_run = RunRepository.get_run_with_relations(db_session, parent_run_uuid)
+        except Exception as e:
+            logger.error(
+                f"Database error while retrieving parent run {run_id}",
+                extra={"parent_run_id": run_id},
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve parent run from database",
+            ) from e
 
         if parent_run is None:
             raise HTTPException(
@@ -613,6 +625,20 @@ async def create_revision(
                     f"Cannot create revision from run with status '{parent_run.status.value}'. "
                     "Parent run must have status 'completed'."
                 ),
+            )
+
+        # Validate parent has required data for revision processing
+        # This prevents enqueueing jobs that will fail when the worker tries to process them
+        if not hasattr(parent_run, 'proposal_version') or parent_run.proposal_version is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Parent run missing proposal version data. Cannot create revision.",
+            )
+
+        if not hasattr(parent_run, 'persona_reviews') or not parent_run.persona_reviews:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Parent run missing persona reviews data. Cannot create revision.",
             )
 
         # Determine parameters (merge with parent)
@@ -676,8 +702,13 @@ async def create_revision(
             extra={"run_id": str(new_run_id)},
         )
 
-        # Flush to ensure all database writes are persisted before publishing
-        db_session.flush()
+        # All database operations successful, commit the transaction first
+        db_session.commit()
+        db_committed = True
+        logger.info(
+            "Revision run and StepProgress records committed to database",
+            extra={"run_id": str(new_run_id), "parent_run_id": run_id},
+        )
 
         # Step 3: Publish job message to Pub/Sub
         # Build sanitized payload (include revision-specific data)
@@ -709,24 +740,25 @@ async def create_revision(
             )
 
         except PubSubPublishError as e:
-            # Rollback database changes if publish fails
-            db_session.rollback()
+            # The run is already committed, so we can't roll back.
+            # The API should return an error, and a background job
+            # could be used to find and retry publishing for such orphaned runs.
             logger.error(
-                "Failed to publish revision job message, rolling back database changes",
+                "Failed to publish revision job message after committing database changes",
                 extra={
                     "run_id": str(new_run_id),
                     "parent_run_id": run_id,
                     "error": str(e),
+                    "mitigation": "A background job should retry publishing for this run_id.",
                 },
                 exc_info=True,
             )
             raise HTTPException(
                 status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Failed to enqueue revision job: Pub/Sub publish failed",
+                detail="Failed to enqueue revision job: Pub/Sub publish failed after run creation",
             ) from e
 
-        # All operations successful, commit the transaction
-        db_session.commit()
+        # All operations successful
         logger.info(
             "Revision job enqueued successfully, transaction committed",
             extra={"run_id": str(new_run_id), "parent_run_id": run_id},
@@ -734,12 +766,15 @@ async def create_revision(
 
     except HTTPException:
         # Re-raise HTTPExceptions as-is (already have proper status codes)
-        db_session.rollback()
+        # Only rollback if we haven't committed yet
+        if not db_committed:
+            db_session.rollback()
         raise
 
     except SQLAlchemyError as e:
-        # Database error, rollback
-        db_session.rollback()
+        # Database error, rollback only if not committed
+        if not db_committed:
+            db_session.rollback()
         logger.error(
             "Database error while enqueueing revision job",
             extra={"run_id": str(new_run_id), "parent_run_id": run_id, "error": str(e)},
@@ -751,8 +786,9 @@ async def create_revision(
         ) from e
 
     except Exception as e:
-        # Unexpected error, rollback
-        db_session.rollback()
+        # Unexpected error, rollback only if not committed
+        if not db_committed:
+            db_session.rollback()
         logger.error(
             "Unexpected error while enqueueing revision job",
             extra={"run_id": str(new_run_id), "parent_run_id": run_id, "error": str(e)},

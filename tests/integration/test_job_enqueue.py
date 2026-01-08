@@ -263,8 +263,8 @@ class TestRevisionJobEnqueue:
         client: TestClient,
     ) -> None:
         """Test that revision requires a completed parent run."""
-        # Mock RunRepository.get_run to return None (not found)
-        mock_run_repo.get_run.return_value = None
+        # Mock RunRepository.get_run_with_relations to return None (not found)
+        mock_run_repo.get_run_with_relations.return_value = None
         
         request_data = {
             "edited_proposal": "Updated proposal text",
@@ -322,7 +322,7 @@ class TestRevisionJobEnqueue:
         client: TestClient,
     ) -> None:
         """Test successful revision job enqueueing."""
-        # Mock parent run
+        # Mock parent run with required relations
         parent_run = Mock(spec=Run)
         parent_run.id = UUID("00000000-0000-0000-0000-000000000001")
         parent_run.status = RunStatus.COMPLETED
@@ -332,8 +332,11 @@ class TestRevisionJobEnqueue:
         parent_run.temperature = 0.7
         parent_run.parameters_json = {}
         parent_run.priority = RunPriority.NORMAL
+        # Add required relations
+        parent_run.proposal_version = Mock()
+        parent_run.persona_reviews = [Mock()]
         
-        mock_run_repo.get_run.return_value = parent_run
+        mock_run_repo.get_run_with_relations.return_value = parent_run
         
         # Mock new run
         new_run = Mock(spec=Run)

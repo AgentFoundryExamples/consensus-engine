@@ -231,14 +231,22 @@ class PubSubPublisher:
         )
 
         try:
-            # Publish with retry decorator
-            # The client library handles retries automatically, but we add explicit retry config
+            # Publish with explicit retry configuration
+            # Use exponential backoff with jitter for transient failures
+            retry_config = retry.Retry(
+                initial=1.0,  # Initial delay in seconds
+                maximum=10.0,  # Maximum delay in seconds
+                multiplier=2.0,  # Exponential backoff multiplier
+                deadline=PUBLISH_TIMEOUT_SECONDS,  # Overall deadline
+            )
+            
             future = self.client.publish(
                 self.topic_path,
                 message_bytes,
                 run_id=run_id,
                 run_type=run_type,
                 priority=priority,
+                retry=retry_config,
             )
 
             # Wait for publish to complete (with timeout)
