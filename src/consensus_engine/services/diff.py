@@ -252,14 +252,22 @@ def compute_run_diff(run1: Run, run2: Run) -> dict[str, Any]:
 
     # Compute proposal changes
     proposal_changes = None
-    if run1.proposal_version and run2.proposal_version:
+    if (
+        run1.proposal_version
+        and run1.proposal_version.expanded_proposal_json
+        and run2.proposal_version
+        and run2.proposal_version.expanded_proposal_json
+    ):
         proposal_changes = compute_proposal_changes(
             run1.proposal_version.expanded_proposal_json,
             run2.proposal_version.expanded_proposal_json,
         )
-    elif not run1.proposal_version and not run2.proposal_version:
+    elif (
+        not run1.proposal_version
+        or not run1.proposal_version.expanded_proposal_json
+    ) and (not run2.proposal_version or not run2.proposal_version.expanded_proposal_json):
         proposal_changes = {"status": "both_missing"}
-    elif not run1.proposal_version:
+    elif not run1.proposal_version or not run1.proposal_version.expanded_proposal_json:
         proposal_changes = {"status": "run1_missing"}
     else:
         proposal_changes = {"status": "run2_missing"}

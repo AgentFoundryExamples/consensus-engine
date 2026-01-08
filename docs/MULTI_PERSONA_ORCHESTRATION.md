@@ -630,6 +630,22 @@ GROUP BY decision_label;
 - Efficient time-series analytics on decision trends
 - No full table scans for common reporting patterns
 
+### Index Design Considerations
+
+**Column Order:**
+The composite index uses column order `(decision_label, created_at)`, which is optimized for queries that filter by decision label first. This is the most common pattern for analytics dashboards.
+
+**Query Pattern Optimization:**
+- **Decision-first queries** (optimized): `WHERE decision_label = 'approve' AND created_at >= '2024-01-01'`
+- **Date-first queries** (uses existing `ix_runs_created_at` index): `WHERE created_at >= '2024-01-01'`
+- **Date-only queries** (uses existing `ix_runs_created_at` index): `WHERE created_at BETWEEN '2024-01-01' AND '2024-04-01'`
+
+**Performance Tips:**
+- For queries that primarily filter by date range and then by decision, the existing `ix_runs_created_at` index will be used
+- If your application frequently uses date-first patterns with large result sets, consider adding an additional index: `CREATE INDEX ix_runs_created_at_decision_label ON runs(created_at, decision_label)`
+- Use `EXPLAIN ANALYZE` to verify query plans and index usage
+- Monitor query performance and adjust index strategy based on actual usage patterns
+
 **Migration:**
 The index is created via Alembic migration `1be7b272f496_add_analytics_index_for_decision_and_date.py` and is automatically applied during `alembic upgrade head`.
 

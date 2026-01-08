@@ -26,6 +26,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import status as http_status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from consensus_engine.config import Settings, get_settings
@@ -451,7 +452,7 @@ async def get_run_diff(
     try:
         run1 = RunRepository.get_run_with_relations(db_session, run_uuid)
         run2 = RunRepository.get_run_with_relations(db_session, other_run_uuid)
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(
             "Database error while retrieving runs for diff",
             extra={"run_id": run_id, "other_run_id": other_run_id},
@@ -460,6 +461,16 @@ async def get_run_diff(
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve runs from database",
+        ) from e
+    except Exception as e:
+        logger.error(
+            "Unexpected error while retrieving runs for diff",
+            extra={"run_id": run_id, "other_run_id": other_run_id},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred",
         ) from e
 
     # Check both runs exist
@@ -478,9 +489,19 @@ async def get_run_diff(
     # Compute diff using service
     try:
         diff_result = compute_run_diff(run1, run2)
+    except (AttributeError, KeyError, ValueError) as e:
+        logger.error(
+            "Data validation error while computing diff",
+            extra={"run_id": run_id, "other_run_id": other_run_id, "error": str(e)},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to compute diff due to invalid or incomplete run data",
+        ) from e
     except Exception as e:
         logger.error(
-            "Error computing diff between runs",
+            "Unexpected error computing diff between runs",
             extra={"run_id": run_id, "other_run_id": other_run_id},
             exc_info=True,
         )
