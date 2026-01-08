@@ -14,6 +14,17 @@
 """Pydantic schemas for request/response models."""
 
 from consensus_engine.schemas.proposal import ExpandedProposal, IdeaInput
+from consensus_engine.schemas.registry import (
+    SchemaNotFoundError,
+    SchemaRegistry,
+    SchemaVersion,
+    SchemaVersionNotFoundError,
+    get_current_schema,
+    get_registry,
+    get_schema_version,
+    list_all_schemas,
+    list_schema_versions,
+)
 from consensus_engine.schemas.review import (
     BlockingIssue,
     Concern,
@@ -36,4 +47,14 @@ __all__ = [
     "MinorityReport",
     "PersonaScoreBreakdown",
     "DetailedScoreBreakdown",
+    # Schema registry exports
+    "SchemaRegistry",
+    "SchemaVersion",
+    "SchemaNotFoundError",
+    "SchemaVersionNotFoundError",
+    "get_registry",
+    "get_current_schema",
+    "get_schema_version",
+    "list_all_schemas",
+    "list_schema_versions",
 ]

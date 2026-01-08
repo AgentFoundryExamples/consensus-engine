@@ -76,7 +76,7 @@ consensus-engine/
 │       ├── clients/      # External service clients (OpenAI, Pub/Sub)
 │       ├── config/       # Configuration and settings
 │       ├── db/           # Database models and repositories
-│       ├── schemas/      # Pydantic models for validation
+│       ├── schemas/      # Pydantic models and versioned schema registry
 │       ├── services/     # Business logic services
 │       ├── workers/      # Background workers (pipeline processor)
 │       └── app.py        # FastAPI application factory
@@ -120,6 +120,13 @@ The Consensus Engine uses an asynchronous architecture with separate API and wor
 - Handles retries, failures, and idempotency
 
 See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for deployment details.
+
+## Documentation
+
+- [Schema Registry](docs/SCHEMA_REGISTRY.md) - Versioned schema management and JSON contract versioning
+- [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) - Production deployment and monitoring
+- [Multi-Persona Orchestration](docs/MULTI_PERSONA_ORCHESTRATION.md) - Consensus building architecture
+- [Async Run Persistence](docs/async_run_persistence.md) - Database persistence patterns
 
 ## Quick Start
 
