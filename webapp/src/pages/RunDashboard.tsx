@@ -8,6 +8,7 @@ import { Container } from '../components/layout';
 import { Button, ErrorBoundary } from '../components/ui';
 import { IdeaForm } from '../components/IdeaForm';
 import { Timeline } from '../components/Timeline';
+import { RoadmapPacket } from '../components/RoadmapPacket';
 import { useRunPolling } from '../hooks/useRunPolling';
 import { useRunsStore } from '../state/runs';
 import { FullReviewService } from '../api/client';
@@ -274,62 +275,71 @@ export function RunDashboard() {
           <div>
             <ErrorBoundary>
               {showTimeline ? (
-                <div className="rounded-lg bg-white p-6 shadow">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Review Progress</h2>
-                    {activeRunDetails.status === 'running' && (
-                      <span className="inline-flex items-center gap-2 text-sm text-blue-600">
-                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        Processing...
-                      </span>
+                <>
+                  <div className="rounded-lg bg-white p-6 shadow">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-gray-900">Review Progress</h2>
+                      {activeRunDetails.status === 'running' && (
+                        <span className="inline-flex items-center gap-2 text-sm text-blue-600">
+                          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          Processing...
+                        </span>
+                      )}
+                    </div>
+                    <Timeline steps={activeRunDetails.step_progress || []} />
+
+                    {/* Show decision when completed */}
+                    {activeRunDetails.status === 'completed' && activeRunDetails.decision && (
+                      <div className="mt-6 rounded-lg bg-gray-50 p-4">
+                        <h3 className="text-base font-semibold text-gray-900">Final Decision</h3>
+                        <div className="mt-2 space-y-2">
+                          <p className="text-sm">
+                            <span className="font-medium">Result: </span>
+                            <span
+                              className={`capitalize ${
+                                activeRunDetails.decision_label === 'approve'
+                                  ? 'text-green-600'
+                                  : activeRunDetails.decision_label === 'reject'
+                                    ? 'text-red-600'
+                                    : 'text-yellow-600'
+                              }`}
+                            >
+                              {activeRunDetails.decision_label}
+                            </span>
+                          </p>
+                          {activeRunDetails.overall_weighted_confidence !== null &&
+                            activeRunDetails.overall_weighted_confidence !== undefined && (
+                              <p className="text-sm">
+                                <span className="font-medium">Confidence: </span>
+                                {(activeRunDetails.overall_weighted_confidence * 100).toFixed(1)}%
+                              </p>
+                            )}
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <Timeline steps={activeRunDetails.step_progress || []} />
 
-                  {/* Show decision when completed */}
-                  {activeRunDetails.status === 'completed' && activeRunDetails.decision && (
-                    <div className="mt-6 rounded-lg bg-gray-50 p-4">
-                      <h3 className="text-base font-semibold text-gray-900">Final Decision</h3>
-                      <div className="mt-2 space-y-2">
-                        <p className="text-sm">
-                          <span className="font-medium">Result: </span>
-                          <span
-                            className={`capitalize ${
-                              activeRunDetails.decision_label === 'approve'
-                                ? 'text-green-600'
-                                : activeRunDetails.decision_label === 'reject'
-                                  ? 'text-red-600'
-                                  : 'text-yellow-600'
-                            }`}
-                          >
-                            {activeRunDetails.decision_label}
-                          </span>
-                        </p>
-                        {activeRunDetails.overall_weighted_confidence !== null &&
-                          activeRunDetails.overall_weighted_confidence !== undefined && (
-                            <p className="text-sm">
-                              <span className="font-medium">Confidence: </span>
-                              {(activeRunDetails.overall_weighted_confidence * 100).toFixed(1)}%
-                            </p>
-                          )}
-                      </div>
+                  {/* Show RoadmapPacket when completed */}
+                  {activeRunDetails.status === 'completed' && (
+                    <div className="mt-6">
+                      <RoadmapPacket run={activeRunDetails} />
                     </div>
                   )}
-                </div>
+                </>
               ) : (
                 <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
                   <svg
