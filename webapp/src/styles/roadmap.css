@@ -1,0 +1,54 @@
+/**
+ * Additional styles for roadmap packet components
+ * Most styling is handled by Tailwind, but custom styles can be added here
+ */
+
+/* Smooth transitions for interactive elements */
+.roadmap-packet-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar for modal and JSON views */
+.roadmap-scrollable::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.roadmap-scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.roadmap-scrollable::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.roadmap-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Focus styles for accessibility */
+.roadmap-focus-ring:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Ensure text is readable with proper contrast */
+.roadmap-text-contrast {
+  color: #1f2937;
+}
+
+/* Animation for minority report badge */
+@keyframes pulse-amber {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.roadmap-minority-badge {
+  animation: pulse-amber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

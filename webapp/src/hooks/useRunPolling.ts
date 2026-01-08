@@ -138,26 +138,19 @@ export function useRunPolling(
           onComplete?.(result);
         } else if (useBackoff) {
           // Increase interval for next poll (exponential backoff)
-          currentIntervalRef.current = Math.min(
-            currentIntervalRef.current * 1.5,
-            maxInterval
-          );
+          currentIntervalRef.current = Math.min(currentIntervalRef.current * 1.5, maxInterval);
         }
       } catch (err) {
         if (!isMountedRef.current) return;
 
-        const error =
-          err instanceof Error ? err : new Error('Unknown error during polling');
+        const error = err instanceof Error ? err : new Error('Unknown error during polling');
         setState((prev) => ({ ...prev, error }));
         onError?.(error);
 
         // Continue polling even on error (transient network issues)
         // but use backoff to avoid hammering a failing endpoint
         if (useBackoff) {
-          currentIntervalRef.current = Math.min(
-            currentIntervalRef.current * 2,
-            maxInterval
-          );
+          currentIntervalRef.current = Math.min(currentIntervalRef.current * 2, maxInterval);
         }
       }
     };
