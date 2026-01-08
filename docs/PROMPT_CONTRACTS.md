@@ -210,12 +210,16 @@ Both schema versions and prompt set versions follow [Semantic Versioning](https:
 - Changing field types (e.g., string → dict)
 - Renaming fields
 - Changing validation constraints that reject previously valid data
+- Adding new enum values if clients don't handle unknown values gracefully
 
 **Bump MINOR (compatible addition)**:
 - Adding optional fields
 - Making required fields optional
 - Relaxing validation constraints
-- Adding new enum values (if clients handle unknown values)
+- Adding new enum values only if:
+  * Clients have explicit unknown value handling
+  * New values are optional/non-critical
+  * Documentation confirms client compatibility
 
 **Bump PATCH (non-functional change)**:
 - Fixing typos in field descriptions
@@ -404,8 +408,10 @@ All API endpoints currently use the `/v1` prefix:
 - Set deprecation timeline
 
 **Step 2: Increment Versions**
+
+Update version constants in the configuration file:
 ```python
-# In src/consensus_engine/config/llm_steps.py
+# File: src/consensus_engine/config/llm_steps.py
 PROMPT_SET_VERSION = "2.0.0"  # Increment MAJOR version
 SCHEMA_VERSION = "2.0.0"      # Increment MAJOR version
 ```
@@ -472,11 +478,13 @@ Before deploying new schema or prompt versions:
 
 ### Snapshot Testing Strategy
 
+**Note**: Snapshot testing infrastructure is recommended for validating version changes but not yet implemented in this codebase. The following guidance describes the recommended approach for future implementation.
+
 Use snapshot tests to detect unintended changes to LLM outputs:
 
 **1. Capture Baseline Snapshots**
 ```bash
-# Generate snapshots for current version
+# Generate snapshots for current version (requires snapshot test infrastructure)
 pytest tests/integration/test_snapshots.py --snapshot-update
 ```
 
@@ -488,7 +496,7 @@ pytest tests/integration/test_snapshots.py --snapshot-update
 
 **3. Compare Against Snapshots**
 ```bash
-# Run tests without --snapshot-update
+# Run tests without --snapshot-update (requires snapshot test infrastructure)
 pytest tests/integration/test_snapshots.py
 
 # Review diffs if tests fail
@@ -501,13 +509,13 @@ pytest tests/integration/test_snapshots.py
 pytest tests/integration/test_snapshots.py --snapshot-update
 ```
 
-**What to Snapshot**:
+**What to Snapshot** (when infrastructure is implemented):
 - Full API response structures
 - Schema validation results
 - Aggregated decision outputs
 - Persona review structures
 
-**Snapshot Test Example**:
+**Snapshot Test Example** (recommended implementation):
 ```python
 def test_expand_output_snapshot(client, snapshot):
     """Ensure expand output structure remains stable."""
@@ -524,6 +532,11 @@ def test_expand_output_snapshot(client, snapshot):
     snapshot.assert_match(data, "expand_output.json")
 ```
 
+**Current Testing Approach**: Until snapshot testing is implemented, validate version changes through:
+- Comprehensive integration tests with expected output validation
+- Manual testing of API endpoints with different inputs
+- Monitoring logs for schema validation errors after deployment
+
 ### Testing Version Changes Locally
 
 **1. Set Up Test Environment**
@@ -535,8 +548,11 @@ cp .env.example .env.test
 **2. Override Versions Locally**
 ```bash
 # In .env.test
-PROMPT_SET_VERSION=2.0.0-rc1  # Release candidate
-SCHEMA_VERSION=2.0.0-rc1
+# Note: System only supports standard semantic versions (MAJOR.MINOR.PATCH)
+# Pre-release identifiers (e.g., -rc1, -alpha) are NOT supported
+# Use incremented versions for testing (e.g., 2.0.0 instead of 2.0.0-rc1)
+PROMPT_SET_VERSION=2.0.0  # Test with next version
+SCHEMA_VERSION=2.0.0
 ```
 
 **3. Run Local Tests**
@@ -621,7 +637,10 @@ if schema_version == "unknown":
 
 **Optional: Backfill Historical Data**
 ```sql
--- Only if version is certain
+-- Only if version is certain and after backing up the database
+-- Use a transaction for safety
+BEGIN;
+
 UPDATE runs
 SET 
     schema_version = '1.0.0',
@@ -630,6 +649,12 @@ WHERE
     schema_version IS NULL
     AND created_at < '2026-01-08'  -- Before version tracking
     AND status = 'completed';
+
+-- Review affected rows before committing
+-- SELECT COUNT(*) FROM runs WHERE schema_version = '1.0.0' AND updated_at = NOW();
+
+COMMIT;
+-- Or ROLLBACK; if results are unexpected
 ```
 
 ### Migration Checklist
