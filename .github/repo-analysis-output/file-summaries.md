@@ -362,8 +362,8 @@ Total files: 76
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 33.49 KB  
-**LOC:** 753  
+**Size:** 34.96 KB  
+**LOC:** 785  
 **TODOs/FIXMEs:** 0  
 
 ## tests/__init__.py
@@ -515,8 +515,8 @@ Total files: 76
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 37.94 KB  
-**LOC:** 798  
+**Size:** 47.31 KB  
+**LOC:** 993  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py
@@ -605,8 +605,8 @@ Total files: 76
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 11.38 KB  
-**LOC:** 224  
+**Size:** 18.23 KB  
+**LOC:** 352  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_orchestrator.py
@@ -632,8 +632,8 @@ Total files: 76
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 16.93 KB  
-**LOC:** 335  
+**Size:** 23.76 KB  
+**LOC:** 444  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_proposal_schemas.py

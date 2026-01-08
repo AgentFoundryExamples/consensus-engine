@@ -10,20 +10,21 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 - **Total files**: 76
 - **Intra-repo dependencies**: 217
-- **External stdlib dependencies**: 35
+- **External stdlib dependencies**: 36
 - **External third-party dependencies**: 71
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 35 unique modules
+Total: 36 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
 - `collections.abc.Callable`
 - `collections.abc.Generator`
 - `collections.abc.Sequence`
+- `collections.deque`
 - `contextlib.asynccontextmanager`
 - `datetime.UTC`
 - `datetime.datetime`
@@ -38,8 +39,7 @@ Total: 35 unique modules
 - `os`
 - `pathlib.Path`
 - `re`
-- `signal`
-- ... and 15 more (see JSON for full list)
+- ... and 16 more (see JSON for full list)
 
 ### Third-Party Packages
 

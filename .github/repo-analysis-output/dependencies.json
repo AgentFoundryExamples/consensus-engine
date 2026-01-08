@@ -595,6 +595,7 @@
       "type": "file",
       "external_dependencies": {
         "stdlib": [
+          "collections.deque",
           "datetime.UTC",
           "datetime.datetime",
           "json",
@@ -894,6 +895,9 @@
           "datetime.timedelta",
           "json",
           "os",
+          "unittest.mock.MagicMock",
+          "unittest.mock.Mock",
+          "unittest.mock.patch",
           "uuid"
         ],
         "third-party": [
@@ -2053,6 +2057,7 @@
       "collections.abc.Callable",
       "collections.abc.Generator",
       "collections.abc.Sequence",
+      "collections.deque",
       "contextlib.asynccontextmanager",
       "datetime.UTC",
       "datetime.datetime",
@@ -2157,7 +2162,7 @@
       "sqlalchemy.select",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 35,
+    "stdlib_count": 36,
     "third-party_count": 71
   }
 }
