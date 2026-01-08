@@ -149,7 +149,9 @@ class TestLogValidationFailure:
         record = caplog.records[0]
         assert record.levelname == "WARNING"
         assert "Validation failure" in record.message
-        assert "idea" in record.message
+        # Check that field is in the record's metadata (extra fields)
+        assert hasattr(record, "field")
+        assert record.field == "idea"
 
     def test_sanitizes_sensitive_metadata(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test that sensitive metadata is not logged."""
