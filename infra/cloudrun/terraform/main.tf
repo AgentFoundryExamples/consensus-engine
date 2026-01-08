@@ -139,9 +139,12 @@ resource "google_pubsub_subscription" "jobs" {
     maximum_backoff = "600s"
   }
   
-  dead_letter_policy {
-    dead_letter_topic     = google_pubsub_topic.dead_letter[0].id
-    max_delivery_attempts = var.pubsub_max_delivery_attempts
+  dynamic "dead_letter_policy" {
+    for_each = var.create_pubsub ? [1] : []
+    content {
+      dead_letter_topic     = google_pubsub_topic.dead_letter[0].id
+      max_delivery_attempts = var.pubsub_max_delivery_attempts
+    }
   }
 }
 
