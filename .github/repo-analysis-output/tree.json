@@ -88,6 +88,10 @@
         },
         {
           "type": "file",
+          "name": "ROADMAP_PACKET_ARCHITECTURE.md"
+        },
+        {
+          "type": "file",
           "name": "SCHEMA_REGISTRY.md"
         },
         {
@@ -882,6 +886,22 @@
                 },
                 {
                   "type": "file",
+                  "name": "JsonToggle.tsx"
+                },
+                {
+                  "type": "file",
+                  "name": "MinorityReport.tsx"
+                },
+                {
+                  "type": "file",
+                  "name": "PersonaReviewModal.tsx"
+                },
+                {
+                  "type": "file",
+                  "name": "RoadmapPacket.tsx"
+                },
+                {
+                  "type": "file",
                   "name": "Timeline.tsx"
                 }
               ]
@@ -923,6 +943,20 @@
                 {
                   "type": "file",
                   "name": "runs.ts"
+                },
+                {
+                  "type": "file",
+                  "name": "selectors.ts"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "styles",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "roadmap.css"
                 }
               ]
             },
@@ -1041,6 +1075,10 @@
     {
       "type": "file",
       "name": "IMPLEMENTATION_SUMMARY_revision_workflow.md"
+    },
+    {
+      "type": "file",
+      "name": "IMPLEMENTATION_SUMMARY_roadmap_packet.md"
     },
     {
       "type": "file",

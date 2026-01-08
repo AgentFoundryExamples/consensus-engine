@@ -19,6 +19,7 @@
   ├── async_run_persistence.md
   ├── MULTI_PERSONA_ORCHESTRATION.md
   ├── PROMPT_CONTRACTS.md
+  ├── ROADMAP_PACKET_ARCHITECTURE.md
   ├── SCHEMA_REGISTRY.md
   ├── SCHEMA_VERSIONING.md
   ├── VERSION_TRACKING.md
@@ -203,6 +204,10 @@
         ├── index.ts
         └── StatusBadge.tsx
       ├── IdeaForm.tsx
+      ├── JsonToggle.tsx
+      ├── MinorityReport.tsx
+      ├── PersonaReviewModal.tsx
+      ├── RoadmapPacket.tsx
       └── Timeline.tsx
     ├── config
       └── index.ts
@@ -211,7 +216,10 @@
     ├── pages
       └── RunDashboard.tsx
     ├── state
-      └── runs.ts
+      ├── runs.ts
+      └── selectors.ts
+    ├── styles
+      └── roadmap.css
     ├── App.css
     ├── App.tsx
     ├── index.css
@@ -240,6 +248,7 @@
 ├── IMPLEMENTATION_SUMMARY_full_review_persistence.md
 ├── IMPLEMENTATION_SUMMARY_pipeline_worker.md
 ├── IMPLEMENTATION_SUMMARY_revision_workflow.md
+├── IMPLEMENTATION_SUMMARY_roadmap_packet.md
 ├── LICENSE
 ├── LLMs.md
 ├── pyproject.toml

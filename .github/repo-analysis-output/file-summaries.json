@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 137,
+  "total_files": 138,
   "files": [
     {
       "schema_version": "2.0",
@@ -1873,8 +1873,8 @@
       "summary": "TypeScript module for useRunPolling",
       "summary_text": "TypeScript module for useRunPolling",
       "metrics": {
-        "size_bytes": 7423,
-        "loc": 195,
+        "size_bytes": 7341,
+        "loc": 188,
         "todo_count": 0
       }
     },
@@ -1889,6 +1889,20 @@
       "metrics": {
         "size_bytes": 2375,
         "loc": 53,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/state/selectors.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for selectors",
+      "summary_text": "TypeScript module for selectors",
+      "metrics": {
+        "size_bytes": 8696,
+        "loc": 234,
         "todo_count": 0
       }
     },

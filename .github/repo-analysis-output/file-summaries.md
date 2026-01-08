@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 137
+Total files: 138
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -1208,8 +1208,8 @@ Total files: 137
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for useRunPolling  
-**Size:** 7.25 KB  
-**LOC:** 195  
+**Size:** 7.17 KB  
+**LOC:** 188  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/state/runs.ts
@@ -1219,6 +1219,15 @@ Total files: 137
 **Summary:** TypeScript module for runs  
 **Size:** 2.32 KB  
 **LOC:** 53  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/state/selectors.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for selectors  
+**Size:** 8.49 KB  
+**LOC:** 234  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/tailwind.config.js
