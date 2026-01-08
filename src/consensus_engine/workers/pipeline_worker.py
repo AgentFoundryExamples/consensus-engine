@@ -796,15 +796,22 @@ class PipelineWorker:
                 schema_versions.append({
                     "schema_name": "ExpandedProposal",
                     "schema_version": proposal_json["_schema_version"],
+                    "prompt_set_version": run.prompt_set_version,
                     "source": "proposal",
                 })
 
         # Collect schema versions from persona reviews
         for review in run.persona_reviews:
             if review.review_json and "_schema_version" in review.review_json:
+                # Extract prompt_set_version from review's prompt_parameters_json if available
+                prompt_set_version = None
+                if review.prompt_parameters_json:
+                    prompt_set_version = review.prompt_parameters_json.get("prompt_set_version")
+                
                 schema_versions.append({
                     "schema_name": "PersonaReview",
                     "schema_version": review.review_json["_schema_version"],
+                    "prompt_set_version": prompt_set_version or run.prompt_set_version,
                     "source": f"review_{review.persona_id}",
                 })
 
@@ -814,6 +821,7 @@ class PipelineWorker:
                 schema_versions.append({
                     "schema_name": "DecisionAggregation",
                     "schema_version": run.decision.decision_json["_schema_version"],
+                    "prompt_set_version": run.prompt_set_version,
                     "source": "decision",
                 })
 
@@ -829,6 +837,8 @@ class PipelineWorker:
                     extra={
                         "run_id": str(run.id),
                         "schema_count": len(schema_versions),
+                        "schema_version": run.schema_version or "unknown",
+                        "prompt_set_version": run.prompt_set_version or "unknown",
                     },
                 )
             except SchemaValidationError:
