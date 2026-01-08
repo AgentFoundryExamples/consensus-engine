@@ -157,6 +157,7 @@
           "fastapi.APIRouter",
           "fastapi.Depends",
           "fastapi.HTTPException",
+          "fastapi.Header",
           "fastapi.status"
         ]
       }
@@ -174,6 +175,7 @@
         "third-party": [
           "fastapi.APIRouter",
           "fastapi.Depends",
+          "fastapi.Header",
           "fastapi.Request",
           "fastapi.responses.JSONResponse",
           "fastapi.status",
@@ -211,6 +213,7 @@
         "third-party": [
           "fastapi.APIRouter",
           "fastapi.Depends",
+          "fastapi.Header",
           "fastapi.Request",
           "fastapi.responses.JSONResponse",
           "fastapi.status"
@@ -232,11 +235,24 @@
           "fastapi.APIRouter",
           "fastapi.Depends",
           "fastapi.HTTPException",
+          "fastapi.Header",
           "fastapi.Query",
           "fastapi.status",
           "sqlalchemy.exc.SQLAlchemyError",
           "sqlalchemy.orm.Session"
         ]
+      }
+    },
+    {
+      "id": "src/consensus_engine/api/validation.py",
+      "path": "src/consensus_engine/api/validation.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "logging",
+          "typing.Any"
+        ],
+        "third-party": []
       }
     },
     {
@@ -550,6 +566,7 @@
       "type": "file",
       "external_dependencies": {
         "stdlib": [
+          "json",
           "re",
           "typing.Any"
         ],
@@ -1027,6 +1044,17 @@
       }
     },
     {
+      "id": "tests/unit/test_api_validation.py",
+      "path": "tests/unit/test_api_validation.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_config.py",
       "path": "tests/unit/test_config.py",
       "type": "file",
@@ -1262,6 +1290,20 @@
       }
     },
     {
+      "id": "tests/unit/test_request_validation.py",
+      "path": "tests/unit/test_request_validation.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json"
+        ],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_review_schemas.py",
       "path": "tests/unit/test_review_schemas.py",
       "type": "file",
@@ -1395,6 +1437,14 @@
     },
     {
       "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/api/validation.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/expand.py",
       "target": "src/consensus_engine/config/logging.py"
     },
     {
@@ -1408,6 +1458,10 @@
     {
       "source": "src/consensus_engine/api/routes/expand.py",
       "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/api/validation.py"
     },
     {
       "source": "src/consensus_engine/api/routes/full_review.py",
@@ -1435,6 +1489,10 @@
     },
     {
       "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
       "target": "src/consensus_engine/schemas/requests.py"
     },
     {
@@ -1460,6 +1518,10 @@
     {
       "source": "src/consensus_engine/api/routes/review.py",
       "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/review.py",
+      "target": "src/consensus_engine/api/validation.py"
     },
     {
       "source": "src/consensus_engine/api/routes/review.py",
@@ -1479,6 +1541,10 @@
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/api/validation.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
       "target": "src/consensus_engine/clients/pubsub.py"
     },
     {
@@ -1503,11 +1569,27 @@
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
       "target": "src/consensus_engine/schemas/requests.py"
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
       "target": "src/consensus_engine/services/diff.py"
+    },
+    {
+      "source": "src/consensus_engine/api/validation.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/validation.py",
+      "target": "src/consensus_engine/config/llm_steps.py"
+    },
+    {
+      "source": "src/consensus_engine/api/validation.py",
+      "target": "src/consensus_engine/exceptions.py"
     },
     {
       "source": "src/consensus_engine/app.py",
@@ -2146,6 +2228,18 @@
       "target": "src/consensus_engine/config/personas.py"
     },
     {
+      "source": "tests/unit/test_api_validation.py",
+      "target": "src/consensus_engine/api/validation.py"
+    },
+    {
+      "source": "tests/unit/test_api_validation.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
+      "source": "tests/unit/test_api_validation.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
       "source": "tests/unit/test_config.py",
       "target": "src/consensus_engine/config/__init__.py"
     },
@@ -2271,6 +2365,10 @@
     },
     {
       "source": "tests/unit/test_request_schemas.py",
+      "target": "src/consensus_engine/schemas/requests.py"
+    },
+    {
+      "source": "tests/unit/test_request_validation.py",
       "target": "src/consensus_engine/schemas/requests.py"
     },
     {
@@ -2400,6 +2498,7 @@
       "fastapi.Depends",
       "fastapi.FastAPI",
       "fastapi.HTTPException",
+      "fastapi.Header",
       "fastapi.Query",
       "fastapi.Request",
       "fastapi.Response",
@@ -2466,6 +2565,6 @@
       "sqlalchemy.text"
     ],
     "stdlib_count": 38,
-    "third-party_count": 72
+    "third-party_count": 73
   }
 }

@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 87
+Total files: 90
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -110,8 +110,8 @@ Total files: 87
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 9.71 KB  
-**LOC:** 234  
+**Size:** 12.34 KB  
+**LOC:** 294  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/full_review.py
@@ -119,8 +119,8 @@ Total files: 87
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 9.75 KB  
-**LOC:** 211  
+**Size:** 11.46 KB  
+**LOC:** 252  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/health.py
@@ -137,8 +137,8 @@ Total files: 87
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 19.56 KB  
-**LOC:** 459  
+**Size:** 21.89 KB  
+**LOC:** 517  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/runs.py
@@ -146,8 +146,17 @@ Total files: 87
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 31.64 KB  
-**LOC:** 741  
+**Size:** 33.41 KB  
+**LOC:** 780  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/api/validation.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 5.46 KB  
+**LOC:** 111  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/app.py
@@ -236,8 +245,8 @@ Total files: 87
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 14.94 KB  
-**LOC:** 381  
+**Size:** 16.09 KB  
+**LOC:** 417  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -281,8 +290,8 @@ Total files: 87
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 3.65 KB  
-**LOC:** 70  
+**Size:** 4.85 KB  
+**LOC:** 96  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/__init__.py
@@ -317,8 +326,8 @@ Total files: 87
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 30.17 KB  
-**LOC:** 643  
+**Size:** 38.12 KB  
+**LOC:** 826  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -591,6 +600,15 @@ Total files: 87
 **LOC:** 374  
 **TODOs/FIXMEs:** 0  
 
+## tests/unit/test_api_validation.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 7.17 KB  
+**LOC:** 153  
+**TODOs/FIXMEs:** 0  
+
 ## tests/unit/test_config.py
 **Language:** Python  
 **Role:** test  
@@ -731,8 +749,17 @@ Total files: 87
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 10.46 KB  
-**LOC:** 219  
+**Size:** 11.00 KB  
+**LOC:** 231  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_request_validation.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 11.29 KB  
+**LOC:** 196  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_review_schemas.py

@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 87,
+  "total_files": 90,
   "files": [
     {
       "schema_version": "2.0",
@@ -165,8 +165,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9948,
-        "loc": 234,
+        "size_bytes": 12632,
+        "loc": 294,
         "todo_count": 0
       }
     },
@@ -179,8 +179,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 9988,
-        "loc": 211,
+        "size_bytes": 11734,
+        "loc": 252,
         "todo_count": 0
       }
     },
@@ -207,8 +207,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 20026,
-        "loc": 459,
+        "size_bytes": 22418,
+        "loc": 517,
         "todo_count": 0
       }
     },
@@ -221,8 +221,22 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 32396,
-        "loc": 741,
+        "size_bytes": 34208,
+        "loc": 780,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/api/validation.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 5586,
+        "loc": 111,
         "todo_count": 0
       }
     },
@@ -361,8 +375,8 @@
       "summary": "Python configuration file (role: configuration)",
       "summary_text": "Python configuration file (role: configuration)",
       "metrics": {
-        "size_bytes": 15303,
-        "loc": 381,
+        "size_bytes": 16480,
+        "loc": 417,
         "todo_count": 0
       }
     },
@@ -431,8 +445,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 3738,
-        "loc": 70,
+        "size_bytes": 4962,
+        "loc": 96,
         "todo_count": 0
       }
     },
@@ -487,8 +501,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 30891,
-        "loc": 643,
+        "size_bytes": 39035,
+        "loc": 826,
         "todo_count": 0
       }
     },
@@ -914,6 +928,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "tests/unit/test_api_validation.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 7339,
+        "loc": 153,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "tests/unit/test_config.py",
       "language": "Python",
       "role": "test",
@@ -1131,8 +1159,22 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 10713,
-        "loc": 219,
+        "size_bytes": 11261,
+        "loc": 231,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_request_validation.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 11563,
+        "loc": 196,
         "todo_count": 0
       }
     },
