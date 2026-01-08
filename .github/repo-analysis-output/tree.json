@@ -80,6 +80,10 @@
         },
         {
           "type": "file",
+          "name": "GCP_DEPLOYMENT_ARCHITECTURE.md"
+        },
+        {
+          "type": "file",
           "name": "MULTI_PERSONA_ORCHESTRATION.md"
         },
         {

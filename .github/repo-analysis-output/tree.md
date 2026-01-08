@@ -17,6 +17,7 @@
     └── af_maintenance.yml
 ├── docs
   ├── async_run_persistence.md
+  ├── GCP_DEPLOYMENT_ARCHITECTURE.md
   ├── MULTI_PERSONA_ORCHESTRATION.md
   ├── PROMPT_CONTRACTS.md
   ├── ROADMAP_PACKET_ARCHITECTURE.md
