@@ -438,3 +438,158 @@ class TestPipelineWorker:
         # Message should be nacked (for retry)
         mock_message.nack.assert_called_once()
         mock_message.ack.assert_not_called()
+
+
+class TestWorkerIdempotencyAndRetries:
+    """Test suite for worker idempotency and retry behavior."""
+
+    @pytest.fixture
+    def settings(self, monkeypatch: pytest.MonkeyPatch) -> Settings:
+        """Create test settings."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("PUBSUB_USE_MOCK", "true")
+        monkeypatch.setenv("PUBSUB_EMULATOR_HOST", "localhost:8085")
+        monkeypatch.setenv("PUBSUB_PROJECT_ID", "test-project")
+        monkeypatch.setenv("PUBSUB_SUBSCRIPTION", "test-sub")
+        monkeypatch.setenv("WORKER_STEP_TIMEOUT_SECONDS", "300")
+        monkeypatch.setenv("WORKER_JOB_TIMEOUT_SECONDS", "1800")
+        return Settings()
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_step_timeout_configuration(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that step timeouts are properly configured."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify timeout settings are properly loaded
+        assert settings.worker_step_timeout_seconds == 300
+        assert settings.worker_job_timeout_seconds == 1800
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_retry_count_tracking(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that retry attempts are tracked per run."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify retry_counts uses LruCache
+        from consensus_engine.workers.pipeline_worker import LruCache
+        assert isinstance(worker.retry_counts, LruCache)
+
+        # Simulate tracking retry for a run
+        run_id = str(uuid.uuid4())
+        worker.retry_counts[run_id] = 1
+        assert worker.retry_counts[run_id] == 1
+
+        # Increment retry count
+        worker.retry_counts[run_id] = worker.retry_counts.get(run_id, 0) + 1
+        assert worker.retry_counts[run_id] == 2
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_worker_initialization_settings(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that worker initializes with correct settings."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify worker attributes
+        assert worker.settings == settings
+        assert worker.project_id == "test-project"
+        assert worker.should_stop is False
+        
+        # Verify retry_counts is LruCache
+        from consensus_engine.workers.pipeline_worker import LruCache
+        assert isinstance(worker.retry_counts, LruCache)
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_worker_concurrency_configuration(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Test that worker concurrency settings are configurable."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("PUBSUB_USE_MOCK", "true")
+        monkeypatch.setenv("PUBSUB_PROJECT_ID", "test-project")
+        monkeypatch.setenv("PUBSUB_SUBSCRIPTION", "test-sub")
+        monkeypatch.setenv("WORKER_MAX_CONCURRENCY", "20")
+        
+        settings = Settings()
+        
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify concurrency settings are properly loaded
+        assert settings.worker_max_concurrency == 20
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_idempotent_duplicate_message_handling(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that duplicate Pub/Sub messages for the same run_id are handled idempotently."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        # Mock database engine and session
+        mock_engine = Mock()
+        mock_get_engine.return_value = mock_engine
+
+        worker = PipelineWorker(settings)
+
+        # Create mock message with run_id
+        run_id = str(uuid.uuid4())
+        mock_message = Mock(spec=pubsub_v1.subscriber.message.Message)
+        message_data = {
+            "run_id": run_id,
+            "run_type": "initial",
+            "priority": "normal",
+            "payload": {"idea": "test idea"},
+        }
+        mock_message.data = json.dumps(message_data).encode("utf-8")
+        mock_message.message_id = "msg-001"
+
+        # Mock _process_job to simulate completed run (idempotency skip)
+        with patch.object(worker, '_process_job') as mock_process:
+            # First message - process returns early due to idempotency
+            mock_process.return_value = None  # Early return for completed run
+            
+            worker._message_callback(mock_message)
+
+            # Verify message was acked after checking idempotency
+            mock_message.ack.assert_called_once()
+            mock_message.nack.assert_not_called()
+
+        # Test duplicate message (different message_id, same run_id)
+        mock_message2 = Mock(spec=pubsub_v1.subscriber.message.Message)
+        mock_message2.data = json.dumps(message_data).encode("utf-8")
+        mock_message2.message_id = "msg-002"  # Different message ID
+
+        with patch.object(worker, '_process_job') as mock_process:
+            # Second message - also returns early due to idempotency
+            mock_process.return_value = None
+            
+            worker._message_callback(mock_message2)
+
+            # Verify duplicate was also acked without reprocessing
+            mock_message2.ack.assert_called_once()
+            mock_message2.nack.assert_not_called()

@@ -1784,11 +1784,168 @@ This scaffolding provides the foundation for:
 
 ## Troubleshooting
 
-**Issue**: `ModuleNotFoundError: No module named 'consensus_engine'`
+### Common Setup Issues
+
+**Issue**: `ModuleNotFoundError: No module named 'consensus_engine'`  
 **Solution**: Install the package with `pip install -e .`
 
-**Issue**: `ValidationError` on startup
+**Issue**: `ValidationError` on startup  
 **Solution**: Ensure all required environment variables are set in `.env`
+
+**Issue**: Missing API Key  
+**Symptom**: Application fails to start with `ValidationError: OPENAI_API_KEY cannot be empty`  
+**Solution**: Set `OPENAI_API_KEY` in `.env` file or environment
+
+### API Server Issues
+
+**Issue**: API returns 503 "Pub/Sub publish error"  
+**Cause**: Cannot publish to Pub/Sub topic  
+**Check**:
+- Verify `PUBSUB_PROJECT_ID` and `PUBSUB_TOPIC` are set correctly
+- Check Pub/Sub credentials (`PUBSUB_CREDENTIALS_FILE` or ADC)
+- If using emulator, ensure `PUBSUB_EMULATOR_HOST` is set and emulator is running
+- Check IAM permissions: `roles/pubsub.publisher` on the topic
+
+**Solution**:
+- Restart API with correct environment variables
+- Use `PUBSUB_USE_MOCK=true` for testing without Pub/Sub
+
+**Issue**: Database connection errors  
+**Cause**: Cannot connect to PostgreSQL  
+**Check**:
+- Verify `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- For Cloud SQL: Check `DB_INSTANCE_CONNECTION_NAME` and IAM permissions
+- Check database is running: `pg_isready -h localhost -p 5432`
+- Check connection pool settings (`DB_POOL_SIZE`, `DB_POOL_TIMEOUT`)
+
+**Solution**:
+- For local dev: Start PostgreSQL with Docker Compose
+- For Cloud SQL: Ensure service account has `roles/cloudsql.client`
+- Check network connectivity and firewall rules
+
+### Worker Issues
+
+**Issue**: Worker not processing jobs (runs stuck in "queued")  
+**Cause**: Worker not running or not subscribed  
+**Check**:
+- Worker process is running: `ps aux | grep pipeline_worker`
+- Worker logs show `worker.started` event
+- Worker configured with correct `PUBSUB_SUBSCRIPTION`
+- Subscription exists and has messages: `gcloud pubsub subscriptions describe <subscription>`
+
+**Solution**:
+- Start worker: `python -m consensus_engine.workers.pipeline_worker`
+- Verify subscription is attached to correct topic
+- Check worker logs for connection or authentication errors
+
+**Issue**: Worker keeps nacking messages (jobs retry forever)  
+**Cause**: Worker encounters repeated errors during processing  
+**Check**:
+- Worker logs for `job.failed` or `step.failed` events with error details
+- LLM API errors (rate limits, timeouts, auth failures)
+- Database errors during status updates
+- Pub/Sub ack deadline too short (job takes longer than `WORKER_ACK_DEADLINE_SECONDS`)
+
+**Solution**:
+- Review error logs and fix underlying issue (e.g., increase OpenAI rate limits)
+- Increase `WORKER_ACK_DEADLINE_SECONDS` for long-running jobs
+- Configure dead-letter topic to prevent infinite retries
+- Manually mark problematic runs as failed in database
+
+**Issue**: Duplicate results (same job processed twice)  
+**Expected Behavior**: Worker idempotency checks should prevent duplicate work  
+**Verify**:
+- Worker logs show `idempotency_check.skipped` for completed runs
+- Completed runs are acked without reprocessing
+- Check run status is properly checked before processing
+
+**Issue**: High latency (jobs taking too long)  
+**Cause**: LLM API slowness, worker overload, or resource constraints  
+**Check**:
+- Worker concurrency: `WORKER_MAX_CONCURRENCY` (default: 10)
+- Per-step latency in logs: Look for slow steps (e.g., `expand` taking > 10s)
+- OpenAI API latency: Check OpenAI status page
+- Database query latency: Slow updates to StepProgress
+- Queue depth: Check `num_undelivered_messages` in subscription metrics
+
+**Solution**:
+- Increase `WORKER_MAX_CONCURRENCY` (balance with resource limits)
+- Optimize OpenAI requests (check temperature, max_tokens settings)
+- Scale worker horizontally (run multiple worker instances)
+- Review database indexes and connection pool size
+
+### Job Failure Recovery
+
+**Inspect failed run:**
+```bash
+curl http://localhost:8000/v1/runs/{run_id}
+```
+
+**Monitor stuck runs:**
+```sql
+-- Runs stuck in "running" for > 30 minutes
+SELECT id, started_at, EXTRACT(EPOCH FROM NOW() - started_at) AS seconds_running
+FROM runs
+WHERE status = 'running'
+AND started_at < NOW() - INTERVAL '30 minutes'
+ORDER BY started_at;
+```
+
+**Monitor failed steps:**
+```sql
+-- Recent failed steps with errors
+SELECT r.id AS run_id, sp.step_name, sp.error_message, sp.completed_at
+FROM runs r
+JOIN step_progress sp ON r.id = sp.run_id
+WHERE sp.status = 'failed'
+AND sp.completed_at > NOW() - INTERVAL '1 hour'
+ORDER BY sp.completed_at DESC;
+```
+
+**Manual intervention (advanced):**
+```sql
+-- Mark run as failed manually (if worker stuck)
+UPDATE runs SET status = 'failed', completed_at = NOW()
+WHERE id = '550e8400-e29b-41d4-a716-446655440000';
+
+-- Reset run for retry (use with caution)
+UPDATE runs SET status = 'queued', started_at = NULL, completed_at = NULL
+WHERE id = '550e8400-e29b-41d4-a716-446655440000';
+
+UPDATE step_progress SET status = 'pending', started_at = NULL, completed_at = NULL, error_message = NULL
+WHERE run_id = '550e8400-e29b-41d4-a716-446655440000';
+```
+
+### Logging and Observability
+
+**Key log events to monitor:**
+- `worker.started` - Worker initialized successfully
+- `job.processing.started` - Job processing began
+- `step.started`, `step.completed` - Individual pipeline steps
+- `step.failed` - Step failures with error details
+- `job.completed` - Job succeeded
+- `job.failed` - Job failed after all retries
+- `idempotency_check.skipped` - Duplicate message ignored
+
+**Enable debug logging:**
+```bash
+export LOG_LEVEL=DEBUG
+```
+
+**Cloud Logging queries (GCP):**
+```
+# Failed jobs in last hour
+resource.type="cloud_run_revision"
+jsonPayload.event="job.failed"
+timestamp>="2026-01-08T04:00:00Z"
+
+# High latency jobs (>60s)
+resource.type="cloud_run_revision"
+jsonPayload.event="job.completed"
+jsonPayload.elapsed_time>60
+```
+
+See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for production deployment details and monitoring setup.
 
 **Issue**: Tests failing with import errors
 **Solution**: Ensure dev dependencies are installed with `pip install -e ".[dev]"`
