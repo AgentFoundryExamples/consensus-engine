@@ -124,10 +124,17 @@ def log_validation_failure(
     }
 
     # Sanitize metadata to avoid logging sensitive content
+    # Whitelist of allowed metadata keys for logging
+    allowed_keys = {
+        "field", "rule", "validation_failure", "request_id", "field_length", "limit",
+        "requested_schema_version", "supported_schema_version",
+        "requested_prompt_set_version", "supported_prompt_set_version",
+        "api_version", "run_id", "parent_run_id", "new_run_id"
+    }
     sanitized_metadata = {}
     for key, value in log_metadata.items():
         # Only log metadata about size/length, not actual content
-        if key in ["field", "rule", "validation_failure", "request_id", "field_length", "limit"]:
+        if key in allowed_keys:
             sanitized_metadata[key] = value
         elif key.endswith("_length") or key.endswith("_size") or key.endswith("_count"):
             sanitized_metadata[key] = value

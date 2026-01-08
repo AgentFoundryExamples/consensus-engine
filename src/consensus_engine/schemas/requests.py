@@ -899,7 +899,7 @@ class CreateRevisionRequest(BaseModel):
             return v
 
         # Use default constant, actual limit enforced at API route level
-        max_length = DEFAULT_MAX_EDIT_NOTES_LENGTH
+        max_length = DEFAULT_MAX_IDEA_LENGTH
         validate_text_length(v, "input_idea", max_length=max_length)
 
         return v
