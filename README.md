@@ -1924,12 +1924,163 @@ The API key is never logged or exposed in error messages for security.
 - **testing**: INFO logging, debug mode disabled
 - **production**: WARNING logging, debug mode disabled, verbose third-party logs suppressed
 
+## Production Deployment
+
+### Overview
+
+The Consensus Engine can be deployed to Google Cloud Platform (GCP) with the following architecture:
+
+```
+┌─────────────┐     ┌──────────────────────┐     ┌──────────────────┐
+│   User      │────▶│ Frontend (Cloud Run) │────▶│ Backend (Cloud   │
+│   Browser   │     │ + Identity-Aware     │     │ Run) + IAM Auth  │
+└─────────────┘     │ Proxy (IAP)          │     └──────────────────┘
+                    └──────────────────────┘              │
+                                                           ▼
+                                                  ┌──────────────────┐
+                                                  │  Cloud SQL       │
+                                                  │  PostgreSQL      │
+                                                  └──────────────────┘
+                                                           │
+                                                           ▼
+                                                  ┌──────────────────┐
+                                                  │  Pub/Sub Topic   │
+                                                  │  (Job Queue)     │
+                                                  └──────────────────┘
+                                                           │
+                                                           ▼
+                                                  ┌──────────────────┐
+                                                  │  Worker (Cloud   │
+                                                  │  Run)            │
+                                                  └──────────────────┘
+```
+
+### Key Components
+
+1. **Frontend (React + Vite)**: Served via nginx on Cloud Run, protected by IAP for user authentication
+2. **Backend (FastAPI)**: API service on Cloud Run with IAM authentication (no public access)
+3. **Worker**: Background job processor (separate Cloud Run service)
+4. **Cloud SQL**: PostgreSQL database with IAM authentication
+5. **Pub/Sub**: Message queue for asynchronous job processing
+
+### Quick Start
+
+See detailed deployment guides:
+- **Infrastructure Setup**: [infra/cloudrun/README.md](infra/cloudrun/README.md) - Complete GCP setup with gcloud commands
+- **Frontend Deployment**: [docs/WEB_FRONTEND.md](docs/WEB_FRONTEND.md) - Detailed frontend deployment with IAP and CORS
+- **Worker Deployment**: [docs/WORKER_DEPLOYMENT.md](docs/WORKER_DEPLOYMENT.md) - Background worker deployment
+
+### CORS Configuration
+
+Cross-Origin Resource Sharing (CORS) must be configured to allow the frontend to communicate with the backend API.
+
+#### Environment Variables
+
+```bash
+# Backend .env
+CORS_ORIGINS=https://your-frontend-url.run.app
+CORS_ALLOW_HEADERS=Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version
+```
+
+#### Multiple Origins
+
+For multiple environments (staging + production):
+
+```bash
+CORS_ORIGINS=https://frontend-staging.run.app,https://frontend-prod.run.app
+```
+
+#### Security Best Practices
+
+- **Never use wildcard (`*`)** for CORS origins in production
+- **Specify explicit origins** you control and trust
+- **Always use HTTPS** for production origins
+- **Restrict headers** to only those needed by your application
+
+#### Verifying CORS
+
+Test CORS configuration:
+
+```bash
+# Test preflight request
+curl -X OPTIONS https://your-backend-api.run.app/v1/runs \
+  -H "Origin: https://your-frontend.run.app" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+  -v
+
+# Expected headers in response:
+# Access-Control-Allow-Origin: https://your-frontend.run.app
+# Access-Control-Allow-Credentials: true
+# Access-Control-Allow-Methods: *
+# Access-Control-Allow-Headers: Content-Type,Authorization,...
+```
+
+See [docs/WEB_FRONTEND.md](docs/WEB_FRONTEND.md) for troubleshooting CORS issues.
+
 ## Security Considerations
 
-- API keys are validated at startup but never logged
-- The `get_safe_dict()` method masks sensitive values for logging
-- Production mode suppresses verbose logging from third-party libraries
-- Use environment variables, never hardcode credentials
+### Application Security
+
+- **API keys** are validated at startup but never logged
+- **Sensitive values** are masked in logs via `get_safe_dict()` method
+- **Production mode** suppresses verbose logging from third-party libraries
+- **Environment variables** should be used for all secrets (never hardcode credentials)
+
+### Deployment Security
+
+- **Frontend**: Protected by Identity-Aware Proxy (IAP) for user authentication
+- **Backend**: Protected by IAM authentication (no unauthenticated access allowed)
+- **Service-to-Service Auth**: Frontend uses signed identity tokens to call backend
+- **Database**: Cloud SQL with IAM authentication (no password-based auth)
+- **Secrets**: Stored in Google Secret Manager, not in environment variables
+- **HTTPS**: Enforced by Cloud Run for all services
+
+### IAM Roles and Permissions
+
+**Frontend Service Account**:
+- `roles/run.invoker` on backend service (to call API)
+
+**Backend Service Account**:
+- `roles/cloudsql.client` (to connect to Cloud SQL)
+- `roles/pubsub.publisher` (to enqueue jobs)
+- `roles/secretmanager.secretAccessor` (to access OpenAI API key)
+
+**Worker Service Account**:
+- `roles/cloudsql.client` (to connect to Cloud SQL)
+- `roles/pubsub.subscriber` (to consume job messages)
+- `roles/secretmanager.secretAccessor` (to access OpenAI API key)
+
+### Testing Authentication Locally
+
+```bash
+# Get identity token for your user
+gcloud auth print-identity-token
+
+# Test backend API call
+curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  https://your-backend-api.run.app/health
+
+# Test with service account impersonation
+gcloud auth print-identity-token \
+  --impersonate-service-account=frontend-sa@project.iam.gserviceaccount.com \
+  --audiences=https://your-backend-api.run.app
+```
+
+### Security Best Practices
+
+1. **Enable audit logging** for IAM and data access events
+2. **Use least-privilege IAM roles** for all service accounts
+3. **Regularly rotate** service account keys (if using key-based auth)
+4. **Monitor security anomalies** via Cloud Security Command Center
+5. **Never expose backend API** publicly (always require IAM auth)
+6. **Validate all inputs** at API boundaries (already implemented)
+7. **Use Secret Manager** for sensitive configuration (API keys, credentials)
+8. **Enable VPC Service Controls** for additional network isolation (optional)
+9. **Implement rate limiting** for API endpoints (consider Cloud Armor)
+10. **Regularly update dependencies** to patch security vulnerabilities
+
+See [infra/cloudrun/README.md](infra/cloudrun/README.md#security-best-practices) for comprehensive security guidance.
 
 ## Future Development
 
