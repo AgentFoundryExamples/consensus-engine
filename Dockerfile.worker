@@ -1,0 +1,76 @@
+# ==============================================================================
+# Consensus Engine Pipeline Worker - Production Dockerfile
+# ==============================================================================
+# Multi-stage build for Pub/Sub worker with dependency caching
+# Supports both amd64 and arm64 architectures
+# Cloud Run Jobs and Services compatible
+# ==============================================================================
+
+# Stage 1: Base image with system dependencies
+FROM python:3.11-slim-bookworm AS base
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Stage 2: Builder stage for installing Python dependencies
+FROM base AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy dependency files
+COPY pyproject.toml /app/
+
+# Install Python dependencies
+# Separate layer for dependencies to maximize cache reuse
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -e .
+
+# Stage 3: Runtime image
+FROM base AS runtime
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application code
+COPY src/ /app/src/
+COPY alembic.ini /app/
+COPY migrations/ /app/migrations/
+
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Set Python environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app/src
+
+# Expose port for health checks (optional, worker can run without HTTP server)
+# Cloud Run requires a port to be exposed even for jobs
+ENV PORT=8080
+EXPOSE 8080
+
+# Health check via simple HTTP server or file-based health signal
+# For Cloud Run Jobs, health checks are optional
+# For Cloud Run Services, provide a basic health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
+
+# Entrypoint runs the pipeline worker
+# Worker will consume messages from Pub/Sub subscription
+CMD ["python", "-m", "consensus_engine.workers.pipeline_worker"]

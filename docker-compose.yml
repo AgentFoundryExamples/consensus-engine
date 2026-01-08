@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: consensus-engine-postgres
@@ -20,6 +21,96 @@ services:
     networks:
       - consensus-network
 
+  # FastAPI Backend Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: consensus-engine-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Database connection for local development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: consensus_engine
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      USE_CLOUD_SQL_CONNECTOR: "false"
+      # Pub/Sub mock for local development
+      PUBSUB_USE_MOCK: "true"
+      # CORS for local webapp
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+      # Environment
+      ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - consensus-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\").read()' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Pipeline Worker Service
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: consensus-engine-worker
+    env_file:
+      - .env
+    environment:
+      # Database connection for local development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: consensus_engine
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      USE_CLOUD_SQL_CONNECTOR: "false"
+      # Pub/Sub mock for local development
+      PUBSUB_USE_MOCK: "true"
+      # Environment
+      ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - consensus-network
+    restart: unless-stopped
+
+  # Web Frontend Service
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    container_name: consensus-engine-webapp
+    ports:
+      - "8080:8080"
+    environment:
+      # API endpoint for local docker-compose
+      # Frontend JavaScript runs in browser, so it needs localhost not the internal Docker network name
+      VITE_API_BASE_URL: http://localhost:8000
+      VITE_ENVIRONMENT: development
+      VITE_POLLING_INTERVAL_MS: 2000
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - consensus-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # pgAdmin for Database Management (Optional)
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: consensus-engine-pgadmin
