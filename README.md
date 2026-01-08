@@ -123,7 +123,15 @@ See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for deployment details.
 
 ## Documentation
 
+### Core Documentation
+
+- [Prompt Contracts and Versioning Strategy](docs/PROMPT_CONTRACTS.md) - **Comprehensive guide** to schema registry usage, version bump rules, prompt_set_version, and safe contract evolution
 - [Schema Registry](docs/SCHEMA_REGISTRY.md) - Versioned schema management and JSON contract versioning
+- [Schema Versioning and Validation](docs/SCHEMA_VERSIONING.md) - API versioning strategy and validation mechanisms
+- [Version Tracking and Audit](docs/VERSION_TRACKING.md) - Run-level and step-level version tracking
+
+### Deployment and Architecture
+
 - [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) - Production deployment and monitoring
 - [Multi-Persona Orchestration](docs/MULTI_PERSONA_ORCHESTRATION.md) - Consensus building architecture
 - [Async Run Persistence](docs/async_run_persistence.md) - Database persistence patterns
@@ -173,6 +181,22 @@ OPENAI_MODEL=gpt-5.1
 TEMPERATURE=0.7
 ENV=development
 ```
+
+#### Schema and Prompt Versioning
+
+The Consensus Engine uses a **single deployment-wide versioning model**:
+
+- **Schema Version**: `1.0.0` - Defines data structure contracts (ExpandedProposal, PersonaReview, DecisionAggregation)
+- **Prompt Set Version**: `1.0.0` - Identifies prompt templates used across all pipeline steps
+- **API Version**: `/v1` - Global version path for all endpoints
+
+**Key Characteristics**:
+- All endpoints share the same schema and prompt versions within a deployment
+- Version metadata included in all API responses and run outputs (see `schema_version` and `prompt_set_version` fields)
+- Breaking changes require new API version (e.g., `/v2`) to maintain backward compatibility
+- Per-step model and temperature configuration available via environment variables (see below)
+
+For detailed information on evolving schemas and prompts safely, see [Prompt Contracts and Versioning Strategy](docs/PROMPT_CONTRACTS.md).
 
 #### Environment Variables
 
