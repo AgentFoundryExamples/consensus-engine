@@ -282,6 +282,44 @@ class Settings(BaseSettings):
         description="Overall job timeout in seconds (60-7200, default: 1800)",
     )
 
+    # API Validation Configuration
+    max_idea_length: int = Field(
+        default=10000,
+        ge=100,
+        le=100000,
+        description="Maximum character length for idea text (100-100000, default: 10000)",
+    )
+    max_extra_context_length: int = Field(
+        default=50000,
+        ge=100,
+        le=500000,
+        description="Maximum character length for extra_context (100-500000, default: 50000)",
+    )
+    max_edited_proposal_length: int = Field(
+        default=100000,
+        ge=1000,
+        le=1000000,
+        description="Maximum character length for edited_proposal (1000-1000000, default: 100000)",
+    )
+    max_edit_notes_length: int = Field(
+        default=10000,
+        ge=100,
+        le=100000,
+        description="Maximum character length for edit_notes (100-100000, default: 10000)",
+    )
+    min_persona_count: int = Field(
+        default=1,
+        ge=1,
+        le=10,
+        description="Minimum number of personas for review (1-10, default: 1)",
+    )
+    max_persona_count: int = Field(
+        default=10,
+        ge=1,
+        le=20,
+        description="Maximum number of personas for review (1-20, default: 10)",
+    )
+
     @field_validator("openai_api_key")
     @classmethod
     def validate_api_key(cls, v: str) -> str:
