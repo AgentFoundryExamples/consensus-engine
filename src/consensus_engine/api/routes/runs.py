@@ -13,8 +13,9 @@
 # limitations under the License.
 """Run retrieval endpoint router.
 
-This module implements GET /v1/runs and GET /v1/runs/{run_id} endpoints
-for querying run history and retrieving individual run details, as well as
+This module implements GET /v1/runs, GET /v1/runs/{run_id}, and 
+GET /v1/runs/{run_id}/diff/{other_run_id} endpoints for querying run history,
+retrieving individual run details, and comparing runs, as well as
 POST /v1/runs/{run_id}/revisions for creating revision runs.
 """
 
@@ -44,10 +45,12 @@ from consensus_engine.schemas.requests import (
     CreateRevisionResponse,
     PersonaReviewSummary,
     RunDetailResponse,
+    RunDiffResponse,
     RunListItemResponse,
     RunListResponse,
 )
 from consensus_engine.services.aggregator import aggregate_persona_reviews
+from consensus_engine.services.diff import compute_run_diff
 from consensus_engine.services.expand import expand_with_edits
 from consensus_engine.services.orchestrator import (
     determine_personas_to_rerun,
@@ -391,6 +394,116 @@ async def get_run_detail(
     )
 
     return response
+
+
+@router.get(
+    "/runs/{run_id}/diff/{other_run_id}",
+    response_model=RunDiffResponse,
+    status_code=http_status.HTTP_200_OK,
+    summary="Compare two runs and compute diff",
+    description=(
+        "Computes structured diff between two runs including proposal changes, "
+        "persona score deltas, and decision changes. Returns 400 for identical runs, "
+        "404 for missing runs. All diffs are computed from stored JSONB without re-running models."
+    ),
+)
+async def get_run_diff(
+    run_id: str,
+    other_run_id: str,
+    db_session: Session = Depends(get_db_session),
+) -> RunDiffResponse:
+    """Compare two runs and return structured diff.
+
+    Args:
+        run_id: UUID of the first run
+        other_run_id: UUID of the second run
+        db_session: Database session injected via dependency
+
+    Returns:
+        RunDiffResponse with proposal changes, persona deltas, and decision delta
+
+    Raises:
+        HTTPException: 400 for identical run IDs, 404 for missing runs
+    """
+    logger.info(
+        f"Computing diff between runs {run_id} and {other_run_id}",
+        extra={"run_id": run_id, "other_run_id": other_run_id},
+    )
+
+    # Validate run IDs are different
+    if run_id == other_run_id:
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail="Cannot diff a run against itself. Please provide two different run IDs.",
+        )
+
+    # Parse and validate run IDs
+    try:
+        run_uuid = uuid.UUID(run_id)
+        other_run_uuid = uuid.UUID(other_run_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid UUID format: {str(e)}",
+        ) from e
+
+    # Retrieve both runs with all relations
+    try:
+        run1 = RunRepository.get_run_with_relations(db_session, run_uuid)
+        run2 = RunRepository.get_run_with_relations(db_session, other_run_uuid)
+    except Exception as e:
+        logger.error(
+            f"Database error while retrieving runs for diff",
+            extra={"run_id": run_id, "other_run_id": other_run_id},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve runs from database",
+        ) from e
+
+    # Check both runs exist
+    if run1 is None:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Run not found: {run_id}",
+        )
+
+    if run2 is None:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Run not found: {other_run_id}",
+        )
+
+    # Compute diff using service
+    try:
+        diff_result = compute_run_diff(run1, run2)
+    except Exception as e:
+        logger.error(
+            f"Error computing diff between runs",
+            extra={"run_id": run_id, "other_run_id": other_run_id},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to compute diff: {str(e)}",
+        ) from e
+
+    logger.info(
+        f"Successfully computed diff between runs {run_id} and {other_run_id}",
+        extra={
+            "run_id": run_id,
+            "other_run_id": other_run_id,
+            "is_parent_child": diff_result["metadata"]["is_parent_child"],
+        },
+    )
+
+    return RunDiffResponse(
+        metadata=diff_result["metadata"],
+        proposal_changes=diff_result["proposal_changes"],
+        persona_deltas=diff_result["persona_deltas"],
+        decision_delta=diff_result["decision_delta"],
+    )
 
 
 @router.post(

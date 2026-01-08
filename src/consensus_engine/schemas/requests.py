@@ -628,3 +628,41 @@ class CreateRevisionResponse(BaseModel):
         ...,
         description="Human-readable message about the revision",
     )
+
+
+class RunDiffResponse(BaseModel):
+    """Response model for GET /v1/runs/{run_id}/diff/{other_run_id} endpoint.
+
+    Attributes:
+        metadata: Metadata about the two runs and their relationship
+        proposal_changes: Per-section diffs of proposal text
+        persona_deltas: Changes in persona confidence scores and blocking flags
+        decision_delta: Changes in overall weighted confidence and decision label
+    """
+
+    metadata: dict[str, Any] = Field(
+        ...,
+        description=(
+            "Metadata including run IDs, timestamps, and parent/child relationship status"
+        ),
+    )
+    proposal_changes: dict[str, Any] = Field(
+        ...,
+        description=(
+            "Per-section proposal diffs with status (unchanged/modified/added/removed) "
+            "and unified diff output for modified sections"
+        ),
+    )
+    persona_deltas: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "List of persona score deltas with old/new confidence, blocking issues changes, "
+            "and security concerns changes"
+        ),
+    )
+    decision_delta: dict[str, Any] = Field(
+        ...,
+        description=(
+            "Overall decision comparison including confidence delta and decision label changes"
+        ),
+    )

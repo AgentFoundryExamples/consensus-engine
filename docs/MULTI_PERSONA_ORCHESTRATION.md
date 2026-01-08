@@ -500,3 +500,137 @@ GET /v1/runs/550e8400-e29b-41d4-a716-446655440000
 - Can be used to retrieve parent proposals when creating revisions
 
 See the main README for complete API documentation and response examples.
+
+## Run Comparison and Diffing
+
+The Consensus Engine provides a diff API to compare two runs and compute structured changes.
+
+### GET /v1/runs/{run_id}/diff/{other_run_id}
+
+Computes a comprehensive diff between two runs without re-running models. All diffs are computed from stored JSONB data.
+
+**Response Structure:**
+```json
+{
+  "metadata": {
+    "run1_id": "uuid-of-first-run",
+    "run2_id": "uuid-of-second-run",
+    "run1_created_at": "2026-01-07T10:00:00Z",
+    "run2_created_at": "2026-01-07T11:00:00Z",
+    "is_parent_child": true,
+    "relationship": "run1_is_parent_of_run2"
+  },
+  "proposal_changes": {
+    "title": {"status": "unchanged", "diff": null},
+    "problem_statement": {
+      "status": "modified",
+      "diff": ["--- original", "+++ modified", "@@ -1,3 +1,3 @@", "..."],
+      "old_length": 500,
+      "new_length": 520
+    },
+    "proposed_solution": {"status": "modified", "diff": ["..."]},
+    "assumptions": {"status": "unchanged", "diff": null},
+    "scope_non_goals": {"status": "added", "new_value": ["..."], "diff": null}
+  },
+  "persona_deltas": [
+    {
+      "persona_id": "architect",
+      "persona_name": "Architect",
+      "old_confidence": 0.75,
+      "new_confidence": 0.85,
+      "confidence_delta": 0.10,
+      "old_blocking_issues": false,
+      "new_blocking_issues": false,
+      "blocking_changed": false,
+      "old_security_concerns": false,
+      "new_security_concerns": false,
+      "security_concerns_changed": false
+    },
+    {
+      "persona_id": "security_guardian",
+      "persona_name": "SecurityGuardian",
+      "old_confidence": 0.60,
+      "new_confidence": 0.90,
+      "confidence_delta": 0.30,
+      "old_blocking_issues": true,
+      "new_blocking_issues": false,
+      "blocking_changed": true,
+      "old_security_concerns": true,
+      "new_security_concerns": false,
+      "security_concerns_changed": true
+    }
+  ],
+  "decision_delta": {
+    "old_overall_weighted_confidence": 0.72,
+    "new_overall_weighted_confidence": 0.84,
+    "confidence_delta": 0.12,
+    "old_decision_label": "revise",
+    "new_decision_label": "approve",
+    "decision_changed": true
+  }
+}
+```
+
+**Features:**
+- **Proposal Changes**: Per-section unified diffs for text fields (problem_statement, proposed_solution, etc.)
+- **Persona Deltas**: Confidence score changes, blocking issue transitions, security concern flags
+- **Decision Delta**: Overall weighted confidence change and decision label transitions
+- **Parent/Child Detection**: Automatically detects and reports revision relationships
+- **Large Proposal Handling**: Diff output is truncated to 50 lines per section to maintain performance
+
+**Edge Cases:**
+- Diffing a run against itself returns 400 Bad Request with helpful error message
+- Missing runs return 404 without leaking implementation details
+- Large proposals limit diff depth to ensure responses remain performant (max 50 lines per section)
+
+**Example Usage:**
+```bash
+# Compare a revision against its parent
+GET /v1/runs/parent-run-uuid/diff/revision-run-uuid
+
+# Compare two unrelated runs
+GET /v1/runs/run1-uuid/diff/run2-uuid
+```
+
+**Use Cases:**
+- **Auditing**: Track exactly what changed between proposal iterations
+- **Analytics**: Identify which personas improved/degraded confidence in revisions
+- **Debugging**: Understand why a decision changed from REVISE to APPROVE
+- **Reporting**: Generate change summaries for stakeholders
+
+## Analytics Support
+
+The database includes a composite index on `(decision_label, created_at)` to accelerate common analytics queries.
+
+### Optimized Index
+
+**Index:** `ix_runs_decision_label_created_at` on `runs(decision_label, created_at)`
+
+**Accelerates:**
+- Filtering by decision outcome: `WHERE decision_label = 'approve'`
+- Date range queries: `WHERE created_at >= '2024-01-01'`
+- Combined filters: `WHERE decision_label = 'approve' AND created_at >= '2024-01-01'`
+
+**Example Queries:**
+```sql
+-- Count approvals in the last month
+SELECT COUNT(*) FROM runs 
+WHERE decision_label = 'approve' 
+AND created_at >= NOW() - INTERVAL '1 month';
+
+-- Average confidence by decision type in Q1
+SELECT decision_label, AVG(overall_weighted_confidence) 
+FROM runs 
+WHERE created_at BETWEEN '2024-01-01' AND '2024-04-01'
+GROUP BY decision_label;
+```
+
+**Benefits:**
+- Fast dashboard queries filtering by decision outcome
+- Efficient time-series analytics on decision trends
+- No full table scans for common reporting patterns
+
+**Migration:**
+The index is created via Alembic migration `1be7b272f496_add_analytics_index_for_decision_and_date.py` and is automatically applied during `alembic upgrade head`.
+
+**Note:** The existing `ix_runs_created_at` index on `created_at` alone is still present for general time-based queries. The composite index complements it for decision-specific analytics.
