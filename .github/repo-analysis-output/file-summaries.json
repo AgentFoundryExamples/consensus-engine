@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 78,
+  "total_files": 82,
   "files": [
     {
       "schema_version": "2.0",
@@ -249,8 +249,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 15821,
-        "loc": 307,
+        "size_bytes": 18475,
+        "loc": 352,
         "todo_count": 0
       }
     },
@@ -279,6 +279,34 @@
       "metrics": {
         "size_bytes": 1234,
         "loc": 27,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/config/instruction_builder.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 10171,
+        "loc": 225,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/config/llm_steps.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 7114,
+        "loc": 178,
         "todo_count": 0
       }
     },
@@ -319,8 +347,8 @@
       "summary": "Python configuration file (role: configuration)",
       "summary_text": "Python configuration file (role: configuration)",
       "metrics": {
-        "size_bytes": 13133,
-        "loc": 330,
+        "size_bytes": 15303,
+        "loc": 381,
         "todo_count": 0
       }
     },
@@ -515,8 +543,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 8911,
-        "loc": 166,
+        "size_bytes": 10191,
+        "loc": 183,
         "todo_count": 0
       }
     },
@@ -529,8 +557,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 23257,
-        "loc": 431,
+        "size_bytes": 24305,
+        "loc": 448,
         "todo_count": 0
       }
     },
@@ -543,8 +571,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 8694,
-        "loc": 155,
+        "size_bytes": 9511,
+        "loc": 166,
         "todo_count": 0
       }
     },
@@ -571,8 +599,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 35799,
-        "loc": 785,
+        "size_bytes": 35930,
+        "loc": 787,
         "todo_count": 0
       }
     },
@@ -921,8 +949,36 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 10931,
-        "loc": 190,
+        "size_bytes": 11399,
+        "loc": 192,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_instruction_builder.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 10308,
+        "loc": 178,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_llm_steps.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 8919,
+        "loc": 189,
         "todo_count": 0
       }
     },
@@ -963,7 +1019,7 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 17226,
+        "size_bytes": 17472,
         "loc": 374,
         "todo_count": 0
       }
@@ -1061,7 +1117,7 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 16713,
+        "size_bytes": 17277,
         "loc": 331,
         "todo_count": 0
       }

@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 78
+Total files: 82
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -164,8 +164,8 @@ Total files: 78
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 15.45 KB  
-**LOC:** 307  
+**Size:** 18.04 KB  
+**LOC:** 352  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/clients/pubsub.py
@@ -184,6 +184,24 @@ Total files: 78
 **Summary:** Python module initialization (role: module-init)  
 **Size:** 1.21 KB  
 **LOC:** 27  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/config/instruction_builder.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 9.93 KB  
+**LOC:** 225  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/config/llm_steps.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 6.95 KB  
+**LOC:** 178  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/config/logging.py
@@ -209,8 +227,8 @@ Total files: 78
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 12.83 KB  
-**LOC:** 330  
+**Size:** 14.94 KB  
+**LOC:** 381  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -335,8 +353,8 @@ Total files: 78
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 8.70 KB  
-**LOC:** 166  
+**Size:** 9.95 KB  
+**LOC:** 183  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/orchestrator.py
@@ -344,8 +362,8 @@ Total files: 78
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 22.71 KB  
-**LOC:** 431  
+**Size:** 23.74 KB  
+**LOC:** 448  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/review.py
@@ -353,8 +371,8 @@ Total files: 78
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 8.49 KB  
-**LOC:** 155  
+**Size:** 9.29 KB  
+**LOC:** 166  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/workers/__init__.py
@@ -371,8 +389,8 @@ Total files: 78
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 34.96 KB  
-**LOC:** 785  
+**Size:** 35.09 KB  
+**LOC:** 787  
 **TODOs/FIXMEs:** 0  
 
 ## tests/__init__.py
@@ -596,8 +614,26 @@ Total files: 78
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 10.67 KB  
-**LOC:** 190  
+**Size:** 11.13 KB  
+**LOC:** 192  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_instruction_builder.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 10.07 KB  
+**LOC:** 178  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_llm_steps.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 8.71 KB  
+**LOC:** 189  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_models.py
@@ -623,7 +659,7 @@ Total files: 78
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 16.82 KB  
+**Size:** 17.06 KB  
 **LOC:** 374  
 **TODOs/FIXMEs:** 0  
 
@@ -686,7 +722,7 @@ Total files: 78
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 16.32 KB  
+**Size:** 16.87 KB  
 **LOC:** 331  
 **TODOs/FIXMEs:** 0  
 

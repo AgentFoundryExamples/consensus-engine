@@ -226,6 +226,14 @@
                 },
                 {
                   "type": "file",
+                  "name": "instruction_builder.py"
+                },
+                {
+                  "type": "file",
+                  "name": "llm_steps.py"
+                },
+                {
+                  "type": "file",
                   "name": "logging.py"
                 },
                 {
@@ -451,6 +459,14 @@
             {
               "type": "file",
               "name": "test_expand_service.py"
+            },
+            {
+              "type": "file",
+              "name": "test_instruction_builder.py"
+            },
+            {
+              "type": "file",
+              "name": "test_llm_steps.py"
             },
             {
               "type": "file",

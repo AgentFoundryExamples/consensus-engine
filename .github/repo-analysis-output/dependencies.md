@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 78
-- **Intra-repo dependencies**: 224
-- **External stdlib dependencies**: 37
-- **External third-party dependencies**: 71
+- **Total files**: 82
+- **Intra-repo dependencies**: 236
+- **External stdlib dependencies**: 38
+- **External third-party dependencies**: 72
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 37 unique modules
+Total: 38 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -39,11 +39,11 @@ Total: 37 unique modules
 - `logging.config.fileConfig`
 - `os`
 - `pathlib.Path`
-- ... and 17 more (see JSON for full list)
+- ... and 18 more (see JSON for full list)
 
 ### Third-Party Packages
 
-Total: 71 unique packages
+Total: 72 unique packages
 
 - `alembic.command`
 - `alembic.config.Config`
@@ -65,7 +65,7 @@ Total: 71 unique packages
 - `google.cloud.pubsub_v1`
 - `google.cloud.sql.connector.Connector`
 - `httpx`
-- ... and 51 more (see JSON for full list)
+- ... and 52 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 
@@ -85,10 +85,10 @@ Total: 71 unique packages
 - `src/consensus_engine/workers/pipeline_worker.py` (12 dependencies)
 - `src/consensus_engine/app.py` (10 dependencies)
 - `src/consensus_engine/api/routes/runs.py` (8 dependencies)
+- `src/consensus_engine/services/orchestrator.py` (8 dependencies)
 - `src/consensus_engine/api/routes/full_review.py` (7 dependencies)
 - `src/consensus_engine/api/routes/review.py` (7 dependencies)
+- `src/consensus_engine/services/review.py` (7 dependencies)
 - `tests/integration/test_pipeline_worker.py` (7 dependencies)
 - `tests/integration/test_revision_endpoint.py` (7 dependencies)
-- `src/consensus_engine/services/orchestrator.py` (6 dependencies)
-- `tests/integration/test_acceptance_criteria.py` (6 dependencies)
-- `tests/integration/test_full_review_endpoint.py` (6 dependencies)
+- `src/consensus_engine/services/expand.py` (6 dependencies)

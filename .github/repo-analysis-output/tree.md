@@ -50,6 +50,8 @@
       └── pubsub.py
     ├── config
       ├── __init__.py
+      ├── instruction_builder.py
+      ├── llm_steps.py
       ├── logging.py
       ├── personas.py
       └── settings.py
@@ -103,6 +105,8 @@
     ├── test_diff_service.py
     ├── test_exceptions.py
     ├── test_expand_service.py
+    ├── test_instruction_builder.py
+    ├── test_llm_steps.py
     ├── test_models.py
     ├── test_openai_client.py
     ├── test_orchestrator.py
