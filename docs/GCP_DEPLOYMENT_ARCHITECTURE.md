@@ -290,6 +290,8 @@ The Consensus Engine consists of four main deployable components:
 
 ## Environment Variables and Secrets
 
+**Note on Placeholder Values**: Throughout this section, example values like `my-project-123`, `us-central1`, and `my-project.iam` are placeholders that must be replaced with your actual GCP project ID, selected region, and project-specific values. These are not default values and will not work as-is.
+
 ### API Service Environment Variables
 
 #### Required
@@ -297,10 +299,10 @@ The Consensus Engine consists of four main deployable components:
 | Variable | Type | Description | Example |
 |----------|------|-------------|---------|
 | `OPENAI_API_KEY` | Secret | OpenAI API key | `sk-...` (from Secret Manager) |
-| `PUBSUB_PROJECT_ID` | Plain | GCP project ID | `my-project-123` |
-| `DB_INSTANCE_CONNECTION_NAME` | Plain | Cloud SQL instance | `my-project:us-central1:consensus-db` |
+| `PUBSUB_PROJECT_ID` | Plain | GCP project ID | `my-project-123` *(replace with your project ID)* |
+| `DB_INSTANCE_CONNECTION_NAME` | Plain | Cloud SQL instance | `my-project:us-central1:consensus-db` *(replace with your instance)* |
 | `DB_NAME` | Plain | Database name | `consensus_engine` |
-| `DB_USER` | Plain | Database user | `consensus-api-sa@my-project.iam` |
+| `DB_USER` | Plain | Database user | `consensus-api-sa@my-project.iam` *(replace with your project)* |
 | `USE_CLOUD_SQL_CONNECTOR` | Plain | Use Cloud SQL connector | `true` |
 | `DB_IAM_AUTH` | Plain | Use IAM for database auth | `true` |
 
@@ -334,11 +336,11 @@ The Consensus Engine consists of four main deployable components:
 | Variable | Type | Description | Example |
 |----------|------|-------------|---------|
 | `OPENAI_API_KEY` | Secret | OpenAI API key | `sk-...` (from Secret Manager) |
-| `PUBSUB_PROJECT_ID` | Plain | GCP project ID | `my-project-123` |
+| `PUBSUB_PROJECT_ID` | Plain | GCP project ID | `my-project-123` *(replace with your project ID)* |
 | `PUBSUB_SUBSCRIPTION` | Plain | Subscription name | `consensus-engine-jobs-sub` |
-| `DB_INSTANCE_CONNECTION_NAME` | Plain | Cloud SQL instance | `my-project:us-central1:consensus-db` |
+| `DB_INSTANCE_CONNECTION_NAME` | Plain | Cloud SQL instance | `my-project:us-central1:consensus-db` *(replace with your instance)* |
 | `DB_NAME` | Plain | Database name | `consensus_engine` |
-| `DB_USER` | Plain | Database user | `consensus-worker-sa@my-project.iam` |
+| `DB_USER` | Plain | Database user | `consensus-worker-sa@my-project.iam` *(replace with your project)* |
 | `USE_CLOUD_SQL_CONNECTOR` | Plain | Use Cloud SQL connector | `true` |
 | `DB_IAM_AUTH` | Plain | Use IAM for database auth | `true` |
 
@@ -347,10 +349,18 @@ The Consensus Engine consists of four main deployable components:
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `WORKER_MAX_CONCURRENCY` | Plain | `10` | Max concurrent jobs |
-| `WORKER_ACK_DEADLINE_SECONDS` | Plain | `600` | Pub/Sub ack deadline |
+| `WORKER_ACK_DEADLINE_SECONDS` | Plain | `600` | Pub/Sub ack deadline (10-600 seconds) |
 | `WORKER_STEP_TIMEOUT_SECONDS` | Plain | `300` | Per-step timeout |
-| `WORKER_JOB_TIMEOUT_SECONDS` | Plain | `1800` | Overall job timeout |
+| `WORKER_JOB_TIMEOUT_SECONDS` | Plain | `540` | Overall job timeout (must be ≤ ack deadline) |
+| `MAX_RETRIES_PER_PERSONA` | Plain | `3` | Max retries per persona review |
+| `RETRY_INITIAL_BACKOFF_SECONDS` | Plain | `1.0` | Initial retry backoff delay |
+| `RETRY_BACKOFF_MULTIPLIER` | Plain | `2.0` | Exponential backoff multiplier |
 | `ENV` | Plain | `production` | Environment mode |
+
+**Important Configuration Notes**:
+- `WORKER_ACK_DEADLINE_SECONDS` has a hard limit of 10-600 seconds in Google Cloud Pub/Sub
+- `WORKER_JOB_TIMEOUT_SECONDS` must be less than or equal to `WORKER_ACK_DEADLINE_SECONDS` to prevent message redelivery and duplicate processing
+- Workers must extend the ack deadline for jobs exceeding the initial deadline
 
 ### Frontend Service Environment Variables
 
@@ -367,9 +377,10 @@ The Consensus Engine consists of four main deployable components:
 | `VITE_APP_TITLE` | Plain | `Consensus Engine` | Application title |
 
 **Build-Time vs Runtime**:
-- Frontend env vars are baked into the build at container build time
-- Changes require rebuilding and redeploying the container
-- Consider using Cloud Run environment variables for runtime configuration
+- Frontend env vars (prefixed with `VITE_`) are baked into the static assets at container build time
+- Changes to these variables require rebuilding and redeploying the frontend container
+- Cloud Run environment variables are NOT accessible by the client-side React application at runtime
+- For dynamic configuration, consider serving a `config.json` file from your web server that the React app can fetch on startup
 
 ## IAM and Service Account Requirements
 
