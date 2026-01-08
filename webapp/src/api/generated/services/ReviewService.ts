@@ -14,7 +14,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { ReviewIdeaRequest } from '../models/ReviewIdeaRequest';
 import type { ReviewIdeaResponse } from '../models/ReviewIdeaResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';

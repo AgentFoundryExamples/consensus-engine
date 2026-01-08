@@ -14,7 +14,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { FullReviewRequest } from '../models/FullReviewRequest';
 import type { JobEnqueuedResponse } from '../models/JobEnqueuedResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';

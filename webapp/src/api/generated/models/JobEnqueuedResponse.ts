@@ -14,7 +14,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 /**
  * Response model for job enqueueing endpoints (POST /v1/full-review, POST /v1/runs/{run_id}/revisions).
  *

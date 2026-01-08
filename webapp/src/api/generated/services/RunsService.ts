@@ -14,7 +14,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { CreateRevisionRequest } from '../models/CreateRevisionRequest';
 import type { JobEnqueuedResponse } from '../models/JobEnqueuedResponse';
 import type { RunDetailResponse } from '../models/RunDetailResponse';

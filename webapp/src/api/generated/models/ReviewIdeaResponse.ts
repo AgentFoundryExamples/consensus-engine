@@ -14,7 +14,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { DecisionAggregation } from './DecisionAggregation';
 import type { ExpandIdeaResponse } from './ExpandIdeaResponse';
 import type { PersonaReview } from './PersonaReview';
