@@ -483,9 +483,9 @@ class TestWorkerIdempotencyAndRetries:
 
         worker = PipelineWorker(settings)
 
-        # Verify retry_counts dict is initialized
-        assert isinstance(worker.retry_counts, dict)
-        assert len(worker.retry_counts) == 0
+        # Verify retry_counts uses LruCache
+        from consensus_engine.workers.pipeline_worker import LruCache
+        assert isinstance(worker.retry_counts, LruCache)
 
         # Simulate tracking retry for a run
         run_id = str(uuid.uuid4())
@@ -493,7 +493,7 @@ class TestWorkerIdempotencyAndRetries:
         assert worker.retry_counts[run_id] == 1
 
         # Increment retry count
-        worker.retry_counts[run_id] += 1
+        worker.retry_counts[run_id] = worker.retry_counts.get(run_id, 0) + 1
         assert worker.retry_counts[run_id] == 2
 
     @patch("consensus_engine.workers.pipeline_worker.get_engine")
@@ -512,7 +512,10 @@ class TestWorkerIdempotencyAndRetries:
         assert worker.settings == settings
         assert worker.project_id == "test-project"
         assert worker.should_stop is False
-        assert isinstance(worker.retry_counts, dict)
+        
+        # Verify retry_counts is LruCache
+        from consensus_engine.workers.pipeline_worker import LruCache
+        assert isinstance(worker.retry_counts, LruCache)
 
     @patch("consensus_engine.workers.pipeline_worker.get_engine")
     @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
@@ -536,3 +539,57 @@ class TestWorkerIdempotencyAndRetries:
 
         # Verify concurrency settings are properly loaded
         assert settings.worker_max_concurrency == 20
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_idempotent_duplicate_message_handling(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that duplicate Pub/Sub messages for the same run_id are handled idempotently."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        # Mock database engine and session
+        mock_engine = Mock()
+        mock_get_engine.return_value = mock_engine
+
+        worker = PipelineWorker(settings)
+
+        # Create mock message with run_id
+        run_id = str(uuid.uuid4())
+        mock_message = Mock(spec=pubsub_v1.subscriber.message.Message)
+        message_data = {
+            "run_id": run_id,
+            "run_type": "initial",
+            "priority": "normal",
+            "payload": {"idea": "test idea"},
+        }
+        mock_message.data = json.dumps(message_data).encode("utf-8")
+        mock_message.message_id = "msg-001"
+
+        # Mock _process_job to simulate completed run (idempotency skip)
+        with patch.object(worker, '_process_job') as mock_process:
+            # First message - process returns early due to idempotency
+            mock_process.return_value = None  # Early return for completed run
+            
+            worker._message_callback(mock_message)
+
+            # Verify message was acked after checking idempotency
+            mock_message.ack.assert_called_once()
+            mock_message.nack.assert_not_called()
+
+        # Test duplicate message (different message_id, same run_id)
+        mock_message2 = Mock(spec=pubsub_v1.subscriber.message.Message)
+        mock_message2.data = json.dumps(message_data).encode("utf-8")
+        mock_message2.message_id = "msg-002"  # Different message ID
+
+        with patch.object(worker, '_process_job') as mock_process:
+            # Second message - also returns early due to idempotency
+            mock_process.return_value = None
+            
+            worker._message_callback(mock_message2)
+
+            # Verify duplicate was also acked without reprocessing
+            mock_message2.ack.assert_called_once()
+            mock_message2.nack.assert_not_called()

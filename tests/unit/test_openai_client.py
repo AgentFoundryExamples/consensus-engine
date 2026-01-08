@@ -439,3 +439,30 @@ class TestOpenAIClientAsyncBehavior:
         assert metadata["model"] == "gpt-4.0"
         assert metadata["temperature"] == 0.2
         assert metadata["step_name"] == "review_architect"
+
+    @patch("consensus_engine.clients.openai_client.OpenAI")
+    def test_timeout_enforcement_during_llm_call(self, mock_openai: Mock, mock_settings: Settings) -> None:
+        """Test that timeout errors are raised when OpenAI API call exceeds timeout."""
+        mock_client = MagicMock()
+        # Simulate timeout during API call
+        mock_client.responses.parse.side_effect = APITimeoutError(request=MagicMock())
+        mock_openai.return_value = mock_client
+
+        wrapper = OpenAIClientWrapper(mock_settings)
+
+        # Should raise timeout error after retries exhausted
+        with pytest.raises(LLMTimeoutError) as exc_info:
+            wrapper.create_structured_response(
+                system_instruction="Test",
+                user_prompt="Test",
+                response_model=MockResponseModel,
+                step_name="expand",
+                max_retries=2,
+            )
+
+        # Verify timeout error details
+        assert "timed out" in str(exc_info.value).lower()
+        assert exc_info.value.code == "LLM_TIMEOUT"
+        assert "step_name" in exc_info.value.details
+        assert exc_info.value.details["step_name"] == "expand"
+        assert "attempt" in exc_info.value.details

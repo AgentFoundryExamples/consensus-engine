@@ -28,6 +28,7 @@ import signal
 import sys
 import time
 import uuid
+from collections import deque
 from datetime import UTC, datetime
 from typing import Any
 
@@ -97,6 +98,49 @@ ALL_STEPS = [
 ]
 
 
+class LruCache:
+    """Simple LRU cache to prevent unbounded memory growth.
+    
+    This cache implements a least-recently-used eviction policy with a maximum size.
+    Used for tracking retry counts per run_id without memory leaks.
+    """
+    
+    def __init__(self, max_size: int = 10000):
+        """Initialize LRU cache.
+        
+        Args:
+            max_size: Maximum number of items to cache (default: 10000)
+        """
+        self.max_size = max_size
+        self.cache: dict[str, int] = {}
+        self.order: deque[str] = deque()
+    
+    def __getitem__(self, key: str) -> int:
+        """Get value for key."""
+        return self.cache[key]
+    
+    def __setitem__(self, key: str, value: int) -> None:
+        """Set value for key, evicting oldest if at capacity."""
+        if key in self.cache:
+            # Update existing key - move to end
+            self.order.remove(key)
+        elif len(self.cache) >= self.max_size:
+            # At capacity - evict oldest
+            oldest = self.order.popleft()
+            del self.cache[oldest]
+        
+        self.cache[key] = value
+        self.order.append(key)
+    
+    def __contains__(self, key: str) -> bool:
+        """Check if key exists in cache."""
+        return key in self.cache
+    
+    def get(self, key: str, default: int = 0) -> int:
+        """Get value with default if not found."""
+        return self.cache.get(key, default)
+
+
 class JobMessage(BaseModel):
     """Schema for job messages from Pub/Sub.
     
@@ -134,8 +178,8 @@ class PipelineWorker:
         self.settings = settings
         self.should_stop = False
         
-        # Track retry attempts per run
-        self.retry_counts: dict[str, int] = {}
+        # Track retry attempts per run with bounded LRU cache to prevent memory leaks
+        self.retry_counts = LruCache(max_size=10000)
         
         # Set up database engine
         self.engine = get_engine(settings)
