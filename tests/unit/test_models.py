@@ -97,6 +97,7 @@ class TestRunModel:
 
     def test_run_status_enum(self):
         """Test RunStatus enum values."""
+        assert RunStatus.QUEUED.value == "queued"
         assert RunStatus.RUNNING.value == "running"
         assert RunStatus.COMPLETED.value == "completed"
         assert RunStatus.FAILED.value == "failed"
@@ -105,6 +106,40 @@ class TestRunModel:
         """Test RunType enum values."""
         assert RunType.INITIAL.value == "initial"
         assert RunType.REVISION.value == "revision"
+
+    def test_run_priority_enum(self):
+        """Test RunPriority enum values."""
+        from consensus_engine.db.models import RunPriority
+        assert RunPriority.NORMAL.value == "normal"
+        assert RunPriority.HIGH.value == "high"
+
+    def test_run_with_async_fields(self):
+        """Test creating a Run with async-ready fields."""
+        from datetime import UTC, datetime
+        from consensus_engine.db.models import RunPriority
+        
+        run_id = uuid.uuid4()
+        queued_at = datetime.now(UTC)
+        
+        run = Run(
+            id=run_id,
+            status=RunStatus.QUEUED,
+            queued_at=queued_at,
+            retry_count=0,
+            priority=RunPriority.HIGH,
+            input_idea="Build async API",
+            run_type=RunType.INITIAL,
+            model="gpt-5.1",
+            temperature=0.7,
+            parameters_json={"max_tokens": 1000},
+        )
+
+        assert run.status == RunStatus.QUEUED
+        assert run.queued_at == queued_at
+        assert run.started_at is None
+        assert run.completed_at is None
+        assert run.retry_count == 0
+        assert run.priority == RunPriority.HIGH
 
 
 class TestProposalVersionModel:
@@ -482,3 +517,116 @@ class TestTableNames:
     def test_decision_table_name(self):
         """Test Decision table name."""
         assert Decision.__tablename__ == "decisions"
+
+    def test_step_progress_table_name(self):
+        """Test StepProgress table name."""
+        from consensus_engine.db.models import StepProgress
+        assert StepProgress.__tablename__ == "step_progress"
+
+
+class TestStepProgressModel:
+    """Test StepProgress model."""
+
+    def test_step_progress_creation(self):
+        """Test creating a StepProgress instance."""
+        from consensus_engine.db.models import StepProgress, StepStatus
+        
+        step_id = uuid.uuid4()
+        run_id = uuid.uuid4()
+
+        step = StepProgress(
+            id=step_id,
+            run_id=run_id,
+            step_name="expand",
+            step_order=0,
+            status=StepStatus.PENDING,
+        )
+
+        assert step.id == step_id
+        assert step.run_id == run_id
+        assert step.step_name == "expand"
+        assert step.step_order == 0
+        assert step.status == StepStatus.PENDING
+        assert step.started_at is None
+        assert step.completed_at is None
+        assert step.error_message is None
+
+    def test_step_progress_with_timestamps(self):
+        """Test creating StepProgress with timestamps."""
+        from datetime import UTC, datetime
+        from consensus_engine.db.models import StepProgress, StepStatus
+        
+        run_id = uuid.uuid4()
+        started = datetime.now(UTC)
+        completed = datetime.now(UTC)
+
+        step = StepProgress(
+            run_id=run_id,
+            step_name="review_architect",
+            step_order=1,
+            status=StepStatus.COMPLETED,
+            started_at=started,
+            completed_at=completed,
+        )
+
+        assert step.started_at == started
+        assert step.completed_at == completed
+
+    def test_step_progress_with_error(self):
+        """Test creating StepProgress with error message."""
+        from consensus_engine.db.models import StepProgress, StepStatus
+        
+        step = StepProgress(
+            run_id=uuid.uuid4(),
+            step_name="aggregate_decision",
+            step_order=6,
+            status=StepStatus.FAILED,
+            error_message="API timeout",
+        )
+
+        assert step.status == StepStatus.FAILED
+        assert step.error_message == "API timeout"
+
+    def test_step_progress_repr(self):
+        """Test StepProgress string representation."""
+        from consensus_engine.db.models import StepProgress, StepStatus
+        
+        run_id = uuid.uuid4()
+        step = StepProgress(
+            run_id=run_id,
+            step_name="expand",
+            step_order=0,
+            status=StepStatus.RUNNING,
+        )
+
+        repr_str = repr(step)
+        assert "StepProgress" in repr_str
+        assert str(run_id) in repr_str
+        assert "expand" in repr_str
+        assert "running" in repr_str
+
+    def test_step_status_enum(self):
+        """Test StepStatus enum values."""
+        from consensus_engine.db.models import StepStatus
+        
+        assert StepStatus.PENDING.value == "pending"
+        assert StepStatus.RUNNING.value == "running"
+        assert StepStatus.COMPLETED.value == "completed"
+        assert StepStatus.FAILED.value == "failed"
+
+    def test_step_progress_default_id_column_has_default(self):
+        """Test that StepProgress id column has default configured."""
+        from consensus_engine.db.models import StepProgress, StepStatus
+        
+        id_column = StepProgress.__table__.columns["id"]
+        assert id_column.default is not None
+        # When an explicit ID is provided, it should be used
+        explicit_id = uuid.uuid4()
+        step = StepProgress(
+            id=explicit_id,
+            run_id=uuid.uuid4(),
+            step_name="expand",
+            step_order=0,
+            status=StepStatus.PENDING,
+        )
+        assert step.id == explicit_id
