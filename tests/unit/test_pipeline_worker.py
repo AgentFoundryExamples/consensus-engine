@@ -534,5 +534,5 @@ class TestWorkerIdempotencyAndRetries:
 
         worker = PipelineWorker(settings)
 
-        # Verify concurrency settings
+        # Verify concurrency settings are properly loaded
         assert settings.worker_max_concurrency == 20
