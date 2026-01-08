@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 69,
+  "total_files": 72,
   "files": [
     {
       "schema_version": "2.0",
@@ -165,8 +165,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 14418,
-        "loc": 297,
+        "size_bytes": 9684,
+        "loc": 207,
         "todo_count": 0
       }
     },
@@ -207,9 +207,9 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 30043,
-        "loc": 706,
-        "todo_count": 1
+        "size_bytes": 29494,
+        "loc": 690,
+        "todo_count": 0
       }
     },
     {
@@ -251,6 +251,20 @@
       "metrics": {
         "size_bytes": 15821,
         "loc": 307,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/clients/pubsub.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 11786,
+        "loc": 259,
         "todo_count": 0
       }
     },
@@ -305,8 +319,8 @@
       "summary": "Python configuration file (role: configuration)",
       "summary_text": "Python configuration file (role: configuration)",
       "metrics": {
-        "size_bytes": 11389,
-        "loc": 280,
+        "size_bytes": 12181,
+        "loc": 301,
         "todo_count": 0
       }
     },
@@ -417,8 +431,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 28788,
-        "loc": 603,
+        "size_bytes": 30131,
+        "loc": 627,
         "todo_count": 0
       }
     },
@@ -657,6 +671,20 @@
       "metrics": {
         "size_bytes": 36213,
         "loc": 773,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_job_enqueue.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 15933,
+        "loc": 307,
         "todo_count": 0
       }
     },
@@ -909,6 +937,20 @@
       "metrics": {
         "size_bytes": 9406,
         "loc": 179,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_pubsub.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 10858,
+        "loc": 206,
         "todo_count": 0
       }
     },

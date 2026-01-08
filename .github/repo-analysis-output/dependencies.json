@@ -281,6 +281,24 @@
       }
     },
     {
+      "id": "src/consensus_engine/clients/pubsub.py",
+      "path": "src/consensus_engine/clients/pubsub.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json",
+          "os",
+          "time",
+          "typing.Any"
+        ],
+        "third-party": [
+          "google.api_core.exceptions.GoogleAPIError",
+          "google.api_core.retry",
+          "google.cloud.pubsub_v1"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/config/__init__.py",
       "path": "src/consensus_engine/config/__init__.py",
       "type": "file",
@@ -719,6 +737,26 @@
       }
     },
     {
+      "id": "tests/integration/test_job_enqueue.py",
+      "path": "tests/integration/test_job_enqueue.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Generator",
+          "datetime.UTC",
+          "datetime.datetime",
+          "unittest.mock.MagicMock",
+          "unittest.mock.Mock",
+          "unittest.mock.patch",
+          "uuid.UUID"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/integration/test_multi_persona.py",
       "path": "tests/integration/test_multi_persona.py",
       "type": "file",
@@ -988,6 +1026,23 @@
       }
     },
     {
+      "id": "tests/unit/test_pubsub.py",
+      "path": "tests/unit/test_pubsub.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json",
+          "unittest.mock.MagicMock",
+          "unittest.mock.Mock",
+          "unittest.mock.patch"
+        ],
+        "third-party": [
+          "google.api_core.exceptions.GoogleAPIError",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_request_schemas.py",
       "path": "tests/unit/test_request_schemas.py",
       "type": "file",
@@ -1109,6 +1164,10 @@
     },
     {
       "source": "src/consensus_engine/api/routes/full_review.py",
+      "target": "src/consensus_engine/clients/pubsub.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/full_review.py",
       "target": "src/consensus_engine/config/__init__.py"
     },
     {
@@ -1129,27 +1188,7 @@
     },
     {
       "source": "src/consensus_engine/api/routes/full_review.py",
-      "target": "src/consensus_engine/exceptions.py"
-    },
-    {
-      "source": "src/consensus_engine/api/routes/full_review.py",
-      "target": "src/consensus_engine/schemas/proposal.py"
-    },
-    {
-      "source": "src/consensus_engine/api/routes/full_review.py",
       "target": "src/consensus_engine/schemas/requests.py"
-    },
-    {
-      "source": "src/consensus_engine/api/routes/full_review.py",
-      "target": "src/consensus_engine/services/__init__.py"
-    },
-    {
-      "source": "src/consensus_engine/api/routes/full_review.py",
-      "target": "src/consensus_engine/services/aggregator.py"
-    },
-    {
-      "source": "src/consensus_engine/api/routes/full_review.py",
-      "target": "src/consensus_engine/services/orchestrator.py"
     },
     {
       "source": "src/consensus_engine/api/routes/health.py",
@@ -1190,6 +1229,10 @@
     {
       "source": "src/consensus_engine/api/routes/review.py",
       "target": "src/consensus_engine/services/__init__.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/clients/pubsub.py"
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
@@ -1290,6 +1333,14 @@
     {
       "source": "src/consensus_engine/clients/openai_client.py",
       "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/clients/pubsub.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/clients/pubsub.py",
+      "target": "src/consensus_engine/config/settings.py"
     },
     {
       "source": "src/consensus_engine/config/__init__.py",
@@ -1572,6 +1623,22 @@
       "target": "src/consensus_engine/config/personas.py"
     },
     {
+      "source": "tests/integration/test_job_enqueue.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_job_enqueue.py",
+      "target": "src/consensus_engine/clients/pubsub.py"
+    },
+    {
+      "source": "tests/integration/test_job_enqueue.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/integration/test_job_enqueue.py",
+      "target": "src/consensus_engine/config/__init__.py"
+    },
+    {
       "source": "tests/integration/test_multi_persona.py",
       "target": "src/consensus_engine/config/settings.py"
     },
@@ -1780,6 +1847,14 @@
       "target": "src/consensus_engine/schemas/proposal.py"
     },
     {
+      "source": "tests/unit/test_pubsub.py",
+      "target": "src/consensus_engine/clients/pubsub.py"
+    },
+    {
+      "source": "tests/unit/test_pubsub.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
       "source": "tests/unit/test_request_schemas.py",
       "target": "src/consensus_engine/schemas/requests.py"
     },
@@ -1853,7 +1928,8 @@
       "unittest.mock.Mock",
       "unittest.mock.patch",
       "urllib.parse.quote_plus",
-      "uuid"
+      "uuid",
+      "uuid.UUID"
     ],
     "third-party": [
       "alembic.command",
@@ -1871,6 +1947,9 @@
       "fastapi.responses.JSONResponse",
       "fastapi.status",
       "fastapi.testclient.TestClient",
+      "google.api_core.exceptions.GoogleAPIError",
+      "google.api_core.retry",
+      "google.cloud.pubsub_v1",
       "google.cloud.sql.connector.Connector",
       "httpx",
       "openai.",
@@ -1925,7 +2004,7 @@
       "sqlalchemy.select",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 32,
-    "third-party_count": 68
+    "stdlib_count": 33,
+    "third-party_count": 71
   }
 }

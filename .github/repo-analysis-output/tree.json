@@ -201,6 +201,10 @@
                 {
                   "type": "file",
                   "name": "openai_client.py"
+                },
+                {
+                  "type": "file",
+                  "name": "pubsub.py"
                 }
               ]
             },
@@ -358,6 +362,10 @@
             },
             {
               "type": "file",
+              "name": "test_job_enqueue.py"
+            },
+            {
+              "type": "file",
               "name": "test_multi_persona.py"
             },
             {
@@ -433,6 +441,10 @@
             {
               "type": "file",
               "name": "test_proposal_schemas.py"
+            },
+            {
+              "type": "file",
+              "name": "test_pubsub.py"
             },
             {
               "type": "file",

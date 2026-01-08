@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 69
+Total files: 72
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -110,8 +110,8 @@ Total files: 69
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 14.08 KB  
-**LOC:** 297  
+**Size:** 9.46 KB  
+**LOC:** 207  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/api/routes/health.py
@@ -137,9 +137,9 @@ Total files: 69
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 29.34 KB  
-**LOC:** 706  
-**TODOs/FIXMEs:** 1  
+**Size:** 28.80 KB  
+**LOC:** 690  
+**TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/app.py
 **Language:** Python  
@@ -166,6 +166,15 @@ Total files: 69
 **Summary:** Python core implementation  
 **Size:** 15.45 KB  
 **LOC:** 307  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/clients/pubsub.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 11.51 KB  
+**LOC:** 259  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/config/__init__.py
@@ -200,8 +209,8 @@ Total files: 69
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 11.12 KB  
-**LOC:** 280  
+**Size:** 11.90 KB  
+**LOC:** 301  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -272,8 +281,8 @@ Total files: 69
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 28.11 KB  
-**LOC:** 603  
+**Size:** 29.42 KB  
+**LOC:** 627  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -427,6 +436,15 @@ Total files: 69
 **Summary:** Python test file (role: test)  
 **Size:** 35.36 KB  
 **LOC:** 773  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_job_enqueue.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 15.56 KB  
+**LOC:** 307  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_multi_persona.py
@@ -589,6 +607,15 @@ Total files: 69
 **Summary:** Python test file (role: test)  
 **Size:** 9.19 KB  
 **LOC:** 179  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_pubsub.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 10.60 KB  
+**LOC:** 206  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_request_schemas.py
