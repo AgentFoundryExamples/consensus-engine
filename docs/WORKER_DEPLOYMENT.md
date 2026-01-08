@@ -4,6 +4,10 @@
 
 The pipeline worker is a background process that consumes job messages from Google Cloud Pub/Sub and executes the consensus pipeline asynchronously. It processes jobs through the full pipeline: expand → persona reviews → aggregation, updating database records with progress and results.
 
+**For comprehensive deployment architecture and requirements, see [GCP Deployment Architecture](./GCP_DEPLOYMENT_ARCHITECTURE.md).**
+
+This guide focuses on worker-specific deployment details. For complete system architecture, components, environment variables, IAM requirements, and deployment prerequisites, refer to the comprehensive architecture document.
+
 ## Architecture
 
 ```
@@ -68,9 +72,76 @@ RETRY_BACKOFF_MULTIPLIER=2.0       # Backoff multiplier (default: 2.0)
 ENV=production                     # Environment (development, production, testing)
 ```
 
+## Architecture Assumptions
+
+### Database Configuration
+
+**Supported**:
+- ✅ Cloud SQL for PostgreSQL with IAM authentication (recommended)
+- ✅ Cloud SQL with password authentication (less secure)
+- ✅ Cloud SQL Connector for connection management
+
+**Unsupported for Cloud Deployments**:
+- ❌ Self-hosted PostgreSQL on Compute Engine
+- ❌ Local PostgreSQL instances
+- ❌ PostgreSQL on other cloud providers (AWS RDS, Azure Database)
+
+**Connection Method**:
+- Workers use Cloud SQL Python Connector (set `USE_CLOUD_SQL_CONNECTOR=true`)
+- IAM authentication strongly recommended (set `DB_IAM_AUTH=true`)
+- Service account must have `roles/cloudsql.client` role
+
+### Pub/Sub Configuration
+
+**Subscription Type**:
+- Workers use **pull subscription** (streaming pull for efficiency)
+- Cloud Run workers automatically handle message acknowledgement
+- Kubernetes/GCE workers use long-lived connections with streaming pull
+
+**Message Flow**:
+1. API publishes job messages to topic
+2. Worker subscribes to subscription and receives messages
+3. Worker processes job and updates database
+4. Worker acknowledges message on success or nacks on failure
+5. Pub/Sub redelivers nacked messages based on retry policy
+
+**Idempotency**:
+- Workers check run status before processing to handle duplicate deliveries
+- Completed runs are skipped (idempotency guard)
+- Database updates use upsert semantics to avoid conflicts
+
+### Container Registry
+
+**Supported**:
+- ✅ Google Container Registry (gcr.io) - legacy
+- ✅ Artifact Registry (recommended) - REGION-docker.pkg.dev
+
+**Image Requirements**:
+- Python 3.11+ base image
+- All dependencies from pyproject.toml installed
+- Application code copied to container
+- Worker entrypoint configured
+
+### Networking
+
+**Worker Network Access**:
+- Outbound to Pub/Sub (Google-managed, no configuration needed)
+- Outbound to Cloud SQL (via Cloud SQL Connector or private IP)
+- Outbound to OpenAI API (public internet)
+- No inbound connections required
+
+**VPC Requirements**:
+- Not required for basic Cloud Run deployment
+- Optional VPC connector for private Cloud SQL access
+- Required for GKE deployments with private networking
+
 ## Deployment
 
 ### Prerequisites
+
+**For complete prerequisites including API enablement, quotas, and IAM permissions, see [GCP Deployment Architecture](./GCP_DEPLOYMENT_ARCHITECTURE.md#deployment-prerequisites).**
+
+Worker-specific prerequisites:
 
 1. **Pub/Sub Setup**:
    - Create topic: `consensus-engine-jobs`
@@ -82,7 +153,7 @@ ENV=production                     # Environment (development, production, testi
    - Cloud SQL instance with IAM authentication enabled
 
 3. **Service Account**:
-   - IAM roles: `roles/pubsub.subscriber`, `roles/cloudsql.client`
+   - IAM roles: `roles/pubsub.subscriber`, `roles/cloudsql.client`, `roles/secretmanager.secretAccessor`
 
 ### Cloud Run Deployment
 

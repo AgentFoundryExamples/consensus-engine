@@ -145,6 +145,7 @@ See [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) for deployment details.
 
 ### Deployment and Architecture
 
+- **[GCP Deployment Architecture](docs/GCP_DEPLOYMENT_ARCHITECTURE.md)** - **Complete guide** to deploying on Google Cloud Platform: components, backing services, IAM requirements, architecture assumptions, prerequisites, and quotas
 - [Worker Deployment Guide](docs/WORKER_DEPLOYMENT.md) - Production deployment and monitoring
 - [Multi-Persona Orchestration](docs/MULTI_PERSONA_ORCHESTRATION.md) - Consensus building architecture
 - [Async Run Persistence](docs/async_run_persistence.md) - Database persistence patterns
@@ -1963,9 +1964,26 @@ The Consensus Engine can be deployed to Google Cloud Platform (GCP) with the fol
 4. **Cloud SQL**: PostgreSQL database with IAM authentication
 5. **Pub/Sub**: Message queue for asynchronous job processing
 
-### Quick Start
+### Comprehensive Deployment Guide
 
-See detailed deployment guides:
+**For complete deployment requirements and architecture details, see:**
+
+📖 **[GCP Deployment Architecture](docs/GCP_DEPLOYMENT_ARCHITECTURE.md)** - Single source of truth for GCP deployments
+
+This comprehensive guide covers:
+- **All deployable components** (API, worker, webapp) with resource requirements
+- **Backing services** (PostgreSQL, Pub/Sub, OpenAI) with configuration details
+- **Complete environment variable reference** by service with secret vs. plain distinction
+- **IAM and service account requirements** with exact permissions needed
+- **Architecture assumptions** (networking, database, container registry)
+- **Deployment prerequisites** including API enablement, quotas, and external services
+- **Optional components** clearly marked for flexible deployment
+- **Cost estimation** and optimization strategies
+- **Security best practices** for production deployments
+
+### Quick Start Guides
+
+For step-by-step deployment instructions:
 - **Infrastructure Setup**: [infra/cloudrun/README.md](infra/cloudrun/README.md) - Complete GCP setup with gcloud commands
 - **Frontend Deployment**: [docs/WEB_FRONTEND.md](docs/WEB_FRONTEND.md) - Detailed frontend deployment with IAP and CORS
 - **Worker Deployment**: [docs/WORKER_DEPLOYMENT.md](docs/WORKER_DEPLOYMENT.md) - Background worker deployment
