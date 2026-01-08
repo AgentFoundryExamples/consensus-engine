@@ -143,7 +143,9 @@ export function useRunHistory(options: UseRunHistoryOptions = {}): UseRunHistory
         onError?.(error);
       }
     },
-    [limit, status, runType, parentRunId, onFetchComplete, onError]
+    // Exclude callbacks from dependencies to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [limit, status, runType, parentRunId]
   );
 
   // Refetch from beginning

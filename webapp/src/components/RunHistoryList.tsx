@@ -96,21 +96,36 @@ export function RunHistoryList({
   // Group runs by parent/child relationships
   const groupedRuns = (() => {
     const groups: { root: RunListItemResponse; children: RunListItemResponse[] }[] = [];
+    const runMap = new Map<string, RunListItemResponse>();
+    const childrenMap = new Map<string, RunListItemResponse[]>();
+
+    // Build maps for O(1) lookups
+    runs.forEach((run) => {
+      runMap.set(run.run_id, run);
+      if (run.parent_run_id) {
+        if (!childrenMap.has(run.parent_run_id)) {
+          childrenMap.set(run.parent_run_id, []);
+        }
+        childrenMap.get(run.parent_run_id)!.push(run);
+      }
+    });
+
     const processed = new Set<string>();
 
+    // First pass: create groups for root runs
     runs.forEach((run) => {
       if (processed.has(run.run_id)) return;
 
       // If this is a root run (no parent), create a group
       if (!run.parent_run_id) {
-        const children = runs.filter((r) => r.parent_run_id === run.run_id);
+        const children = childrenMap.get(run.run_id) || [];
         groups.push({ root: run, children });
         processed.add(run.run_id);
         children.forEach((child) => processed.add(child.run_id));
       }
     });
 
-    // Add orphaned runs (those with parent_run_id but parent not in list)
+    // Second pass: add orphaned runs (parent not in list)
     runs.forEach((run) => {
       if (!processed.has(run.run_id)) {
         groups.push({ root: run, children: [] });

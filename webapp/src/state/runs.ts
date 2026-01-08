@@ -54,7 +54,7 @@ interface RunsState {
   getRunChain: (run_id: string) => RunSummary[];
 }
 
-export const useRunsStore = create<RunsState>((set) => ({
+export const useRunsStore = create<RunsState>((set, get) => ({
   runs: [],
   activeRunId: null,
   activeRunDetails: null,
@@ -87,28 +87,27 @@ export const useRunsStore = create<RunsState>((set) => ({
       activeRunDetails: null,
     }),
 
-  getChildRuns: (parent_run_id): RunSummary[] => {
-    const state = useRunsStore.getState() as RunsState;
-    return state.runs.filter((run: RunSummary) => run.parent_run_id === parent_run_id);
+  getChildRuns: (parent_run_id) => {
+    return get().runs.filter((run) => run.parent_run_id === parent_run_id);
   },
 
-  getParentRun: (run_id): RunSummary | null => {
-    const state = useRunsStore.getState() as RunsState;
-    const run = state.runs.find((r: RunSummary) => r.run_id === run_id);
+  getParentRun: (run_id) => {
+    const runs = get().runs;
+    const run = runs.find((r) => r.run_id === run_id);
     if (!run || !run.parent_run_id) return null;
-    return state.runs.find((r: RunSummary) => r.run_id === run.parent_run_id) || null;
+    return runs.find((r) => r.run_id === run.parent_run_id) || null;
   },
 
-  getRunChain: (run_id): RunSummary[] => {
-    const state = useRunsStore.getState() as RunsState;
+  getRunChain: (run_id) => {
+    const runs = get().runs;
     const chain: RunSummary[] = [];
-    let current = state.runs.find((r: RunSummary) => r.run_id === run_id);
+    let current = runs.find((r) => r.run_id === run_id);
 
     // Walk up the chain to find the root
     while (current) {
       chain.unshift(current);
       if (!current.parent_run_id) break;
-      current = state.runs.find((r: RunSummary) => r.run_id === current!.parent_run_id);
+      current = runs.find((r) => r.run_id === current!.parent_run_id);
     }
 
     return chain;

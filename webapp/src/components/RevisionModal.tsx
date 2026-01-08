@@ -94,6 +94,24 @@ ${proposal.scope_non_goals?.join('\n- ') || 'None'}
         return;
       }
 
+      // Validate character limits (backend enforced limits)
+      const MAX_PROPOSAL_LENGTH = 100000;
+      const MAX_NOTES_LENGTH = 10000;
+
+      if (editedProposal.length > MAX_PROPOSAL_LENGTH) {
+        setError(
+          `Edited proposal exceeds maximum length of ${MAX_PROPOSAL_LENGTH.toLocaleString()} characters (current: ${editedProposal.length.toLocaleString()})`
+        );
+        return;
+      }
+
+      if (editNotes.length > MAX_NOTES_LENGTH) {
+        setError(
+          `Edit notes exceed maximum length of ${MAX_NOTES_LENGTH.toLocaleString()} characters (current: ${editNotes.length.toLocaleString()})`
+        );
+        return;
+      }
+
       setIsSubmitting(true);
       setError(null);
 
