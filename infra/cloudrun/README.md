@@ -2,6 +2,10 @@
 
 This directory contains example infrastructure configurations for deploying the Consensus Engine to Google Cloud Platform (GCP).
 
+**📖 For comprehensive deployment architecture, requirements, and prerequisites, see [GCP Deployment Architecture](../../docs/GCP_DEPLOYMENT_ARCHITECTURE.md).**
+
+This guide provides step-by-step `gcloud` commands for manual deployment. For architecture decisions, component requirements, environment variables, IAM permissions, and deployment planning, refer to the comprehensive architecture document.
+
 ## Directory Structure
 
 ```
@@ -19,7 +23,7 @@ The Consensus Engine consists of three main components:
 
 1. **Frontend (Web UI)**: React + TypeScript application served via nginx, protected by IAP
 2. **Backend (API)**: FastAPI application with IAM-based authentication
-3. **Worker**: Background job processor (not covered in these examples - runs as separate service)
+3. **Worker**: Background job processor (see [Worker Deployment Guide](../../docs/WORKER_DEPLOYMENT.md))
 
 ## Deployment Architecture
 
@@ -50,23 +54,16 @@ graph TB
 
 ## Prerequisites
 
-Before deploying, ensure you have:
+**For complete prerequisites including quotas, external services, and detailed requirements, see [GCP Deployment Architecture - Prerequisites](../../docs/GCP_DEPLOYMENT_ARCHITECTURE.md#deployment-prerequisites).**
 
-1. **GCP Project**: Active GCP project with billing enabled
-2. **gcloud CLI**: Installed and authenticated (`gcloud auth login`)
-3. **APIs Enabled**: 
-   - Cloud Run API
-   - Cloud Build API
-   - Cloud SQL Admin API
-   - Cloud Pub/Sub API
-   - Secret Manager API
-   - IAM Service Account Credentials API
-4. **Permissions**: 
-   - `roles/run.admin` (Cloud Run Admin)
-   - `roles/iam.serviceAccountUser` (Service Account User)
-   - `roles/cloudsql.admin` (Cloud SQL Admin)
-   - `roles/pubsub.admin` (Pub/Sub Admin)
-   - `roles/secretmanager.admin` (Secret Manager Admin)
+Quick checklist before deploying:
+
+- [ ] GCP Project with billing enabled
+- [ ] gcloud CLI installed and authenticated
+- [ ] Required APIs enabled (see architecture doc)
+- [ ] Deploying user has necessary IAM permissions
+- [ ] OpenAI API key obtained and noted
+- [ ] Docker installed (if building images locally)
 
 ## Quick Start
 
@@ -547,6 +544,15 @@ curl -H "Authorization: Bearer $(curl -H 'Metadata-Flavor: Google' http://metada
 
 ## Additional Resources
 
+### Consensus Engine Documentation
+
+- **[GCP Deployment Architecture](../../docs/GCP_DEPLOYMENT_ARCHITECTURE.md)** - Complete deployment requirements and architecture
+- [Main README](../../README.md) - Project overview and local development
+- [Worker Deployment Guide](../../docs/WORKER_DEPLOYMENT.md) - Background worker deployment
+- [Web Frontend Documentation](../../docs/WEB_FRONTEND.md) - Frontend deployment with IAP
+
+### Google Cloud Documentation
+
 - [Cloud Run Documentation](https://cloud.google.com/run/docs)
 - [Cloud SQL for PostgreSQL](https://cloud.google.com/sql/docs/postgres)
 - [Identity-Aware Proxy](https://cloud.google.com/iap/docs)
@@ -556,7 +562,10 @@ curl -H "Authorization: Bearer $(curl -H 'Metadata-Flavor: Google' http://metada
 
 ## Support
 
-For issues specific to this deployment configuration, see:
-- [Main README](../../README.md)
-- [Web Frontend Documentation](../../docs/WEB_FRONTEND.md)
-- [Worker Deployment Guide](../../docs/WORKER_DEPLOYMENT.md)
+For deployment planning and architecture questions, see:
+- **[GCP Deployment Architecture](../../docs/GCP_DEPLOYMENT_ARCHITECTURE.md)** - Single source of truth for deployment
+
+For implementation and troubleshooting:
+- [Main README](../../README.md) - Local development and testing
+- [Worker Deployment Guide](../../docs/WORKER_DEPLOYMENT.md) - Worker-specific issues
+- [Web Frontend Documentation](../../docs/WEB_FRONTEND.md) - Frontend-specific issues
