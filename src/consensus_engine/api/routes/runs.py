@@ -13,7 +13,7 @@
 # limitations under the License.
 """Run retrieval endpoint router.
 
-This module implements GET /v1/runs, GET /v1/runs/{run_id}, and 
+This module implements GET /v1/runs, GET /v1/runs/{run_id}, and
 GET /v1/runs/{run_id}/diff/{other_run_id} endpoints for querying run history,
 retrieving individual run details, and comparing runs, as well as
 POST /v1/runs/{run_id}/revisions for creating revision runs.
@@ -453,7 +453,7 @@ async def get_run_diff(
         run2 = RunRepository.get_run_with_relations(db_session, other_run_uuid)
     except Exception as e:
         logger.error(
-            f"Database error while retrieving runs for diff",
+            "Database error while retrieving runs for diff",
             extra={"run_id": run_id, "other_run_id": other_run_id},
             exc_info=True,
         )
@@ -480,7 +480,7 @@ async def get_run_diff(
         diff_result = compute_run_diff(run1, run2)
     except Exception as e:
         logger.error(
-            f"Error computing diff between runs",
+            "Error computing diff between runs",
             extra={"run_id": run_id, "other_run_id": other_run_id},
             exc_info=True,
         )
