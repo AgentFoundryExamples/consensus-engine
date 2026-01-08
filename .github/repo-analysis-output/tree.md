@@ -17,7 +17,8 @@
     └── af_maintenance.yml
 ├── docs
   ├── async_run_persistence.md
-  └── MULTI_PERSONA_ORCHESTRATION.md
+  ├── MULTI_PERSONA_ORCHESTRATION.md
+  └── WORKER_DEPLOYMENT.md
 ├── examples
   └── test_full_review.py
 ├── migrations
@@ -68,6 +69,9 @@
       ├── expand.py
       ├── orchestrator.py
       └── review.py
+    ├── workers
+      ├── __init__.py
+      └── pipeline_worker.py
     ├── __init__.py
     ├── app.py
     └── exceptions.py
@@ -83,6 +87,7 @@
     ├── test_full_review_endpoint.py
     ├── test_job_enqueue.py
     ├── test_multi_persona.py
+    ├── test_pipeline_worker.py
     ├── test_review_endpoint.py
     ├── test_review_service.py
     ├── test_revision_endpoint.py
@@ -100,6 +105,7 @@
     ├── test_openai_client.py
     ├── test_orchestrator.py
     ├── test_personas.py
+    ├── test_pipeline_worker.py
     ├── test_proposal_schemas.py
     ├── test_pubsub.py
     ├── test_request_schemas.py
@@ -114,6 +120,7 @@
 ├── docker-compose.yml
 ├── IMPLEMENTATION_SUMMARY.md
 ├── IMPLEMENTATION_SUMMARY_full_review_persistence.md
+├── IMPLEMENTATION_SUMMARY_pipeline_worker.md
 ├── IMPLEMENTATION_SUMMARY_revision_workflow.md
 ├── LICENSE
 ├── LLMs.md

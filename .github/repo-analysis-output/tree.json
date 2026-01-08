@@ -81,6 +81,10 @@
         {
           "type": "file",
           "name": "MULTI_PERSONA_ORCHESTRATION.md"
+        },
+        {
+          "type": "file",
+          "name": "WORKER_DEPLOYMENT.md"
         }
       ]
     },
@@ -305,6 +309,20 @@
               ]
             },
             {
+              "type": "directory",
+              "name": "workers",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py"
+                },
+                {
+                  "type": "file",
+                  "name": "pipeline_worker.py"
+                }
+              ]
+            },
+            {
               "type": "file",
               "name": "__init__.py"
             },
@@ -367,6 +385,10 @@
             {
               "type": "file",
               "name": "test_multi_persona.py"
+            },
+            {
+              "type": "file",
+              "name": "test_pipeline_worker.py"
             },
             {
               "type": "file",
@@ -440,6 +462,10 @@
             },
             {
               "type": "file",
+              "name": "test_pipeline_worker.py"
+            },
+            {
+              "type": "file",
               "name": "test_proposal_schemas.py"
             },
             {
@@ -497,6 +523,10 @@
     {
       "type": "file",
       "name": "IMPLEMENTATION_SUMMARY_full_review_persistence.md"
+    },
+    {
+      "type": "file",
+      "name": "IMPLEMENTATION_SUMMARY_pipeline_worker.md"
     },
     {
       "type": "file",

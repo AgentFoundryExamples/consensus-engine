@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 72
+Total files: 76
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -209,8 +209,8 @@ Total files: 72
 **Role:** configuration  
 **Role Justification:** configuration file name 'settings'  
 **Summary:** Python configuration file (role: configuration)  
-**Size:** 11.90 KB  
-**LOC:** 301  
+**Size:** 12.83 KB  
+**LOC:** 330  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/db/__init__.py
@@ -348,6 +348,24 @@ Total files: 72
 **LOC:** 155  
 **TODOs/FIXMEs:** 0  
 
+## src/consensus_engine/workers/__init__.py
+**Language:** Python  
+**Role:** module-init  
+**Role Justification:** module initialization file '__init__'  
+**Summary:** Python module initialization (role: module-init)  
+**Size:** 0.72 KB  
+**LOC:** 4  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/workers/pipeline_worker.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 33.49 KB  
+**LOC:** 753  
+**TODOs/FIXMEs:** 0  
+
 ## tests/__init__.py
 **Language:** Python  
 **Role:** test  
@@ -454,6 +472,15 @@ Total files: 72
 **Summary:** Python test file (role: test)  
 **Size:** 13.67 KB  
 **LOC:** 284  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_pipeline_worker.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 15.13 KB  
+**LOC:** 342  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_review_endpoint.py
@@ -598,6 +625,15 @@ Total files: 72
 **Summary:** Python test file (role: test)  
 **Size:** 20.19 KB  
 **LOC:** 393  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_pipeline_worker.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 16.93 KB  
+**LOC:** 335  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_proposal_schemas.py

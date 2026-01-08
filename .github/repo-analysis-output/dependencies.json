@@ -581,6 +581,44 @@
       }
     },
     {
+      "id": "src/consensus_engine/workers/__init__.py",
+      "path": "src/consensus_engine/workers/__init__.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "src/consensus_engine/workers/pipeline_worker.py",
+      "path": "src/consensus_engine/workers/pipeline_worker.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "json",
+          "os",
+          "signal",
+          "sys",
+          "time",
+          "typing.Any",
+          "uuid"
+        ],
+        "third-party": [
+          "google.api_core.retry",
+          "google.cloud.pubsub_v1",
+          "pydantic.BaseModel",
+          "pydantic.Field",
+          "pydantic.ValidationError",
+          "sqlalchemy.exc.IntegrityError",
+          "sqlalchemy.exc.SQLAlchemyError",
+          "sqlalchemy.orm.Session",
+          "sqlalchemy.select"
+        ]
+      }
+    },
+    {
       "id": "tests/__init__.py",
       "path": "tests/__init__.py",
       "type": "file",
@@ -767,6 +805,29 @@
         ],
         "third-party": [
           "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/integration/test_pipeline_worker.py",
+      "path": "tests/integration/test_pipeline_worker.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "json",
+          "os",
+          "unittest.mock.Mock",
+          "unittest.mock.patch",
+          "uuid"
+        ],
+        "third-party": [
+          "pytest",
+          "sqlalchemy.create_engine",
+          "sqlalchemy.orm.Session",
+          "sqlalchemy.select",
+          "sqlalchemy.text"
         ]
       }
     },
@@ -1008,6 +1069,28 @@
       "external_dependencies": {
         "stdlib": [],
         "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/unit/test_pipeline_worker.py",
+      "path": "tests/unit/test_pipeline_worker.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "json",
+          "unittest.mock.MagicMock",
+          "unittest.mock.Mock",
+          "unittest.mock.call",
+          "unittest.mock.patch",
+          "uuid"
+        ],
+        "third-party": [
+          "google.cloud.pubsub_v1",
           "pydantic.ValidationError",
           "pytest"
         ]
@@ -1491,6 +1574,54 @@
       "target": "src/consensus_engine/schemas/review.py"
     },
     {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/clients/openai_client.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/config/personas.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/exceptions.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/services/aggregator.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/services/expand.py"
+    },
+    {
+      "source": "src/consensus_engine/workers/pipeline_worker.py",
+      "target": "src/consensus_engine/services/orchestrator.py"
+    },
+    {
       "source": "tests/conftest.py",
       "target": "src/consensus_engine/schemas/proposal.py"
     },
@@ -1657,6 +1788,34 @@
     {
       "source": "tests/integration/test_multi_persona.py",
       "target": "src/consensus_engine/services/orchestrator.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/db/repositories.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/workers/pipeline_worker.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/integration/test_pipeline_worker.py",
+      "target": "src/consensus_engine/schemas/review.py"
     },
     {
       "source": "tests/integration/test_review_endpoint.py",
@@ -1843,6 +2002,18 @@
       "target": "src/consensus_engine/config/personas.py"
     },
     {
+      "source": "tests/unit/test_pipeline_worker.py",
+      "target": "src/consensus_engine/config/settings.py"
+    },
+    {
+      "source": "tests/unit/test_pipeline_worker.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/unit/test_pipeline_worker.py",
+      "target": "src/consensus_engine/workers/pipeline_worker.py"
+    },
+    {
       "source": "tests/unit/test_proposal_schemas.py",
       "target": "src/consensus_engine/schemas/proposal.py"
     },
@@ -1916,6 +2087,7 @@
       "os",
       "pathlib.Path",
       "re",
+      "signal",
       "sys",
       "threading",
       "time",
@@ -1926,6 +2098,7 @@
       "typing.cast",
       "unittest.mock.MagicMock",
       "unittest.mock.Mock",
+      "unittest.mock.call",
       "unittest.mock.patch",
       "urllib.parse.quote_plus",
       "uuid",
@@ -2004,7 +2177,7 @@
       "sqlalchemy.select",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 33,
+    "stdlib_count": 35,
     "third-party_count": 71
   }
 }

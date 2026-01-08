@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 72,
+  "total_files": 76,
   "files": [
     {
       "schema_version": "2.0",
@@ -319,8 +319,8 @@
       "summary": "Python configuration file (role: configuration)",
       "summary_text": "Python configuration file (role: configuration)",
       "metrics": {
-        "size_bytes": 12181,
-        "loc": 301,
+        "size_bytes": 13133,
+        "loc": 330,
         "todo_count": 0
       }
     },
@@ -536,6 +536,34 @@
     },
     {
       "schema_version": "2.0",
+      "path": "src/consensus_engine/workers/__init__.py",
+      "language": "Python",
+      "role": "module-init",
+      "role_justification": "module initialization file '__init__'",
+      "summary": "Python module initialization (role: module-init)",
+      "summary_text": "Python module initialization (role: module-init)",
+      "metrics": {
+        "size_bytes": 737,
+        "loc": 4,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/workers/pipeline_worker.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 34294,
+        "loc": 753,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "tests/__init__.py",
       "language": "Python",
       "role": "test",
@@ -699,6 +727,20 @@
       "metrics": {
         "size_bytes": 13997,
         "loc": 284,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_pipeline_worker.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 15497,
+        "loc": 342,
         "todo_count": 0
       }
     },
@@ -923,6 +965,20 @@
       "metrics": {
         "size_bytes": 20671,
         "loc": 393,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_pipeline_worker.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 17334,
+        "loc": 335,
         "todo_count": 0
       }
     },
