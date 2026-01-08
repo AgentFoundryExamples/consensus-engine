@@ -523,3 +523,108 @@ class RunDetailResponse(BaseModel):
     decision: dict[str, Any] | None = Field(
         default=None, description="Decision JSON (null if run failed or incomplete)"
     )
+
+
+class CreateRevisionRequest(BaseModel):
+    """Request model for POST /v1/runs/{run_id}/revisions endpoint.
+
+    Attributes:
+        edited_proposal: Full structured proposal object or text edits to apply
+        edit_notes: Optional notes about what was edited and why
+        input_idea: Optional new input idea text (overrides parent if provided)
+        extra_context: Optional new additional context (overrides parent if provided)
+        model: Optional new LLM model identifier (overrides parent if provided)
+        temperature: Optional new temperature parameter (overrides parent if provided)
+        parameters_json: Optional new LLM parameters (overrides parent if provided)
+    """
+
+    edited_proposal: dict[str, Any] | str | None = Field(
+        default=None,
+        description=(
+            "Edited proposal as structured JSON object or free-form text to merge with parent. "
+            "If omitted, edit_notes is used to guide re-expansion."
+        ),
+        examples=[
+            {"problem_statement": "Updated problem", "proposed_solution": "New approach"},
+            "Revise the security section to use OAuth 2.0 instead of basic auth",
+        ],
+    )
+    edit_notes: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Optional notes about edits or guidance for re-expansion",
+        examples=["Added security requirements based on SecurityGuardian feedback"],
+    )
+    input_idea: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Optional new input idea text (overrides parent)",
+    )
+    extra_context: dict[str, Any] | str | None = Field(
+        default=None,
+        description="Optional new additional context (overrides parent)",
+    )
+    model: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Optional new LLM model identifier (overrides parent)",
+    )
+    temperature: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="Optional new temperature parameter (overrides parent)",
+    )
+    parameters_json: dict[str, Any] | None = Field(
+        default=None,
+        description="Optional new LLM parameters (overrides parent)",
+    )
+
+    @field_validator("edited_proposal", "edit_notes")
+    @classmethod
+    def require_at_least_one_edit_field(cls, v: Any, info: Any) -> Any:
+        """Validate that at least one of edited_proposal or edit_notes is provided.
+
+        Args:
+            v: Field value
+            info: Field info with context
+
+        Returns:
+            The validated field value
+
+        Note:
+            This validator runs per-field. Use the class-level validation in the
+            endpoint to ensure at least one edit field is provided.
+        """
+        return v
+
+
+class CreateRevisionResponse(BaseModel):
+    """Response model for POST /v1/runs/{run_id}/revisions endpoint.
+
+    Attributes:
+        run_id: UUID of the newly created revision run
+        parent_run_id: UUID of the parent run
+        status: Current status of the revision run
+        created_at: Timestamp when revision run was created
+        personas_rerun: List of persona IDs that were re-executed
+        personas_reused: List of persona IDs whose reviews were reused from parent
+        message: Human-readable message about the revision
+    """
+
+    run_id: str = Field(..., description="UUID of the newly created revision run")
+    parent_run_id: str = Field(..., description="UUID of the parent run")
+    status: str = Field(..., description="Current status: running, completed, or failed")
+    created_at: str = Field(..., description="ISO timestamp when revision run was created")
+    personas_rerun: list[str] = Field(
+        default_factory=list,
+        description="List of persona IDs that were re-executed",
+    )
+    personas_reused: list[str] = Field(
+        default_factory=list,
+        description="List of persona IDs whose reviews were reused from parent",
+    )
+    message: str = Field(
+        ...,
+        description="Human-readable message about the revision",
+    )

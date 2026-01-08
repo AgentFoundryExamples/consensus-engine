@@ -99,6 +99,109 @@ pytest tests/integration/test_multi_persona.py
 
 ## Persistence
 
+The multi-persona review results are persisted to the database as part of the `full_review_endpoint` transaction. Each run creates:
+
+- A `Run` record with metadata and status
+- A `ProposalVersion` record with the expanded proposal
+- Multiple `PersonaReview` records (one per persona)
+- A `Decision` record with aggregated results
+
+All operations occur in a single atomic transaction that commits only after all steps complete successfully.
+
+## Revision Workflow
+
+The revision workflow allows users to edit proposals and selectively re-run personas based on confidence scores and blocking issues.
+
+### Creating a Revision
+
+POST /v1/runs/{run_id}/revisions
+
+Request body:
+```json
+{
+  "edited_proposal": "Add OAuth2 authentication",
+  "edit_notes": "Addressing security concerns from review",
+  "model": "gpt-5.1",  // Optional: override parent model
+  "temperature": 0.7    // Optional: override parent temperature
+}
+```
+
+### Persona Re-run Criteria
+
+Personas are selectively re-run based on the following criteria:
+
+1. **Low Confidence**: confidence_score < 0.70
+2. **Blocking Issues**: blocking_issues_present is true
+3. **Security Guardian Rule**: persona_id is "security_guardian" AND security_concerns_present is true
+
+Personas not meeting these criteria reuse their reviews from the parent run.
+
+### Revision Process
+
+1. **Validate Parent**: Ensure parent run exists and has status 'completed'
+2. **Re-expand Proposal**: Merge edits with parent proposal and re-expand via LLM
+3. **Compute Diff**: Calculate proposal_diff_json for auditability
+4. **Determine Re-runs**: Evaluate parent reviews against rerun criteria
+5. **Selective Review**: Re-run selected personas, reuse others
+6. **Aggregate Decision**: Combine new and reused reviews into final decision
+7. **Persist**: Create new Run with run_type='revision' and parent_run_id
+
+### Example Usage
+
+```python
+# Create initial run via full_review endpoint
+response = client.post("/v1/full-review", json={
+    "idea": "Build a REST API",
+    "extra_context": "Must support authentication"
+})
+parent_run_id = response.json()["run_id"]
+
+# Create revision with edits
+revision_response = client.post(
+    f"/v1/runs/{parent_run_id}/revisions",
+    json={
+        "edited_proposal": "Add OAuth2 authentication",
+        "edit_notes": "Security Guardian feedback"
+    }
+)
+
+# Check which personas were re-run
+print(f"Re-run: {revision_response.json()['personas_rerun']}")
+print(f"Reused: {revision_response.json()['personas_reused']}")
+```
+
+### Response Format
+
+```json
+{
+  "run_id": "uuid-of-new-revision-run",
+  "parent_run_id": "uuid-of-parent-run",
+  "status": "completed",
+  "created_at": "2025-01-07T23:00:00Z",
+  "personas_rerun": ["architect", "security_guardian"],
+  "personas_reused": ["critic", "optimist", "user_advocate"],
+  "message": "Revision created successfully. Re-ran 2 persona(s), reused 3 review(s)."
+}
+```
+
+### Edge Cases
+
+- **No Edit Inputs**: Returns 400 if neither edited_proposal nor edit_notes provided
+- **Parent Not Found**: Returns 404 if parent run_id doesn't exist
+- **Parent Failed**: Returns 409 if parent run status is not 'completed'
+- **Full Re-run**: If all personas meet rerun criteria, all are re-executed
+- **Zero Re-run**: If no personas meet criteria, all reviews are reused
+
+### Configuration
+
+The confidence threshold for re-running personas is defined in `orchestrator.py`:
+
+```python
+RERUN_CONFIDENCE_THRESHOLD = 0.70
+```
+
+This threshold applies only to new revisions. Historical runs retain their stored confidence scores unaffected.
+
 The Consensus Engine uses PostgreSQL to persist run lifecycle data with SQLAlchemy and Alembic migrations.
 
 ### Database Infrastructure

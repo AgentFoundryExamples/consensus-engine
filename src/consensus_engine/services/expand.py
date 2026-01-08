@@ -18,6 +18,8 @@ outputs to expand a simple idea into a comprehensive proposal with validated
 structure.
 """
 
+import json
+from datetime import UTC, datetime
 from typing import Any
 
 from consensus_engine.clients.openai_client import OpenAIClientWrapper
@@ -108,3 +110,128 @@ def expand_idea(
     )
 
     return parsed_response, metadata
+
+
+def expand_with_edits(
+    parent_proposal: ExpandedProposal,
+    edited_proposal: dict[str, Any] | str | None,
+    edit_notes: str | None,
+    settings: Settings,
+) -> tuple[ExpandedProposal, dict[str, Any], dict[str, Any]]:
+    """Expand a proposal with edits applied, generating a new version and diff.
+
+    This function takes a parent proposal and edit inputs, merges them intelligently,
+    re-expands via the LLM to ensure coherence, and computes a diff for auditability.
+
+    Args:
+        parent_proposal: The parent ExpandedProposal to base revisions on
+        edited_proposal: Edited proposal as structured JSON or free-form text
+        edit_notes: Optional notes about what was edited
+        settings: Application settings for OpenAI client configuration
+
+    Returns:
+        Tuple of (new ExpandedProposal, metadata, diff_json)
+
+    Raises:
+        LLMServiceError: For OpenAI API errors
+        SchemaValidationError: If response doesn't match expected schema
+        ValidationError: If input validation fails
+    """
+    logger.info("Starting proposal expansion with edits")
+
+    # Build the edit context from parent proposal and edit inputs
+    parent_dict = json.loads(parent_proposal.model_dump_json())
+
+    # Construct user prompt that merges parent with edits
+    user_prompt = "Generate an improved proposal based on the following:\n\n"
+    user_prompt += "**Original Proposal:**\n"
+    user_prompt += f"Problem Statement: {parent_proposal.problem_statement}\n"
+    user_prompt += f"Proposed Solution: {parent_proposal.proposed_solution}\n"
+    user_prompt += f"Assumptions: {', '.join(parent_proposal.assumptions)}\n"
+    user_prompt += f"Scope/Non-Goals: {', '.join(parent_proposal.scope_non_goals)}\n\n"
+
+    # Add edit information
+    if edited_proposal is not None:
+        if isinstance(edited_proposal, str):
+            user_prompt += f"**Edit Instructions:**\n{edited_proposal}\n\n"
+        else:
+            user_prompt += "**Proposed Changes:**\n"
+            for key, value in edited_proposal.items():
+                user_prompt += f"- {key}: {value}\n"
+            user_prompt += "\n"
+
+    if edit_notes:
+        user_prompt += f"**Edit Notes:**\n{edit_notes}\n\n"
+
+    user_prompt += (
+        "Generate a complete, revised proposal that incorporates these edits "
+        "while maintaining coherence and completeness."
+    )
+
+    # Initialize OpenAI client
+    client = OpenAIClientWrapper(settings)
+
+    # Call OpenAI with structured output
+    parsed_response, metadata = client.create_structured_response(
+        system_instruction=SYSTEM_INSTRUCTION,
+        user_prompt=user_prompt,
+        response_model=ExpandedProposal,
+        developer_instruction=DEVELOPER_INSTRUCTION,
+        step_name="expand_with_edits",
+        model_override=settings.expand_model,
+        temperature_override=settings.expand_temperature,
+    )
+
+    # Compute diff between parent and new proposal
+    new_dict = json.loads(parsed_response.model_dump_json())
+    diff_json = _compute_proposal_diff(parent_dict, new_dict)
+
+    # Log success without sensitive data
+    logger.info(
+        "Proposal expansion with edits completed successfully",
+        extra={
+            "request_id": metadata.get("request_id"),
+            "step_name": "expand_with_edits",
+            "model": metadata.get("model"),
+            "temperature": metadata.get("temperature"),
+            "elapsed_time": metadata.get("elapsed_time"),
+            "latency": metadata.get("latency"),
+            "status": "success",
+            "diff_fields": list(diff_json.get("changed_fields", {}).keys()),
+        },
+    )
+
+    return parsed_response, metadata, diff_json
+
+
+def _compute_proposal_diff(
+    parent: dict[str, Any],
+    revised: dict[str, Any],
+) -> dict[str, Any]:
+    """Compute a simple diff between parent and revised proposals.
+
+    Args:
+        parent: Parent proposal as dictionary
+        revised: Revised proposal as dictionary
+
+    Returns:
+        Dictionary containing diff metadata with changed_fields and summary
+    """
+    changed_fields: dict[str, dict[str, Any]] = {}
+
+    # Check each field for changes
+    for key in set(parent.keys()) | set(revised.keys()):
+        parent_value = parent.get(key)
+        revised_value = revised.get(key)
+
+        if parent_value != revised_value:
+            changed_fields[key] = {
+                "before": parent_value,
+                "after": revised_value,
+            }
+
+    return {
+        "changed_fields": changed_fields,
+        "num_changes": len(changed_fields),
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
