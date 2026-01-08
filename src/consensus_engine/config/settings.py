@@ -231,6 +231,37 @@ class Settings(BaseSettings):
         default=False,
         description="Use mock publisher for testing (no-op that logs messages)",
     )
+    pubsub_subscription: str = Field(
+        default="consensus-engine-jobs-sub",
+        description="Pub/Sub subscription name for worker to consume",
+        min_length=1,
+    )
+    
+    # Worker Configuration
+    worker_max_concurrency: int = Field(
+        default=10,
+        ge=1,
+        le=1000,
+        description="Maximum concurrent message handlers for worker (1-1000, default: 10)",
+    )
+    worker_ack_deadline_seconds: int = Field(
+        default=600,
+        ge=60,
+        le=3600,
+        description="Pub/Sub ack deadline in seconds (60-3600, default: 600)",
+    )
+    worker_step_timeout_seconds: int = Field(
+        default=300,
+        ge=10,
+        le=1800,
+        description="Per-step timeout in seconds (10-1800, default: 300)",
+    )
+    worker_job_timeout_seconds: int = Field(
+        default=1800,
+        ge=60,
+        le=7200,
+        description="Overall job timeout in seconds (60-7200, default: 1800)",
+    )
 
     @field_validator("openai_api_key")
     @classmethod
