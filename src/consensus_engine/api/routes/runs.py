@@ -437,101 +437,104 @@ async def create_revision(
         extra={"parent_run_id": run_id},
     )
 
-    # Validate request has at least one edit input
-    if request.edited_proposal is None and request.edit_notes is None:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail="At least one of 'edited_proposal' or 'edit_notes' must be provided",
-        )
-
-    # Parse and validate parent run_id
-    try:
-        parent_run_uuid = uuid.UUID(run_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid run_id UUID: {run_id}",
-        ) from e
-
-    # Retrieve parent run with all relations
-    try:
-        parent_run = RunRepository.get_run_with_relations(db_session, parent_run_uuid)
-    except Exception as e:
-        logger.error(
-            f"Database error while retrieving parent run {run_id}",
-            extra={"parent_run_id": run_id},
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve parent run from database",
-        ) from e
-
-    if parent_run is None:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail=f"Parent run not found: {run_id}",
-        )
-
-    # Validate parent run completed successfully
-    if parent_run.status != RunStatus.COMPLETED:
-        raise HTTPException(
-            status_code=http_status.HTTP_409_CONFLICT,
-            detail=(
-                f"Cannot create revision from run with status '{parent_run.status.value}'. "
-                "Parent run must have status 'completed'."
-            ),
-        )
-
-    # Validate parent has required data
-    if not parent_run.proposal_version:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail="Parent run missing proposal version data",
-        )
-
-    if not parent_run.persona_reviews:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail="Parent run missing persona reviews data",
-        )
-
-    # Extract parent data
-    parent_proposal_json = parent_run.proposal_version.expanded_proposal_json
-    parent_proposal = ExpandedProposal(**parent_proposal_json)
-
-    parent_reviews_data: list[tuple[str, dict[str, Any]]] = [
-        (review.persona_id, review.review_json) for review in parent_run.persona_reviews
-    ]
-
-    # Pre-generate new run_id
+    # Pre-generate new run_id and start timing
     new_run_id = uuid.uuid4()
     start_time = time.time()
 
-    # Determine parameters (merge with parent)
-    input_idea = request.input_idea if request.input_idea is not None else parent_run.input_idea
-
-    extra_context_dict: dict[str, Any] | None = None
-    if request.extra_context is not None:
-        if isinstance(request.extra_context, dict):
-            extra_context_dict = request.extra_context
-        else:
-            extra_context_dict = {"text": request.extra_context}
-    else:
-        extra_context_dict = parent_run.extra_context
-
-    model = request.model if request.model is not None else parent_run.model
-    temperature = (
-        request.temperature if request.temperature is not None else float(parent_run.temperature)
-    )
-
-    parameters_json = (
-        request.parameters_json
-        if request.parameters_json is not None
-        else parent_run.parameters_json
-    )
-
     try:
+        # Validate request has at least one edit input
+        if request.edited_proposal is None and request.edit_notes is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="At least one of 'edited_proposal' or 'edit_notes' must be provided",
+            )
+
+        # Parse and validate parent run_id
+        try:
+            parent_run_uuid = uuid.UUID(run_id)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid run_id UUID: {run_id}",
+            ) from e
+
+        # Retrieve parent run with all relations
+        try:
+            parent_run = RunRepository.get_run_with_relations(db_session, parent_run_uuid)
+        except Exception as e:
+            logger.error(
+                f"Database error while retrieving parent run {run_id}",
+                extra={"parent_run_id": run_id},
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve parent run from database",
+            ) from e
+
+        if parent_run is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Parent run not found: {run_id}",
+            )
+
+        # Validate parent run completed successfully
+        if parent_run.status != RunStatus.COMPLETED:
+            raise HTTPException(
+                status_code=http_status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Cannot create revision from run with status '{parent_run.status.value}'. "
+                    "Parent run must have status 'completed'."
+                ),
+            )
+
+        # Validate parent has required data
+        if not parent_run.proposal_version:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Parent run missing proposal version data",
+            )
+
+        if not parent_run.persona_reviews:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Parent run missing persona reviews data",
+            )
+
+        # Extract parent data
+        parent_proposal_json = parent_run.proposal_version.expanded_proposal_json
+        parent_proposal = ExpandedProposal(**parent_proposal_json)
+
+        # Extract parent reviews with security_concerns_present from DB
+        parent_reviews_data: list[tuple[str, dict[str, Any], bool]] = [
+            (review.persona_id, review.review_json, review.security_concerns_present)
+            for review in parent_run.persona_reviews
+        ]
+
+        # Determine parameters (merge with parent)
+        input_idea = request.input_idea if request.input_idea is not None else parent_run.input_idea
+
+        extra_context_dict: dict[str, Any] | None = None
+        if request.extra_context is not None:
+            if isinstance(request.extra_context, dict):
+                extra_context_dict = request.extra_context
+            else:
+                extra_context_dict = {"text": request.extra_context}
+        else:
+            extra_context_dict = parent_run.extra_context
+
+        model = request.model if request.model is not None else parent_run.model
+        temperature = (
+            request.temperature
+            if request.temperature is not None
+            else float(parent_run.temperature)
+        )
+
+        parameters_json = (
+            request.parameters_json
+            if request.parameters_json is not None
+            else parent_run.parameters_json
+        )
         # Step 1: Create new Run record
         new_run = RunRepository.create_run(
             session=db_session,
@@ -550,6 +553,9 @@ async def create_revision(
             extra={"run_id": str(new_run_id), "parent_run_id": run_id},
         )
 
+        # Flush to ensure run is persisted before potential failures
+        db_session.flush()
+
         # Step 2: Expand with edits
         try:
             new_proposal, expand_metadata, diff_json = expand_with_edits(
@@ -559,9 +565,8 @@ async def create_revision(
                 settings=settings,
             )
         except ConsensusEngineError as e:
-            # Mark run as failed
+            # Mark run as failed and let outer exception handler rollback
             RunRepository.update_run_status(db_session, new_run_id, RunStatus.FAILED)
-            db_session.commit()
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to expand proposal with edits: {str(e)}",
@@ -597,10 +602,9 @@ async def create_revision(
                 personas_to_rerun=personas_to_rerun,
                 settings=settings,
             )
-        except ConsensusEngineError as e:
-            # Mark run as failed
+        except (ConsensusEngineError, ValueError) as e:
+            # Mark run as failed and let outer exception handler rollback
             RunRepository.update_run_status(db_session, new_run_id, RunStatus.FAILED)
-            db_session.commit()
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to review proposal with personas: {str(e)}",
@@ -693,18 +697,17 @@ async def create_revision(
             ),
         )
 
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        db_session.rollback()
-        raise
     except Exception as e:
-        # Catch-all for unexpected errors
+        # Catch all errors (including HTTPExceptions from validation)
         db_session.rollback()
         logger.error(
-            f"Unexpected error creating revision for run {run_id}",
+            f"Error creating revision for run {run_id}, rolling back transaction",
             extra={"parent_run_id": run_id},
             exc_info=True,
         )
+        # Re-raise HTTPException as-is, wrap others
+        if isinstance(e, HTTPException):
+            raise
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create revision: {str(e)}",

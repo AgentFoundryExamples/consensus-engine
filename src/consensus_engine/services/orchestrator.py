@@ -54,7 +54,7 @@ RERUN_CONFIDENCE_THRESHOLD = 0.70
 
 
 def determine_personas_to_rerun(
-    parent_persona_reviews: list[tuple[str, dict[str, Any]]],
+    parent_persona_reviews: list[tuple[str, dict[str, Any], bool]],
 ) -> list[str]:
     """Determine which personas should be re-run for a revision.
 
@@ -64,7 +64,8 @@ def determine_personas_to_rerun(
     3. Persona is SecurityGuardian AND security_concerns_present is True
 
     Args:
-        parent_persona_reviews: List of (persona_id, review_json) tuples from parent
+        parent_persona_reviews: List of (persona_id, review_json, security_concerns_present)
+            tuples from parent
 
     Returns:
         List of persona IDs that should be re-executed
@@ -76,7 +77,7 @@ def determine_personas_to_rerun(
         extra={"parent_review_count": len(parent_persona_reviews)},
     )
 
-    for persona_id, review_json in parent_persona_reviews:
+    for persona_id, review_json, security_concerns_present in parent_persona_reviews:
         should_rerun = False
         reason = ""
 
@@ -100,17 +101,14 @@ def determine_personas_to_rerun(
             )
 
         # Check criterion 3: SecurityGuardian with security concerns
-        if persona_id == SECURITY_GUARDIAN_PERSONA_ID:
-            security_concerns_present = any(
-                issue.get("security_critical", False) for issue in blocking_issues
+        # Use the security_concerns_present flag from the DB for consistency
+        if persona_id == SECURITY_GUARDIAN_PERSONA_ID and security_concerns_present:
+            should_rerun = True
+            reason = (
+                "Security Guardian with security_critical issues"
+                if not reason
+                else f"{reason}; Security concerns present"
             )
-            if security_concerns_present:
-                should_rerun = True
-                reason = (
-                    "Security Guardian with security_critical issues"
-                    if not reason
-                    else f"{reason}; Security concerns present"
-                )
 
         if should_rerun:
             personas_to_rerun.append(persona_id)
@@ -335,7 +333,7 @@ def review_with_all_personas(
 
 def review_with_selective_personas(
     expanded_proposal: ExpandedProposal,
-    parent_persona_reviews: list[tuple[str, dict[str, Any]]],
+    parent_persona_reviews: list[tuple[str, dict[str, Any], bool]],
     personas_to_rerun: list[str],
     settings: Settings,
 ) -> tuple[list[PersonaReview], dict[str, Any]]:
@@ -346,7 +344,8 @@ def review_with_selective_personas(
 
     Args:
         expanded_proposal: Validated ExpandedProposal to review
-        parent_persona_reviews: List of (persona_id, review_json) tuples from parent
+        parent_persona_reviews: List of (persona_id, review_json, security_concerns_present)
+            tuples from parent
         personas_to_rerun: List of persona IDs to re-execute
         settings: Application settings for OpenAI client configuration
 
@@ -380,7 +379,7 @@ def review_with_selective_personas(
 
     # Build parent reviews lookup
     parent_reviews_map: dict[str, dict[str, Any]] = {}
-    for persona_id, review_json in parent_persona_reviews:
+    for persona_id, review_json, _ in parent_persona_reviews:
         parent_reviews_map[persona_id] = review_json
 
     # Construct user prompt (same as in review_with_all_personas)
@@ -505,10 +504,16 @@ def review_with_selective_personas(
         else:
             # Reuse parent review
             if persona_id not in parent_reviews_map:
-                raise ValueError(
-                    f"Persona '{persona_id}' not found in parent reviews. "
-                    "Cannot reuse review for missing persona."
+                # Log error but don't fail the entire run
+                logger.error(
+                    f"Persona '{persona_id}' not found in parent reviews, skipping reuse",
+                    extra={
+                        "run_id": run_id,
+                        "persona_id": persona_id,
+                        "persona_name": persona_config.display_name,
+                    },
                 )
+                continue
 
             logger.info(
                 f"Reusing parent review for persona={persona_config.display_name}",
@@ -519,9 +524,22 @@ def review_with_selective_personas(
                 },
             )
 
-            # Reconstruct PersonaReview from parent JSON
+            # Reconstruct PersonaReview from parent JSON with error handling
             parent_review_json = parent_reviews_map[persona_id]
-            parsed_response = PersonaReview(**parent_review_json)
+            try:
+                parsed_response = PersonaReview(**parent_review_json)
+            except Exception as e:
+                # Log validation error and skip this persona
+                logger.error(
+                    f"Failed to reconstruct parent review for persona {persona_id}, skipping",
+                    extra={
+                        "run_id": run_id,
+                        "persona_id": persona_id,
+                        "error": str(e),
+                    },
+                    exc_info=True,
+                )
+                continue
 
             # Mark as reused in metadata
             parsed_response.internal_metadata = {

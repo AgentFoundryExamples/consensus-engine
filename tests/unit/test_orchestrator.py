@@ -332,6 +332,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.65,
                     "blocking_issues": [],
                 },
+                False,  # security_concerns_present
             ),
             (
                 "critic",
@@ -340,6 +341,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.85,
                     "blocking_issues": [],
                 },
+                False,  # security_concerns_present
             ),
         ]
 
@@ -360,6 +362,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.85,
                     "blocking_issues": [{"text": "Critical issue", "security_critical": False}],
                 },
+                False,  # security_concerns_present
             ),
             (
                 "critic",
@@ -368,6 +371,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.80,
                     "blocking_issues": [],
                 },
+                False,  # security_concerns_present
             ),
         ]
 
@@ -390,6 +394,7 @@ class TestDeterminePersonasToRerun:
                         {"text": "SQL injection risk", "security_critical": True}
                     ],
                 },
+                True,  # security_concerns_present from DB
             ),
             (
                 "critic",
@@ -398,6 +403,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.80,
                     "blocking_issues": [],
                 },
+                False,  # security_concerns_present
             ),
         ]
 
@@ -418,6 +424,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.85,
                     "blocking_issues": [],
                 },
+                False,  # security_concerns_present
             ),
             (
                 "critic",
@@ -426,6 +433,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.90,
                     "blocking_issues": [],
                 },
+                False,  # security_concerns_present
             ),
         ]
 
@@ -445,6 +453,7 @@ class TestDeterminePersonasToRerun:
                     "confidence_score": 0.65,
                     "blocking_issues": [{"text": "Issue", "security_critical": False}],
                 },
+                False,  # security_concerns_present
             ),
         ]
 
