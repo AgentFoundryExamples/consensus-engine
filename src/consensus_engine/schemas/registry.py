@@ -7,6 +7,9 @@ is registered with semantic version identifiers to enable deterministic
 contracts and safe prompt evolution.
 """
 
+import json
+import logging
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -15,6 +18,9 @@ from pydantic import BaseModel
 from consensus_engine.db.models import RunStatus as DBRunStatus
 from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 
 class SchemaNotFoundError(Exception):
@@ -74,8 +80,6 @@ class SchemaVersion:
             JSON string with version metadata
         """
         # Add version metadata to the JSON output
-        import json
-
         data = self.to_dict(instance)
         return json.dumps(data, indent=2)
 
@@ -131,6 +135,14 @@ class SchemaRegistry:
         Raises:
             ValueError: If version format is invalid or already registered
         """
+        # Validate semantic versioning format (MAJOR.MINOR.PATCH)
+        semver_pattern = r"^\d+\.\d+\.\d+$"
+        if not re.match(semver_pattern, version):
+            raise ValueError(
+                f"Invalid version format '{version}'. "
+                f"Expected semantic versioning format: MAJOR.MINOR.PATCH (e.g., '1.0.0')"
+            )
+
         if schema_name not in self._schemas:
             self._schemas[schema_name] = {}
 
@@ -210,9 +222,6 @@ class SchemaRegistry:
 
         # Log warning if version is deprecated
         if schema_version.deprecated:
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.warning(
                 f"Schema '{schema_name}' version '{version}' is deprecated. "
                 f"Migration notes: {schema_version.migration_notes or 'None provided'}"
@@ -312,12 +321,11 @@ _registry.register(
 )
 
 # Note: RunStatus is an enum in the database models, not a Pydantic schema
-# For compatibility, we'll add a simple wrapper
+# For compatibility, we'll add a simple wrapper model with conversion helpers
 
 
-@dataclass
-class RunStatusSchema:
-    """Wrapper for RunStatus enum with schema-like interface.
+class RunStatusModel(BaseModel):
+    """Simple Pydantic model wrapper for RunStatus enum metadata.
 
     This provides a consistent interface for the registry while maintaining
     compatibility with the database enum.
@@ -326,14 +334,14 @@ class RunStatusSchema:
     status: str
 
     @classmethod
-    def from_enum(cls, status: DBRunStatus) -> "RunStatusSchema":
+    def from_enum(cls, status: DBRunStatus) -> "RunStatusModel":
         """Create from database enum.
 
         Args:
             status: RunStatus enum value
 
         Returns:
-            RunStatusSchema instance
+            RunStatusModel instance
         """
         return cls(status=status.value)
 
@@ -344,13 +352,6 @@ class RunStatusSchema:
             RunStatus enum value
         """
         return DBRunStatus(self.status)
-
-
-# For RunStatus, we'll register metadata about the enum with a simple wrapper model
-class RunStatusModel(BaseModel):
-    """Simple Pydantic model wrapper for RunStatus enum metadata."""
-
-    status: str
 
 
 _registry.register(
@@ -430,5 +431,5 @@ __all__ = [
     "get_schema_version",
     "list_all_schemas",
     "list_schema_versions",
-    "RunStatusSchema",
+    "RunStatusModel",
 ]

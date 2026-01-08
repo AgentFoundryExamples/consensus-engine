@@ -62,6 +62,40 @@ class TestSchemaRegistry:
                 is_current=False,
             )
 
+    def test_register_invalid_version_format_raises_error(self) -> None:
+        """Test that registering with invalid version format raises ValueError."""
+        registry = SchemaRegistry()
+
+        # Test various invalid formats
+        invalid_versions = ["v1.0.0", "1.0", "1", "latest", "1.0.0-alpha", ""]
+
+        for invalid_version in invalid_versions:
+            with pytest.raises(ValueError, match="Invalid version format"):
+                registry.register(
+                    schema_name="TestSchema",
+                    version=invalid_version,
+                    schema_class=ExpandedProposal,
+                    description="Test schema",
+                    is_current=True,
+                )
+
+    def test_register_valid_semantic_version_succeeds(self) -> None:
+        """Test that registering with valid semantic version succeeds."""
+        registry = SchemaRegistry()
+
+        # Test various valid formats
+        valid_versions = ["0.0.1", "1.0.0", "2.1.3", "10.20.30"]
+
+        for valid_version in valid_versions:
+            registry.register(
+                schema_name=f"TestSchema{valid_version}",
+                version=valid_version,
+                schema_class=ExpandedProposal,
+                description="Test schema",
+                is_current=True,
+            )
+            # Should not raise any error
+
     def test_get_current_schema(self) -> None:
         """Test retrieving current schema version."""
         registry = SchemaRegistry()
