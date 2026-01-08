@@ -287,19 +287,26 @@ export function DiffView({ runId, otherRunId, className = '' }: DiffViewProps) {
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow">
           <h3 className="mb-4 text-lg font-semibold text-gray-900">Proposal Changes</h3>
           <div className="space-y-4">
-            {Object.entries(diff.proposal_changes).map(([section, change]: [string, any]) => (
-              <div key={section} className="border-l-4 border-blue-500 pl-4">
-                <h4 className="text-sm font-semibold capitalize text-gray-900">
-                  {section.replace(/_/g, ' ')}
-                </h4>
-                <p className="mt-1 text-xs text-gray-600">Status: {change.status || 'unknown'}</p>
-                {change.diff && (
-                  <pre className="mt-2 overflow-x-auto rounded bg-gray-100 p-3 text-xs font-mono">
-                    {change.diff}
-                  </pre>
-                )}
-              </div>
-            ))}
+            {Object.entries(diff.proposal_changes).map(
+              ([section, change]: [string, Record<string, unknown>]) => {
+                const changeData = change as { status?: string; diff?: string };
+                return (
+                  <div key={section} className="border-l-4 border-blue-500 pl-4">
+                    <h4 className="text-sm font-semibold capitalize text-gray-900">
+                      {section.replace(/_/g, ' ')}
+                    </h4>
+                    <p className="mt-1 text-xs text-gray-600">
+                      Status: {changeData.status || 'unknown'}
+                    </p>
+                    {changeData.diff && (
+                      <pre className="mt-2 overflow-x-auto rounded bg-gray-100 p-3 font-mono text-xs">
+                        {changeData.diff}
+                      </pre>
+                    )}
+                  </div>
+                );
+              }
+            )}
           </div>
         </div>
       )}

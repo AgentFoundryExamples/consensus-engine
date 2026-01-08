@@ -24,4 +24,4 @@ export const DecisionEnum = {
   REJECT: 'reject',
 } as const;
 
-export type DecisionEnum = typeof DecisionEnum[keyof typeof DecisionEnum];
+export type DecisionEnum = (typeof DecisionEnum)[keyof typeof DecisionEnum];

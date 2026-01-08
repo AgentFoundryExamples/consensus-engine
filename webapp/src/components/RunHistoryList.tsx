@@ -241,13 +241,17 @@ export function RunHistoryList({
                           type="button"
                           onClick={() => handleSelectRun(child.run_id)}
                           className={`w-full rounded-md border border-gray-200 p-2 text-left transition-colors hover:bg-white ${
-                            selectedRunId === child.run_id ? 'bg-blue-50 ring-2 ring-blue-500' : 'bg-white'
+                            selectedRunId === child.run_id
+                              ? 'bg-blue-50 ring-2 ring-blue-500'
+                              : 'bg-white'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
                               <div className="mb-1 flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-700">v{idx + 2}</span>
+                                <span className="text-xs font-medium text-gray-700">
+                                  v{idx + 2}
+                                </span>
                                 <span
                                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(child.status)}`}
                                 >

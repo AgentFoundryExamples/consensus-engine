@@ -217,7 +217,10 @@ ${proposal.scope_non_goals?.join('\n- ') || 'None'}
 
           {/* Edited proposal field */}
           <div className="mb-4">
-            <label htmlFor="editedProposal" className="mb-2 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="editedProposal"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Edited Proposal Text
               <span className="ml-1 text-xs text-gray-500">(or leave for LLM re-expansion)</span>
             </label>

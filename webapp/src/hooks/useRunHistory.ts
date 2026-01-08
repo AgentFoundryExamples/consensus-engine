@@ -153,18 +153,29 @@ export function useRunHistory(options: UseRunHistoryOptions = {}): UseRunHistory
 
   // Load more (next page)
   const loadMore = useCallback(async () => {
-    if (state.isLoading || !hasMore) return;
+    if (state.isLoading || state.runs.length >= state.total) return;
     await fetchRuns(state.offset + limit, true);
-  }, [fetchRuns, state.isLoading, state.offset, limit]);
+  }, [fetchRuns, state.isLoading, state.offset, state.runs.length, state.total, limit]);
 
   // Check if there are more pages
   const hasMore = state.runs.length < state.total;
 
   // Auto-fetch on mount if enabled
   useEffect(() => {
-    if (autoFetch) {
-      fetchRuns(0, false);
-    }
+    if (!autoFetch) return;
+
+    let cancelled = false;
+
+    const doFetch = async () => {
+      if (cancelled) return;
+      await fetchRuns(0, false);
+    };
+
+    doFetch();
+
+    return () => {
+      cancelled = true;
+    };
   }, [autoFetch, fetchRuns]);
 
   // Merge session runs with API runs (deduplicate by run_id)

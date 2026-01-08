@@ -41,7 +41,8 @@
 
 /* Animation for minority report badge */
 @keyframes pulse-amber {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
