@@ -13,6 +13,8 @@
 # limitations under the License.
 """Unit tests for instruction builder module."""
 
+import re
+
 import pytest
 
 from consensus_engine.config.instruction_builder import InstructionBuilder, InstructionPayload
@@ -509,8 +511,6 @@ class TestPromptSetVersionTagging:
     def test_prompt_set_version_constant_value(self) -> None:
         """Test that PROMPT_SET_VERSION constant has expected format."""
         # Verify it's a semantic version string
-        import re
-
         assert isinstance(PROMPT_SET_VERSION, str)
         # Should match semantic versioning format: X.Y.Z
         assert re.match(r"^\d+\.\d+\.\d+$", PROMPT_SET_VERSION)

@@ -14,6 +14,7 @@
 """Unit tests for schema registry module."""
 
 import json
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -31,6 +32,19 @@ from consensus_engine.schemas.registry import (
     list_schema_versions,
 )
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
+
+
+# Fixture path helper
+def get_fixture_path(filename: str) -> Path:
+    """Get the path to a fixture file.
+    
+    Args:
+        filename: Name of the fixture file (e.g., 'expanded_proposal_v1.0.0.json')
+    
+    Returns:
+        Path to the fixture file
+    """
+    return Path(__file__).parent.parent / "fixtures" / "schemas" / filename
 
 
 class TestSchemaRegistry:
@@ -737,20 +751,14 @@ class TestBackwardCompatibility:
 
     def test_load_expanded_proposal_v1_0_0_fixture(self) -> None:
         """Test loading ExpandedProposal v1.0.0 fixture validates correctly."""
-        import json
-        from pathlib import Path
-
         # Load fixture
-        fixture_path = (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "schemas"
-            / "expanded_proposal_v1.0.0.json"
-        )
+        fixture_path = get_fixture_path("expanded_proposal_v1.0.0.json")
         with open(fixture_path) as f:
             payload = json.load(f)
 
-        # Remove metadata field from payload as it's not part of the schema
+        # Note: The metadata field in the fixture is for documentation purposes
+        # and is not part of the ExpandedProposal schema itself (it's used in responses)
+        # Remove it before validation
         metadata = payload.pop("metadata", None)
 
         # Schema should validate
@@ -768,16 +776,8 @@ class TestBackwardCompatibility:
 
     def test_load_persona_review_v1_0_0_fixture(self) -> None:
         """Test loading PersonaReview v1.0.0 fixture validates correctly."""
-        import json
-        from pathlib import Path
-
         # Load fixture
-        fixture_path = (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "schemas"
-            / "persona_review_v1.0.0.json"
-        )
+        fixture_path = get_fixture_path("persona_review_v1.0.0.json")
         with open(fixture_path) as f:
             payload = json.load(f)
 
@@ -795,16 +795,8 @@ class TestBackwardCompatibility:
 
     def test_load_decision_aggregation_v1_0_0_fixture(self) -> None:
         """Test loading DecisionAggregation v1.0.0 fixture validates correctly."""
-        import json
-        from pathlib import Path
-
         # Load fixture
-        fixture_path = (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "schemas"
-            / "decision_aggregation_v1.0.0.json"
-        )
+        fixture_path = get_fixture_path("decision_aggregation_v1.0.0.json")
         with open(fixture_path) as f:
             payload = json.load(f)
 
@@ -819,16 +811,8 @@ class TestBackwardCompatibility:
 
     def test_load_run_status_v1_0_0_fixture(self) -> None:
         """Test loading RunStatus v1.0.0 fixture validates correctly."""
-        import json
-        from pathlib import Path
-
         # Load fixture
-        fixture_path = (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "schemas"
-            / "run_status_v1.0.0.json"
-        )
+        fixture_path = get_fixture_path("run_status_v1.0.0.json")
         with open(fixture_path) as f:
             payload = json.load(f)
 
