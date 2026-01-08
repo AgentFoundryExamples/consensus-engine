@@ -115,6 +115,11 @@ async def full_review_endpoint(
     priority = RunPriority.NORMAL
     run_type = RunType.INITIAL
 
+    # Get schema and prompt versions from settings
+    llm_config = settings.get_llm_steps_config()
+    schema_version = "1.0.0"  # Default schema version
+    prompt_set_version = llm_config.prompt_set_version
+
     try:
         # Step 1: Create Run with status='queued'
         run = RunRepository.create_run(
@@ -128,6 +133,8 @@ async def full_review_endpoint(
             parameters_json=parameters_json,
             priority=priority,
             status=RunStatus.QUEUED,
+            schema_version=schema_version,
+            prompt_set_version=prompt_set_version,
         )
         logger.info(
             "Created Run with status='queued'",

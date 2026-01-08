@@ -61,6 +61,8 @@ class RunRepository:
         user_id: uuid.UUID | None = None,
         priority: RunPriority = RunPriority.NORMAL,
         status: RunStatus = RunStatus.QUEUED,
+        schema_version: str | None = None,
+        prompt_set_version: str | None = None,
     ) -> Run:
         """Create a new Run record with status='queued' by default.
 
@@ -77,6 +79,8 @@ class RunRepository:
             user_id: Optional user ID
             priority: Priority level for run execution (default: NORMAL)
             status: Initial status (default: QUEUED)
+            schema_version: Optional schema version for audit (default: None)
+            prompt_set_version: Optional prompt set version for audit (default: None)
 
         Returns:
             Created Run instance
@@ -100,17 +104,22 @@ class RunRepository:
                 parameters_json=parameters_json,
                 parent_run_id=parent_run_id,
                 user_id=user_id,
+                schema_version=schema_version,
+                prompt_set_version=prompt_set_version,
             )
 
             session.add(run)
 
             logger.info(
                 f"Created Run object with id={run.id}, status={run.status.value}, "
-                f"priority={run.priority.value}",
+                f"priority={run.priority.value}, schema_version={schema_version}, "
+                f"prompt_set_version={prompt_set_version}",
                 extra={
                     "run_id": str(run.id),
                     "status": run.status.value,
                     "priority": run.priority.value,
+                    "schema_version": schema_version or "unknown",
+                    "prompt_set_version": prompt_set_version or "unknown",
                 },
             )
 
@@ -582,6 +591,7 @@ class StepProgressRepository:
         started_at: datetime | None = None,
         completed_at: datetime | None = None,
         error_message: str | None = None,
+        step_metadata: dict[str, Any] | None = None,
     ) -> StepProgress:
         """Create or update a step progress record (idempotent).
 
@@ -597,6 +607,7 @@ class StepProgressRepository:
             started_at: Optional timestamp when step started
             completed_at: Optional timestamp when step completed/failed
             error_message: Optional error message if step failed
+            step_metadata: Optional JSONB metadata for the step
 
         Returns:
             StepProgress instance (created or updated)
@@ -635,6 +646,10 @@ class StepProgressRepository:
                 if status != StepStatus.FAILED:
                     existing.error_message = None
 
+                # Update step_metadata if provided
+                if step_metadata is not None:
+                    existing.step_metadata = step_metadata
+
                 session.flush()
 
                 logger.info(
@@ -645,6 +660,7 @@ class StepProgressRepository:
                         "run_id": str(run_id),
                         "step_name": step_name,
                         "status": status.value,
+                        "has_metadata": step_metadata is not None,
                     },
                 )
 
@@ -659,6 +675,7 @@ class StepProgressRepository:
                     started_at=started_at,
                     completed_at=completed_at,
                     error_message=error_message,
+                    step_metadata=step_metadata,
                 )
 
                 session.add(step_progress)
@@ -672,6 +689,7 @@ class StepProgressRepository:
                         "run_id": str(run_id),
                         "step_name": step_name,
                         "status": status.value,
+                        "has_metadata": step_metadata is not None,
                     },
                 )
 
