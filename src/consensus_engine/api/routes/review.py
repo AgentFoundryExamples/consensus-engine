@@ -82,6 +82,10 @@ def _build_expand_response(
     Returns:
         ExpandIdeaResponse instance
     """
+    # Extract version information from metadata with defaults
+    schema_version = metadata.get("schema_version", "1.0.0")
+    prompt_set_version = metadata.get("prompt_set_version", "1.0.0")
+
     return ExpandIdeaResponse(
         problem_statement=proposal.problem_statement,
         proposed_solution=proposal.proposed_solution,
@@ -91,6 +95,8 @@ def _build_expand_response(
         summary=proposal.summary,
         raw_idea=proposal.raw_idea,
         raw_expanded_proposal=proposal.raw_expanded_proposal,
+        schema_version=schema_version,
+        prompt_set_version=prompt_set_version,
         metadata=metadata,
     )
 

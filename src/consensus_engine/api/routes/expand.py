@@ -162,6 +162,10 @@ async def expand_idea_endpoint(
         # Call expand service
         proposal, metadata = expand_service(idea_input)
 
+        # Extract version information from metadata
+        schema_version = metadata.get("schema_version", "1.0.0")
+        prompt_set_version = metadata.get("prompt_set_version", "1.0.0")
+
         # Build response
         response = ExpandIdeaResponse(
             problem_statement=proposal.problem_statement,
@@ -169,12 +173,18 @@ async def expand_idea_endpoint(
             assumptions=proposal.assumptions,
             scope_non_goals=proposal.scope_non_goals,
             raw_expanded_proposal=proposal.raw_expanded_proposal,
+            schema_version=schema_version,
+            prompt_set_version=prompt_set_version,
             metadata=metadata,
         )
 
         logger.info(
             "Successfully processed expand-idea request",
-            extra={"request_id": metadata.get("request_id")},
+            extra={
+                "request_id": metadata.get("request_id"),
+                "schema_version": schema_version,
+                "prompt_set_version": prompt_set_version,
+            },
         )
 
         return response
@@ -226,13 +236,21 @@ async def expand_idea_endpoint(
             "Schema validation error",
             extra={"code": e.code, "details": e.details},
         )
+        # Extract schema_version from error details if available
+        error_detail = {
+            "code": e.code,
+            "message": e.message,
+            "details": e.details,
+        }
+        # Include schema_version in error response for debugging
+        if "schema_version" in e.details:
+            error_detail["schema_version"] = e.details["schema_version"]
+        if "field_errors" in e.details:
+            error_detail["field_errors"] = e.details["field_errors"]
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": e.code,
-                "message": e.message,
-                "details": e.details,
-            },
+            detail=error_detail,
         ) from e
 
     except ConsensusEngineError as e:
