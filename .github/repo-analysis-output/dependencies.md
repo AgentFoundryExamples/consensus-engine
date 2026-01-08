@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 76
-- **Intra-repo dependencies**: 217
-- **External stdlib dependencies**: 36
+- **Total files**: 78
+- **Intra-repo dependencies**: 224
+- **External stdlib dependencies**: 37
 - **External third-party dependencies**: 71
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 36 unique modules
+Total: 37 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -26,6 +26,7 @@ Total: 36 unique modules
 - `collections.abc.Sequence`
 - `collections.deque`
 - `contextlib.asynccontextmanager`
+- `dataclasses.dataclass`
 - `datetime.UTC`
 - `datetime.datetime`
 - `datetime.timedelta`
@@ -38,8 +39,7 @@ Total: 36 unique modules
 - `logging.config.fileConfig`
 - `os`
 - `pathlib.Path`
-- `re`
-- ... and 16 more (see JSON for full list)
+- ... and 17 more (see JSON for full list)
 
 ### Third-Party Packages
 
@@ -69,13 +69,13 @@ Total: 71 unique packages
 
 ## Most Depended Upon Files (Intra-Repo)
 
-- `src/consensus_engine/schemas/proposal.py` (24 dependents)
-- `src/consensus_engine/schemas/review.py` (21 dependents)
+- `src/consensus_engine/schemas/proposal.py` (26 dependents)
+- `src/consensus_engine/schemas/review.py` (23 dependents)
 - `src/consensus_engine/config/settings.py` (20 dependents)
 - `src/consensus_engine/exceptions.py` (16 dependents)
+- `src/consensus_engine/db/models.py` (16 dependents)
 - `src/consensus_engine/config/__init__.py` (15 dependents)
 - `src/consensus_engine/config/logging.py` (15 dependents)
-- `src/consensus_engine/db/models.py` (15 dependents)
 - `src/consensus_engine/app.py` (10 dependents)
 - `src/consensus_engine/db/__init__.py` (9 dependents)
 - `src/consensus_engine/db/dependencies.py` (8 dependents)

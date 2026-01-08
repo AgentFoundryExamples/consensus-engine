@@ -481,6 +481,23 @@
       }
     },
     {
+      "id": "src/consensus_engine/schemas/registry.py",
+      "path": "src/consensus_engine/schemas/registry.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "dataclasses.dataclass",
+          "json",
+          "logging",
+          "re",
+          "typing.Any"
+        ],
+        "third-party": [
+          "pydantic.BaseModel"
+        ]
+      }
+    },
+    {
       "id": "src/consensus_engine/schemas/requests.py",
       "path": "src/consensus_engine/schemas/requests.py",
       "type": "file",
@@ -1168,6 +1185,20 @@
       }
     },
     {
+      "id": "tests/unit/test_schema_registry.py",
+      "path": "tests/unit/test_schema_registry.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "json"
+        ],
+        "third-party": [
+          "pydantic.ValidationError",
+          "pytest"
+        ]
+      }
+    },
+    {
       "id": "tests/unit/test_validation.py",
       "path": "tests/unit/test_validation.py",
       "type": "file",
@@ -1455,6 +1486,22 @@
     },
     {
       "source": "src/consensus_engine/schemas/__init__.py",
+      "target": "src/consensus_engine/schemas/registry.py"
+    },
+    {
+      "source": "src/consensus_engine/schemas/__init__.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
+      "source": "src/consensus_engine/schemas/registry.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "src/consensus_engine/schemas/registry.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "src/consensus_engine/schemas/registry.py",
       "target": "src/consensus_engine/schemas/review.py"
     },
     {
@@ -2038,6 +2085,18 @@
       "target": "src/consensus_engine/services/review.py"
     },
     {
+      "source": "tests/unit/test_schema_registry.py",
+      "target": "src/consensus_engine/schemas/proposal.py"
+    },
+    {
+      "source": "tests/unit/test_schema_registry.py",
+      "target": "src/consensus_engine/schemas/registry.py"
+    },
+    {
+      "source": "tests/unit/test_schema_registry.py",
+      "target": "src/consensus_engine/schemas/review.py"
+    },
+    {
       "source": "tests/unit/test_validation.py",
       "target": "src/consensus_engine/schemas/requests.py"
     },
@@ -2059,6 +2118,7 @@
       "collections.abc.Sequence",
       "collections.deque",
       "contextlib.asynccontextmanager",
+      "dataclasses.dataclass",
       "datetime.UTC",
       "datetime.datetime",
       "datetime.timedelta",
@@ -2162,7 +2222,7 @@
       "sqlalchemy.select",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 36,
+    "stdlib_count": 37,
     "third-party_count": 71
   }
 }

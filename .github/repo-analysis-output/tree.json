@@ -84,6 +84,10 @@
         },
         {
           "type": "file",
+          "name": "SCHEMA_REGISTRY.md"
+        },
+        {
+          "type": "file",
           "name": "WORKER_DEPLOYMENT.md"
         }
       ]
@@ -267,6 +271,10 @@
                 {
                   "type": "file",
                   "name": "proposal.py"
+                },
+                {
+                  "type": "file",
+                  "name": "registry.py"
                 },
                 {
                   "type": "file",
@@ -483,6 +491,10 @@
             {
               "type": "file",
               "name": "test_review_service.py"
+            },
+            {
+              "type": "file",
+              "name": "test_schema_registry.py"
             },
             {
               "type": "file",

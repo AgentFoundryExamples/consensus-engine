@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 76
+Total files: 78
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -263,8 +263,8 @@ Total files: 76
 **Role:** module-init  
 **Role Justification:** module initialization file '__init__'  
 **Summary:** Python module initialization (role: module-init)  
-**Size:** 1.14 KB  
-**LOC:** 24  
+**Size:** 1.64 KB  
+**LOC:** 44  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/proposal.py
@@ -274,6 +274,15 @@ Total files: 76
 **Summary:** Python core implementation  
 **Size:** 5.87 KB  
 **LOC:** 138  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/schemas/registry.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 13.35 KB  
+**LOC:** 325  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/requests.py
@@ -679,6 +688,15 @@ Total files: 76
 **Summary:** Python test file (role: test)  
 **Size:** 16.32 KB  
 **LOC:** 331  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_schema_registry.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 19.52 KB  
+**LOC:** 422  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_validation.py

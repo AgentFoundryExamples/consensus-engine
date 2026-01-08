@@ -18,6 +18,7 @@
 ├── docs
   ├── async_run_persistence.md
   ├── MULTI_PERSONA_ORCHESTRATION.md
+  ├── SCHEMA_REGISTRY.md
   └── WORKER_DEPLOYMENT.md
 ├── examples
   └── test_full_review.py
@@ -60,6 +61,7 @@
     ├── schemas
       ├── __init__.py
       ├── proposal.py
+      ├── registry.py
       ├── requests.py
       └── review.py
     ├── services
@@ -111,6 +113,7 @@
     ├── test_request_schemas.py
     ├── test_review_schemas.py
     ├── test_review_service.py
+    ├── test_schema_registry.py
     └── test_validation.py
   ├── __init__.py
   └── conftest.py
