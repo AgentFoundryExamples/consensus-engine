@@ -2096,7 +2096,7 @@ chmod +x cloud-sql-proxy
 
 # Start proxy with service account impersonation and run migrations
 ./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 --impersonate-service-account="consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com" &
-export DATABASE_URL="postgresql://consensus-api-sa@${PROJECT_ID}.iam:@localhost:5432/consensus_engine"
+export DATABASE_URL="postgresql://consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com:@localhost:5432/consensus_engine"
 alembic upgrade head
 kill %1  # Stop proxy
 ```

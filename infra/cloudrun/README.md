@@ -259,20 +259,21 @@ gcloud pubsub subscriptions update consensus-engine-jobs-sub \
 **Security Best Practice**: Never expose API keys in command history, scripts, or environment variables. Use Secret Manager for all sensitive values.
 
 ```bash
-# Store OpenAI API key in Secret Manager (preferred: read from file)
-# Option 1: Read from file (recommended)
+# Store OpenAI API key in Secret Manager
+# Option 1: Read from stdin (recommended - prompts for input without history exposure)
+gcloud secrets create openai-api-key \
+  --replication-policy="automatic" \
+  --project=$PROJECT_ID
+# Then paste your API key when prompted and press Ctrl+D
+
+# Option 2: Read from secure file with restricted permissions
+umask 077  # Ensure file is only readable by current user
 echo -n "your-openai-api-key" > /tmp/api-key.txt
 gcloud secrets create openai-api-key \
   --data-file=/tmp/api-key.txt \
   --replication-policy="automatic" \
   --project=$PROJECT_ID
-rm /tmp/api-key.txt  # Clean up immediately
-
-# Option 2: Pipe from echo (warning: may appear in shell history)
-# echo -n "your-openai-api-key" | gcloud secrets create openai-api-key \
-#   --data-file=- \
-#   --replication-policy="automatic" \
-#   --project=$PROJECT_ID
+shred -u /tmp/api-key.txt  # Securely delete the file
 
 # Grant backend service account access to secret
 gcloud secrets add-iam-policy-binding openai-api-key \
@@ -739,7 +740,7 @@ gcloud run jobs executions logs read \
 ./cloud-sql-proxy ${PROJECT_ID}:${REGION}:consensus-db --port 5432 --impersonate-service-account="consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com" &
 
 # Connect with IAM authentication (no password needed)
-psql -h localhost -p 5432 -U "consensus-api-sa@${PROJECT_ID}.iam" -d consensus_engine -c "\dt"
+psql -h localhost -p 5432 -U "consensus-api-sa@${PROJECT_ID}.iam.gserviceaccount.com" -d consensus_engine -c "\dt"
 
 # Should show: runs, step_progress, alembic_version tables
 kill %1  # Stop proxy
