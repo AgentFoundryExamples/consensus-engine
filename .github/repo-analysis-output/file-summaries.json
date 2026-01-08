@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 63,
+  "total_files": 68,
   "files": [
     {
       "schema_version": "2.0",
@@ -27,6 +27,20 @@
       "metrics": {
         "size_bytes": 3158,
         "loc": 52,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "migrations/versions/1be7b272f496_add_analytics_index_for_decision_and_.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python module for 1be7b272f496 add analytics index for decision and ",
+      "summary_text": "Python module for 1be7b272f496 add analytics index for decision and ",
+      "metrics": {
+        "size_bytes": 2611,
+        "loc": 38,
         "todo_count": 0
       }
     },
@@ -179,8 +193,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 25318,
-        "loc": 590,
+        "size_bytes": 30043,
+        "loc": 706,
         "todo_count": 1
       }
     },
@@ -389,8 +403,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 24431,
-        "loc": 510,
+        "size_bytes": 25740,
+        "loc": 544,
         "todo_count": 0
       }
     },
@@ -433,6 +447,20 @@
       "metrics": {
         "size_bytes": 9745,
         "loc": 195,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "src/consensus_engine/services/diff.py",
+      "language": "Python",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "Python core implementation",
+      "summary_text": "Python core implementation",
+      "metrics": {
+        "size_bytes": 11785,
+        "loc": 247,
         "todo_count": 0
       }
     },
@@ -559,6 +587,20 @@
       "metrics": {
         "size_bytes": 27180,
         "loc": 554,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/integration/test_diff_endpoint.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 17059,
+        "loc": 360,
         "todo_count": 0
       }
     },
@@ -727,6 +769,34 @@
       "metrics": {
         "size_bytes": 13767,
         "loc": 262,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_diff_endpoint.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 5549,
+        "loc": 102,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "tests/unit/test_diff_service.py",
+      "language": "Python",
+      "role": "test",
+      "role_justification": "filename starts with 'test_'",
+      "summary": "Python test file (role: test)",
+      "summary_text": "Python test file (role: test)",
+      "metrics": {
+        "size_bytes": 18152,
+        "loc": 405,
         "todo_count": 0
       }
     },

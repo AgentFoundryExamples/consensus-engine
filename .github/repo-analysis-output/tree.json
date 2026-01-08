@@ -100,6 +100,10 @@
           "children": [
             {
               "type": "file",
+              "name": "1be7b272f496_add_analytics_index_for_decision_and_.py"
+            },
+            {
+              "type": "file",
               "name": "453a79c83bde_add_versioned_run_tables.py"
             },
             {
@@ -272,6 +276,10 @@
                 },
                 {
                   "type": "file",
+                  "name": "diff.py"
+                },
+                {
+                  "type": "file",
                   "name": "expand.py"
                 },
                 {
@@ -326,6 +334,10 @@
             },
             {
               "type": "file",
+              "name": "test_diff_endpoint.py"
+            },
+            {
+              "type": "file",
               "name": "test_expand_endpoint.py"
             },
             {
@@ -377,6 +389,14 @@
             {
               "type": "file",
               "name": "test_db.py"
+            },
+            {
+              "type": "file",
+              "name": "test_diff_endpoint.py"
+            },
+            {
+              "type": "file",
+              "name": "test_diff_service.py"
             },
             {
               "type": "file",

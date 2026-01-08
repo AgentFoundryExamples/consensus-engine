@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 63
-- **Intra-repo dependencies**: 183
-- **External stdlib dependencies**: 31
+- **Total files**: 68
+- **Intra-repo dependencies**: 194
+- **External stdlib dependencies**: 32
 - **External third-party dependencies**: 68
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 31 unique modules
+Total: 32 unique modules
 
 - `collections.abc.AsyncGenerator`
 - `collections.abc.Awaitable`
@@ -28,6 +28,7 @@ Total: 31 unique modules
 - `datetime.UTC`
 - `datetime.datetime`
 - `datetime.timedelta`
+- `difflib`
 - `enum`
 - `enum.Enum`
 - `functools.lru_cache`
@@ -38,8 +39,7 @@ Total: 31 unique modules
 - `pathlib.Path`
 - `re`
 - `sys`
-- `threading`
-- ... and 11 more (see JSON for full list)
+- ... and 12 more (see JSON for full list)
 
 ### Third-Party Packages
 
@@ -74,16 +74,16 @@ Total: 68 unique packages
 - `src/consensus_engine/exceptions.py` (17 dependents)
 - `src/consensus_engine/config/settings.py` (15 dependents)
 - `src/consensus_engine/config/__init__.py` (14 dependents)
-- `src/consensus_engine/config/logging.py` (12 dependents)
-- `src/consensus_engine/db/models.py` (8 dependents)
-- `src/consensus_engine/db/__init__.py` (7 dependents)
+- `src/consensus_engine/config/logging.py` (13 dependents)
+- `src/consensus_engine/db/models.py` (11 dependents)
+- `src/consensus_engine/app.py` (9 dependents)
+- `src/consensus_engine/db/__init__.py` (8 dependents)
 - `src/consensus_engine/schemas/requests.py` (7 dependents)
-- `src/consensus_engine/app.py` (7 dependents)
 
 ## Files with Most Dependencies (Intra-Repo)
 
+- `src/consensus_engine/api/routes/runs.py` (12 dependencies)
 - `src/consensus_engine/api/routes/full_review.py` (11 dependencies)
-- `src/consensus_engine/api/routes/runs.py` (11 dependencies)
 - `src/consensus_engine/app.py` (10 dependencies)
 - `src/consensus_engine/api/routes/review.py` (7 dependencies)
 - `tests/integration/test_revision_endpoint.py` (7 dependencies)

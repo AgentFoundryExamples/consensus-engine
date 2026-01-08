@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 63
+Total files: 68
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -22,6 +22,15 @@ Total files: 63
 **Summary:** Python module for env  
 **Size:** 3.08 KB  
 **LOC:** 52  
+**TODOs/FIXMEs:** 0  
+
+## migrations/versions/1be7b272f496_add_analytics_index_for_decision_and_.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python module for 1be7b272f496 add analytics index for decision and   
+**Size:** 2.55 KB  
+**LOC:** 38  
 **TODOs/FIXMEs:** 0  
 
 ## migrations/versions/453a79c83bde_add_versioned_run_tables.py
@@ -119,8 +128,8 @@ Total files: 63
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 24.72 KB  
-**LOC:** 590  
+**Size:** 29.34 KB  
+**LOC:** 706  
 **TODOs/FIXMEs:** 1  
 
 ## src/consensus_engine/app.py
@@ -254,8 +263,8 @@ Total files: 63
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 23.86 KB  
-**LOC:** 510  
+**Size:** 25.14 KB  
+**LOC:** 544  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/schemas/review.py
@@ -283,6 +292,15 @@ Total files: 63
 **Summary:** Python core implementation  
 **Size:** 9.52 KB  
 **LOC:** 195  
+**TODOs/FIXMEs:** 0  
+
+## src/consensus_engine/services/diff.py
+**Language:** Python  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** Python core implementation  
+**Size:** 11.51 KB  
+**LOC:** 247  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/services/expand.py
@@ -364,6 +382,15 @@ Total files: 63
 **Summary:** Python test file (role: test)  
 **Size:** 26.54 KB  
 **LOC:** 554  
+**TODOs/FIXMEs:** 0  
+
+## tests/integration/test_diff_endpoint.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 16.66 KB  
+**LOC:** 360  
 **TODOs/FIXMEs:** 0  
 
 ## tests/integration/test_expand_endpoint.py
@@ -472,6 +499,24 @@ Total files: 63
 **Summary:** Python test file (role: test)  
 **Size:** 13.44 KB  
 **LOC:** 262  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_diff_endpoint.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 5.42 KB  
+**LOC:** 102  
+**TODOs/FIXMEs:** 0  
+
+## tests/unit/test_diff_service.py
+**Language:** Python  
+**Role:** test  
+**Role Justification:** filename starts with 'test_'  
+**Summary:** Python test file (role: test)  
+**Size:** 17.73 KB  
+**LOC:** 405  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_exceptions.py

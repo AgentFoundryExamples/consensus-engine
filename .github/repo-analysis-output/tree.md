@@ -21,6 +21,7 @@
   └── test_full_review.py
 ├── migrations
   ├── versions
+    ├── 1be7b272f496_add_analytics_index_for_decision_and_.py
     ├── 453a79c83bde_add_versioned_run_tables.py
     └── 9a73090ad792_initial_empty_migration.py
   ├── env.py
@@ -60,6 +61,7 @@
     ├── services
       ├── __init__.py
       ├── aggregator.py
+      ├── diff.py
       ├── expand.py
       ├── orchestrator.py
       └── review.py
@@ -72,6 +74,7 @@
     ├── test_acceptance_criteria.py
     ├── test_app.py
     ├── test_db.py
+    ├── test_diff_endpoint.py
     ├── test_expand_endpoint.py
     ├── test_expand_service.py
     ├── test_full_review_endpoint.py
@@ -85,6 +88,8 @@
     ├── test_aggregator.py
     ├── test_config.py
     ├── test_db.py
+    ├── test_diff_endpoint.py
+    ├── test_diff_service.py
     ├── test_exceptions.py
     ├── test_expand_service.py
     ├── test_models.py

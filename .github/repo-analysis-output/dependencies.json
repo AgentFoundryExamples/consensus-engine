@@ -30,6 +30,19 @@
       }
     },
     {
+      "id": "migrations/versions/1be7b272f496_add_analytics_index_for_decision_and_.py",
+      "path": "migrations/versions/1be7b272f496_add_analytics_index_for_decision_and_.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "collections.abc.Sequence"
+        ],
+        "third-party": [
+          "alembic.op"
+        ]
+      }
+    },
+    {
       "id": "migrations/versions/453a79c83bde_add_versioned_run_tables.py",
       "path": "migrations/versions/453a79c83bde_add_versioned_run_tables.py",
       "type": "file",
@@ -192,6 +205,7 @@
           "fastapi.HTTPException",
           "fastapi.Query",
           "fastapi.status",
+          "sqlalchemy.exc.SQLAlchemyError",
           "sqlalchemy.orm.Session"
         ]
       }
@@ -483,6 +497,18 @@
       }
     },
     {
+      "id": "src/consensus_engine/services/diff.py",
+      "path": "src/consensus_engine/services/diff.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "difflib",
+          "typing.Any"
+        ],
+        "third-party": []
+      }
+    },
+    {
       "id": "src/consensus_engine/services/expand.py",
       "path": "src/consensus_engine/services/expand.py",
       "type": "file",
@@ -601,6 +627,27 @@
           "sqlalchemy.create_engine",
           "sqlalchemy.exc.IntegrityError",
           "sqlalchemy.exc.OperationalError",
+          "sqlalchemy.orm.sessionmaker",
+          "sqlalchemy.text"
+        ]
+      }
+    },
+    {
+      "id": "tests/integration/test_diff_endpoint.py",
+      "path": "tests/integration/test_diff_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "json",
+          "os",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest",
+          "sqlalchemy.create_engine",
           "sqlalchemy.orm.sessionmaker",
           "sqlalchemy.text"
         ]
@@ -788,6 +835,39 @@
           "sqlalchemy.engine.Engine",
           "sqlalchemy.exc.OperationalError",
           "sqlalchemy.orm.Session"
+        ]
+      }
+    },
+    {
+      "id": "tests/unit/test_diff_endpoint.py",
+      "path": "tests/unit/test_diff_endpoint.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "unittest.mock.MagicMock",
+          "unittest.mock.patch",
+          "uuid"
+        ],
+        "third-party": [
+          "fastapi.testclient.TestClient",
+          "pytest"
+        ]
+      }
+    },
+    {
+      "id": "tests/unit/test_diff_service.py",
+      "path": "tests/unit/test_diff_service.py",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "datetime.UTC",
+          "datetime.datetime",
+          "unittest.mock.MagicMock"
+        ],
+        "third-party": [
+          "pytest"
         ]
       }
     },
@@ -1129,6 +1209,10 @@
     },
     {
       "source": "src/consensus_engine/api/routes/runs.py",
+      "target": "src/consensus_engine/services/diff.py"
+    },
+    {
+      "source": "src/consensus_engine/api/routes/runs.py",
       "target": "src/consensus_engine/services/expand.py"
     },
     {
@@ -1268,6 +1352,14 @@
       "target": "src/consensus_engine/schemas/review.py"
     },
     {
+      "source": "src/consensus_engine/services/diff.py",
+      "target": "src/consensus_engine/config/logging.py"
+    },
+    {
+      "source": "src/consensus_engine/services/diff.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
       "source": "src/consensus_engine/services/expand.py",
       "target": "src/consensus_engine/clients/openai_client.py"
     },
@@ -1385,6 +1477,22 @@
     },
     {
       "source": "tests/integration/test_db.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/integration/test_diff_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/integration/test_diff_endpoint.py",
+      "target": "src/consensus_engine/db/__init__.py"
+    },
+    {
+      "source": "tests/integration/test_diff_endpoint.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "tests/integration/test_diff_endpoint.py",
       "target": "src/consensus_engine/db/models.py"
     },
     {
@@ -1568,6 +1676,22 @@
       "target": "src/consensus_engine/db/__init__.py"
     },
     {
+      "source": "tests/unit/test_diff_endpoint.py",
+      "target": "src/consensus_engine/app.py"
+    },
+    {
+      "source": "tests/unit/test_diff_endpoint.py",
+      "target": "src/consensus_engine/db/models.py"
+    },
+    {
+      "source": "tests/unit/test_diff_endpoint.py",
+      "target": "src/consensus_engine/db/dependencies.py"
+    },
+    {
+      "source": "tests/unit/test_diff_service.py",
+      "target": "src/consensus_engine/services/diff.py"
+    },
+    {
       "source": "tests/unit/test_exceptions.py",
       "target": "src/consensus_engine/exceptions.py"
     },
@@ -1683,6 +1807,7 @@
       "datetime.UTC",
       "datetime.datetime",
       "datetime.timedelta",
+      "difflib",
       "enum",
       "enum.Enum",
       "functools.lru_cache",
@@ -1776,7 +1901,7 @@
       "sqlalchemy.select",
       "sqlalchemy.text"
     ],
-    "stdlib_count": 31,
+    "stdlib_count": 32,
     "third-party_count": 68
   }
 }
