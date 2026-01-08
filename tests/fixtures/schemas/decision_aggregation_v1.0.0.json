@@ -1,0 +1,74 @@
+{
+  "overall_weighted_confidence": 0.7625,
+  "weighted_confidence": 0.7625,
+  "decision": "approve",
+  "score_breakdown": {
+    "Architect": {
+      "weight": 0.25,
+      "notes": "Strong architectural design"
+    },
+    "Critic": {
+      "weight": 0.25,
+      "notes": "Some concerns about edge cases"
+    },
+    "Optimist": {
+      "weight": 0.15,
+      "notes": "Excellent potential"
+    },
+    "SecurityGuardian": {
+      "weight": 0.20,
+      "notes": "Security needs attention"
+    },
+    "UserAdvocate": {
+      "weight": 0.15,
+      "notes": "Good user experience potential"
+    }
+  },
+  "detailed_score_breakdown": {
+    "weights": {
+      "architect": 0.25,
+      "critic": 0.25,
+      "optimist": 0.15,
+      "security_guardian": 0.20,
+      "user_advocate": 0.15
+    },
+    "individual_scores": {
+      "architect": 0.85,
+      "critic": 0.70,
+      "optimist": 0.90,
+      "security_guardian": 0.65,
+      "user_advocate": 0.80
+    },
+    "weighted_contributions": {
+      "architect": 0.2125,
+      "critic": 0.175,
+      "optimist": 0.135,
+      "security_guardian": 0.13,
+      "user_advocate": 0.12
+    },
+    "formula": "weighted_confidence = sum(weight_i * score_i for each persona i)"
+  },
+  "minority_report": {
+    "persona_id": "security_guardian",
+    "persona_name": "SecurityGuardian",
+    "confidence_score": 0.65,
+    "blocking_summary": "Security concerns require immediate attention",
+    "mitigation_recommendation": "Implement authentication and rate limiting before deployment",
+    "strengths": [
+      "Good overall architecture"
+    ],
+    "concerns": [
+      "Missing authentication",
+      "No rate limiting"
+    ]
+  },
+  "minority_reports": [
+    {
+      "persona_id": "security_guardian",
+      "persona_name": "SecurityGuardian",
+      "confidence_score": 0.65,
+      "blocking_summary": "Security concerns require immediate attention",
+      "mitigation_recommendation": "Implement authentication and rate limiting before deployment"
+    }
+  ]
+}

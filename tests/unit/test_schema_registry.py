@@ -14,6 +14,7 @@
 """Unit tests for schema registry module."""
 
 import json
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -31,6 +32,19 @@ from consensus_engine.schemas.registry import (
     list_schema_versions,
 )
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
+
+
+# Fixture path helper
+def get_fixture_path(filename: str) -> Path:
+    """Get the path to a fixture file.
+    
+    Args:
+        filename: Name of the fixture file (e.g., 'expanded_proposal_v1.0.0.json')
+    
+    Returns:
+        Path to the fixture file
+    """
+    return Path(__file__).parent.parent / "fixtures" / "schemas" / filename
 
 
 class TestSchemaRegistry:
@@ -533,3 +547,384 @@ class TestEdgeCases:
                 assumptions=[],
                 scope_non_goals=[],
             )
+
+
+class TestSchemaStructureSnapshots:
+    """Test suite for schema structure snapshot validation.
+
+    These tests ensure that schema structures match documented shapes and fail
+    if fields are removed/renamed without a version bump. This prevents silent
+    regressions in schema contracts.
+    """
+
+    def test_expanded_proposal_schema_structure_v1_0_0(self) -> None:
+        """Test ExpandedProposal v1.0.0 schema has expected fields."""
+        schema_version = get_schema_version("ExpandedProposal", "1.0.0")
+        json_schema = schema_version.get_json_schema()
+
+        # Verify version metadata
+        assert json_schema["$version"] == "1.0.0"
+        assert json_schema["$prompt_set_version"] == "1.0.0"
+
+        # Verify required fields
+        required_fields = json_schema.get("required", [])
+        assert "problem_statement" in required_fields
+        assert "proposed_solution" in required_fields
+        assert "assumptions" in required_fields
+        assert "scope_non_goals" in required_fields
+
+        # Verify optional fields exist in properties
+        properties = json_schema.get("properties", {})
+        assert "title" in properties
+        assert "summary" in properties
+        assert "raw_idea" in properties
+        assert "metadata" in properties
+        assert "raw_expanded_proposal" in properties
+
+        # Verify field types
+        assert properties["problem_statement"]["type"] == "string"
+        assert properties["proposed_solution"]["type"] == "string"
+        assert properties["assumptions"]["type"] == "array"
+        assert properties["scope_non_goals"]["type"] == "array"
+
+    def test_persona_review_schema_structure_v1_0_0(self) -> None:
+        """Test PersonaReview v1.0.0 schema has expected fields."""
+        schema_version = get_schema_version("PersonaReview", "1.0.0")
+        json_schema = schema_version.get_json_schema()
+
+        # Verify version metadata
+        assert json_schema["$version"] == "1.0.0"
+        assert json_schema["$prompt_set_version"] == "1.0.0"
+
+        # Verify required fields
+        required_fields = json_schema.get("required", [])
+        assert "persona_name" in required_fields
+        assert "persona_id" in required_fields
+        assert "confidence_score" in required_fields
+        assert "strengths" in required_fields
+        assert "concerns" in required_fields
+        assert "recommendations" in required_fields
+        assert "blocking_issues" in required_fields
+        assert "estimated_effort" in required_fields
+        assert "dependency_risks" in required_fields
+
+        # Verify field types
+        properties = json_schema.get("properties", {})
+        assert properties["persona_name"]["type"] == "string"
+        assert properties["persona_id"]["type"] == "string"
+        assert properties["confidence_score"]["type"] == "number"
+        assert properties["strengths"]["type"] == "array"
+        assert properties["concerns"]["type"] == "array"
+        assert properties["recommendations"]["type"] == "array"
+        assert properties["blocking_issues"]["type"] == "array"
+        assert properties["dependency_risks"]["type"] == "array"
+
+        # Verify confidence_score constraints
+        assert properties["confidence_score"]["minimum"] == 0.0
+        assert properties["confidence_score"]["maximum"] == 1.0
+
+    def test_decision_aggregation_schema_structure_v1_0_0(self) -> None:
+        """Test DecisionAggregation v1.0.0 schema has expected fields."""
+        schema_version = get_schema_version("DecisionAggregation", "1.0.0")
+        json_schema = schema_version.get_json_schema()
+
+        # Verify version metadata
+        assert json_schema["$version"] == "1.0.0"
+        assert json_schema["$prompt_set_version"] == "1.0.0"
+
+        # Verify required fields
+        required_fields = json_schema.get("required", [])
+        assert "overall_weighted_confidence" in required_fields
+        assert "decision" in required_fields
+
+        # Verify optional fields exist in properties
+        properties = json_schema.get("properties", {})
+        assert "weighted_confidence" in properties
+        assert "score_breakdown" in properties
+        assert "detailed_score_breakdown" in properties
+        assert "minority_report" in properties
+        assert "minority_reports" in properties
+
+        # Verify field types
+        assert properties["overall_weighted_confidence"]["type"] == "number"
+        # decision is an enum reference
+        assert "$ref" in properties["decision"] or "allOf" in properties["decision"]
+
+        # Verify confidence constraints
+        assert properties["overall_weighted_confidence"]["minimum"] == 0.0
+        assert properties["overall_weighted_confidence"]["maximum"] == 1.0
+
+    def test_run_status_schema_structure_v1_0_0(self) -> None:
+        """Test RunStatus v1.0.0 schema has expected fields."""
+        schema_version = get_schema_version("RunStatus", "1.0.0")
+        json_schema = schema_version.get_json_schema()
+
+        # Verify version metadata
+        assert json_schema["$version"] == "1.0.0"
+        assert json_schema["$prompt_set_version"] == "1.0.0"
+
+        # Verify required fields
+        required_fields = json_schema.get("required", [])
+        assert "status" in required_fields
+
+        # Verify field types
+        properties = json_schema.get("properties", {})
+        assert properties["status"]["type"] == "string"
+
+    def test_schema_field_removal_detection(self) -> None:
+        """Test that removing a field from schema would be detected.
+
+        This test verifies that the schema structure validation would catch
+        if a field was accidentally removed from a schema without a version bump.
+        """
+        # Get current ExpandedProposal schema
+        schema_version = get_current_schema("ExpandedProposal")
+        json_schema = schema_version.get_json_schema()
+
+        # Create an instance with all fields
+        proposal = ExpandedProposal(
+            problem_statement="Problem",
+            proposed_solution="Solution",
+            assumptions=["Assumption"],
+            scope_non_goals=["Non-goal"],
+            title="Title",
+            summary="Summary",
+            raw_idea="Raw idea",
+            raw_expanded_proposal="Raw proposal",
+            metadata={"key": "value"},
+        )
+
+        # Serialize to dict
+        data = schema_version.to_dict(proposal)
+
+        # Verify all fields are present in serialized output
+        assert "problem_statement" in data
+        assert "proposed_solution" in data
+        assert "assumptions" in data
+        assert "scope_non_goals" in data
+        assert "title" in data
+        assert "summary" in data
+        assert "raw_idea" in data
+        assert "raw_expanded_proposal" in data
+        assert "metadata" in data
+
+        # Verify version metadata is included
+        assert "_schema_version" in data
+        assert data["_schema_version"] == "1.0.0"
+        assert "_prompt_set_version" in data
+        assert data["_prompt_set_version"] == "1.0.0"
+
+    def test_schema_rename_detection(self) -> None:
+        """Test that renaming a field would be detected via validation failures."""
+        # This test documents that field renames would cause validation errors
+        # when loading old payloads, which is the desired behavior
+
+        # Valid data matches current schema
+        valid_data = {
+            "problem_statement": "Problem",
+            "proposed_solution": "Solution",
+            "assumptions": ["Assumption"],
+            "scope_non_goals": ["Non-goal"],
+        }
+        proposal = ExpandedProposal(**valid_data)
+        assert proposal.problem_statement == "Problem"
+
+        # If field was renamed (e.g., problem_statement -> problem_def),
+        # this would fail validation
+        invalid_data = {
+            "problem_def": "Problem",  # Wrong field name
+            "proposed_solution": "Solution",
+            "assumptions": ["Assumption"],
+            "scope_non_goals": ["Non-goal"],
+        }
+        with pytest.raises(ValidationError):
+            ExpandedProposal(**invalid_data)
+
+
+class TestBackwardCompatibility:
+    """Test suite for backward compatibility of schema versions.
+
+    These tests ensure that minor version increments remain backward compatible
+    by loading sample payloads from prior schema versions. Major version changes
+    should intentionally fail when loading old payloads.
+    """
+
+    def test_load_expanded_proposal_v1_0_0_fixture(self) -> None:
+        """Test loading ExpandedProposal v1.0.0 fixture validates correctly."""
+        # Load fixture
+        fixture_path = get_fixture_path("expanded_proposal_v1.0.0.json")
+        with open(fixture_path) as f:
+            payload = json.load(f)
+
+        # Verify fixture contains metadata field for documentation
+        assert "metadata" in payload, "Fixture should contain metadata field for documentation"
+
+        # Schema should validate (metadata is part of ExpandedProposal schema)
+        schema_version = get_schema_version("ExpandedProposal", "1.0.0")
+        proposal = schema_version.schema_class(**payload)
+
+        assert proposal.problem_statement == payload["problem_statement"]
+        assert proposal.proposed_solution == payload["proposed_solution"]
+        assert proposal.assumptions == payload["assumptions"]
+        assert proposal.scope_non_goals == payload["scope_non_goals"]
+        assert proposal.title == payload["title"]
+        assert proposal.summary == payload["summary"]
+        assert proposal.raw_idea == payload["raw_idea"]
+        assert proposal.raw_expanded_proposal == payload["raw_expanded_proposal"]
+        assert proposal.metadata == payload["metadata"]
+
+    def test_load_persona_review_v1_0_0_fixture(self) -> None:
+        """Test loading PersonaReview v1.0.0 fixture validates correctly."""
+        # Load fixture
+        fixture_path = get_fixture_path("persona_review_v1.0.0.json")
+        with open(fixture_path) as f:
+            payload = json.load(f)
+
+        # Schema should validate
+        schema_version = get_schema_version("PersonaReview", "1.0.0")
+        review = schema_version.schema_class(**payload)
+
+        assert review.persona_name == payload["persona_name"]
+        assert review.persona_id == payload["persona_id"]
+        assert review.confidence_score == payload["confidence_score"]
+        assert len(review.strengths) == len(payload["strengths"])
+        assert len(review.concerns) == len(payload["concerns"])
+        assert len(review.recommendations) == len(payload["recommendations"])
+        assert len(review.blocking_issues) == len(payload["blocking_issues"])
+
+    def test_load_decision_aggregation_v1_0_0_fixture(self) -> None:
+        """Test loading DecisionAggregation v1.0.0 fixture validates correctly."""
+        # Load fixture
+        fixture_path = get_fixture_path("decision_aggregation_v1.0.0.json")
+        with open(fixture_path) as f:
+            payload = json.load(f)
+
+        # Schema should validate
+        schema_version = get_schema_version("DecisionAggregation", "1.0.0")
+        decision = schema_version.schema_class(**payload)
+
+        assert decision.overall_weighted_confidence == payload["overall_weighted_confidence"]
+        assert decision.decision.value == payload["decision"]
+        assert decision.minority_report is not None
+        assert decision.minority_reports is not None
+
+    def test_load_run_status_v1_0_0_fixture(self) -> None:
+        """Test loading RunStatus v1.0.0 fixture validates correctly."""
+        # Load fixture
+        fixture_path = get_fixture_path("run_status_v1.0.0.json")
+        with open(fixture_path) as f:
+            payload = json.load(f)
+
+        # Schema should validate
+        schema_version = get_schema_version("RunStatus", "1.0.0")
+        status = schema_version.schema_class(**payload)
+
+        assert status.status == payload["status"]
+
+    def test_minor_version_compatibility_simulation(self) -> None:
+        """Test that adding optional fields maintains backward compatibility.
+
+        This simulates a minor version bump where optional fields are added
+        but existing payloads still validate.
+        """
+        # Create a minimal v1.0.0 payload (only required fields)
+        minimal_proposal = {
+            "problem_statement": "Problem",
+            "proposed_solution": "Solution",
+            "assumptions": [],
+            "scope_non_goals": [],
+        }
+
+        # Should validate with current schema (which could have new optional fields)
+        schema_version = get_current_schema("ExpandedProposal")
+        proposal = schema_version.schema_class(**minimal_proposal)
+
+        assert proposal.problem_statement == "Problem"
+        assert proposal.proposed_solution == "Solution"
+
+        # New optional fields should default to None
+        assert proposal.title is None
+        assert proposal.summary is None
+
+    def test_major_version_breaking_change_detection(self) -> None:
+        """Test that major version changes with breaking changes are detected.
+
+        This documents how to handle major version bumps that intentionally
+        break backward compatibility (e.g., removing required fields).
+        """
+        # If we were to register a v2.0.0 that removed a required field,
+        # old payloads would fail validation - this is expected behavior
+        # for major version changes
+
+        # Create registry with hypothetical v2.0.0
+        registry = SchemaRegistry()
+
+        # Register v1.0.0 (current production)
+        registry.register(
+            schema_name="TestBreakingChange",
+            version="1.0.0",
+            schema_class=ExpandedProposal,
+            description="Original version",
+            is_current=False,
+        )
+
+        # In a real major version change, we'd register a different schema class
+        # For now, document that v2.0.0 would be registered with migration notes
+        registry.register(
+            schema_name="TestBreakingChange",
+            version="2.0.0",
+            schema_class=ExpandedProposal,
+            description="Major version with breaking changes",
+            is_current=True,
+            migration_notes="Required fields changed: problem_statement split into "
+            "problem_context and problem_details. See migration guide.",
+        )
+
+        # Verify migration notes are accessible
+        v2_schema = registry.get_version("TestBreakingChange", "2.0.0")
+        assert "migration guide" in v2_schema.migration_notes.lower()
+
+    def test_backward_compatible_field_addition(self) -> None:
+        """Test adding new optional fields maintains backward compatibility."""
+        # Old payload without new optional fields
+        old_payload = {
+            "problem_statement": "Problem",
+            "proposed_solution": "Solution",
+            "assumptions": ["Assumption"],
+            "scope_non_goals": ["Non-goal"],
+        }
+
+        # Should still validate with current schema
+        schema_version = get_current_schema("ExpandedProposal")
+        proposal = schema_version.schema_class(**old_payload)
+
+        # Verify old fields work
+        assert proposal.problem_statement == "Problem"
+
+        # New fields should be None or default
+        # (In this case, all optional fields default to None)
+
+    def test_forward_compatibility_with_unknown_fields(self) -> None:
+        """Test that schemas handle unknown fields gracefully.
+
+        Pydantic by default ignores unknown fields, which provides some
+        forward compatibility when loading data from newer versions.
+        """
+        # Payload with a hypothetical future field
+        future_payload = {
+            "problem_statement": "Problem",
+            "proposed_solution": "Solution",
+            "assumptions": [],
+            "scope_non_goals": [],
+            "future_field": "This field doesn't exist yet",  # Unknown field
+        }
+
+        # Should validate, unknown fields are ignored
+        schema_version = get_current_schema("ExpandedProposal")
+        proposal = schema_version.schema_class(**future_payload)
+
+        # Known fields should work
+        assert proposal.problem_statement == "Problem"
+
+        # Unknown field should be ignored (not accessible)
+        assert not hasattr(proposal, "future_field")

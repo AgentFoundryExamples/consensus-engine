@@ -1,0 +1,42 @@
+{
+  "persona_name": "SecurityGuardian",
+  "persona_id": "security_guardian",
+  "confidence_score": 0.75,
+  "strengths": [
+    "Clear problem definition",
+    "Well-structured solution approach",
+    "Considers security implications"
+  ],
+  "concerns": [
+    {
+      "text": "Missing input validation details",
+      "is_blocking": false
+    },
+    {
+      "text": "No rate limiting mentioned",
+      "is_blocking": true
+    }
+  ],
+  "recommendations": [
+    "Add comprehensive input validation strategy",
+    "Implement rate limiting on API endpoints",
+    "Include security testing in CI/CD"
+  ],
+  "blocking_issues": [
+    {
+      "text": "Critical: No authentication mechanism specified",
+      "security_critical": true
+    }
+  ],
+  "estimated_effort": "3 weeks",
+  "dependency_risks": [
+    "OpenAI API stability and rate limits",
+    "PostgreSQL performance at scale"
+  ],
+  "internal_metadata": {
+    "model": "gpt-5.1",
+    "temperature": 0.7,
+    "duration": 2.5,
+    "prompt_set_version": "1.0.0"
+  }
+}
