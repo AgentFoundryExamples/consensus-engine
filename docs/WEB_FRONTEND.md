@@ -553,6 +553,304 @@ gcloud compute url-maps create consensus-web-map \
   --default-backend-bucket=consensus-web-backend
 ```
 
+### Deployment Verification
+
+After deploying the frontend to Cloud Run, verify the deployment is working correctly:
+
+#### 1. Basic Accessibility
+
+```bash
+# Get frontend URL
+export FRONTEND_URL=$(gcloud run services describe consensus-web \
+  --region=$REGION \
+  --format='value(status.url)' \
+  --project=$PROJECT_ID)
+
+# Test HTTP response
+curl -I $FRONTEND_URL
+
+# Expected: HTTP/2 200 OK
+# Or HTTP/2 302 (if IAP is enabled, redirects to login)
+
+# Test in browser
+open $FRONTEND_URL  # macOS
+# or visit URL in browser
+```
+
+#### 2. Static Assets
+
+```bash
+# Verify JavaScript bundles load correctly
+curl -s $FRONTEND_URL | grep -o '<script[^>]*src="[^"]*"'
+
+# Test a specific asset (replace hash with actual)
+curl -I ${FRONTEND_URL}/assets/index-xxxxx.js
+
+# Expected: HTTP/2 200
+# Cache-Control: public, max-age=31536000
+```
+
+#### 3. API Configuration
+
+```bash
+# Check environment variables are configured
+gcloud run services describe consensus-web \
+  --region=$REGION \
+  --format='value(spec.template.spec.containers[0].env)' \
+  --project=$PROJECT_ID | grep VITE
+
+# Should show VITE_API_BASE_URL and other VITE_* variables
+```
+
+#### 4. Frontend-Backend Connection
+
+```bash
+# Test CORS is configured correctly
+curl -X OPTIONS ${BACKEND_URL}/v1/runs \
+  -H "Origin: ${FRONTEND_URL}" \
+  -H "Access-Control-Request-Method: GET" \
+  -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+  -v 2>&1 | grep -i "access-control"
+
+# Expected headers:
+# Access-Control-Allow-Origin: <frontend-url>
+# Access-Control-Allow-Credentials: true
+```
+
+#### 5. End-to-End Flow
+
+Test the complete user journey:
+
+1. **Access Frontend:** Navigate to `$FRONTEND_URL` in browser
+2. **Authenticate (if IAP enabled):** Complete Google login
+3. **Submit Test Idea:** Use the UI to submit a test idea
+4. **Check API Request:** Open DevTools Network tab, verify API calls succeed
+5. **Monitor Job:** Watch run status change from "queued" → "running" → "completed"
+
+```bash
+# Monitor from command line
+# Get run ID from UI or API response
+export RUN_ID="<run-id-from-ui>"
+
+# Poll run status
+watch -n 5 "curl -s -H 'Authorization: Bearer $(gcloud auth print-identity-token)' \
+  ${BACKEND_URL}/v1/runs/${RUN_ID} | jq '.status'"
+```
+
+### Frontend Deployment Troubleshooting
+
+Common issues and solutions specific to frontend deployment.
+
+#### Build Fails with "out of memory"
+
+**Symptom:** Cloud Build fails with OOM error during `npm run build`
+
+**Solution:**
+```bash
+# Use larger Cloud Build machine type
+gcloud builds submit \
+  --tag ${IMAGE} \
+  --machine-type=n1-highcpu-8 \
+  --timeout=20m
+```
+
+Or build locally if you have sufficient memory:
+```bash
+docker build -t ${IMAGE} .
+docker push ${IMAGE}
+```
+
+#### Frontend Shows Blank Page
+
+**Symptoms:**
+- Browser shows blank white page
+- Console shows no errors
+- Static assets load (200 status codes)
+
+**Check:**
+```bash
+# 1. Verify build completed successfully
+docker run --rm ${FRONTEND_IMAGE} ls -la /usr/share/nginx/html
+
+# Should show: index.html, assets/, etc.
+
+# 2. Check nginx configuration
+docker run --rm ${FRONTEND_IMAGE} cat /etc/nginx/nginx.conf
+
+# 3. Test container locally
+docker run -p 8080:8080 ${FRONTEND_IMAGE}
+open http://localhost:8080
+```
+
+**Solutions:**
+- Rebuild with correct Dockerfile and nginx.conf
+- Verify `npm run build` creates dist/ directory
+- Check nginx is serving from correct directory (/usr/share/nginx/html)
+
+#### API Calls Fail with CORS Errors
+
+**Symptoms:**
+- Browser console shows: "blocked by CORS policy"
+- Network tab shows preflight OPTIONS requests failing
+
+**Check:**
+```bash
+# 1. Verify CORS_ORIGINS on backend includes frontend URL
+gcloud run services describe consensus-api \
+  --region=$REGION \
+  --format='value(spec.template.spec.containers[0].env)' | grep CORS_ORIGINS
+
+# 2. Test CORS preflight manually
+curl -X OPTIONS ${BACKEND_URL}/v1/health \
+  -H "Origin: ${FRONTEND_URL}" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+  -v
+```
+
+**Solutions:**
+```bash
+# Update backend CORS configuration
+gcloud run services update consensus-api \
+  --update-env-vars="CORS_ORIGINS=${FRONTEND_URL}" \
+  --region=$REGION
+
+# Verify frontend is using correct backend URL
+gcloud run services describe consensus-web \
+  --region=$REGION \
+  --format='value(spec.template.spec.containers[0].env)' | grep VITE_API_BASE_URL
+```
+
+#### 401/403 Errors When Calling Backend
+
+**Symptoms:**
+- API calls return 401 Unauthorized or 403 Forbidden
+- Health check works but other endpoints fail
+
+**Check:**
+```bash
+# 1. Verify frontend service account has invoker role on backend
+gcloud run services get-iam-policy consensus-api \
+  --region=$REGION \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:consensus-web-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+
+# 2. Test authentication manually
+TOKEN=$(gcloud auth print-identity-token \
+  --impersonate-service-account=consensus-web-sa@${PROJECT_ID}.iam.gserviceaccount.com \
+  --audiences=${BACKEND_URL})
+
+curl -H "Authorization: Bearer $TOKEN" ${BACKEND_URL}/v1/runs
+```
+
+**Solutions:**
+```bash
+# Grant invoker role to frontend service account
+gcloud run services add-iam-policy-binding consensus-api \
+  --member="serviceAccount:consensus-web-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --region=$REGION
+
+# Verify backend requires authentication (should be --no-allow-unauthenticated)
+gcloud run services describe consensus-api \
+  --region=$REGION \
+  --format='value(spec.template.spec.containers[0].env)'
+```
+
+#### Environment Variables Not Loading
+
+**Symptoms:**
+- Frontend uses default values instead of configured ones
+- `import.meta.env.VITE_API_BASE_URL` is undefined
+
+**Check:**
+```bash
+# 1. Verify environment variables are set in Cloud Run
+gcloud run services describe consensus-web \
+  --region=$REGION \
+  --format='value(spec.template.spec.containers[0].env)'
+
+# 2. Check build args were passed correctly
+gcloud builds describe <BUILD_ID> --format=json | jq '.steps[].args'
+```
+
+**Solutions:**
+- **Build-time approach:** Rebuild image with correct `--build-arg` values
+- **Runtime approach:** Ensure entrypoint script injects variables correctly
+- Verify variable names start with `VITE_` prefix
+
+#### IAP Redirect Loop
+
+**Symptoms:**
+- Browser keeps redirecting between IAP and frontend
+- Never reaches actual application
+
+**Check:**
+```bash
+# 1. Verify IAP is configured correctly
+gcloud iap web get-iam-policy \
+  --resource-type=backend-services \
+  --service=consensus-web
+
+# 2. Check user has access
+gcloud iap web get-iam-policy \
+  --resource-type=backend-services \
+  --service=consensus-web \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:user:${USER_EMAIL}"
+
+# 3. Verify OAuth consent screen is configured
+# Check in Console: APIs & Services > OAuth consent screen
+```
+
+**Solutions:**
+- Grant user IAP access: `gcloud iap web add-iam-policy-binding ...`
+- Verify OAuth consent screen is complete
+- Try incognito window to rule out cached credentials
+- Check service allows unauthenticated (IAP handles auth): `--allow-unauthenticated`
+
+#### Slow Initial Load Time
+
+**Symptoms:**
+- First page load takes 10+ seconds
+- Cold starts are very slow
+
+**Check:**
+```bash
+# Check startup time from logs
+gcloud logging read \
+  "resource.type=cloud_run_revision AND resource.labels.service_name=consensus-web" \
+  --limit=10 \
+  --format=json | jq '.[].timestamp'
+```
+
+**Solutions:**
+```bash
+# Set min-instances to 1 to keep instance warm
+gcloud run services update consensus-web \
+  --min-instances=1 \
+  --region=$REGION
+
+# Enable CPU boost for faster cold starts
+gcloud run services update consensus-web \
+  --cpu-boost \
+  --region=$REGION
+
+# Optimize Dockerfile (multi-stage build, smaller base image)
+# Use nginx:alpine instead of nginx:latest
+```
+
+### Deployment Best Practices
+
+1. **Use Artifact Registry:** Migrate from GCR to Artifact Registry for better security
+2. **Enable Cloud CDN:** For faster asset delivery globally
+3. **Set Proper Cache Headers:** nginx configuration includes cache headers for static assets
+4. **Monitor Frontend Errors:** Use Cloud Logging or integrate error tracking (e.g., Sentry)
+5. **Test Deployments:** Always test in staging before production
+6. **Use Tagged Releases:** Tag images with version numbers, not just `latest`
+7. **Document Environment Variables:** Keep `.env.example` up-to-date
+8. **Automate Deployments:** Use Cloud Build triggers for CI/CD
+
 ## Production Deployment with IAP and IAM
 
 This section covers deploying the frontend and backend as separate Cloud Run services with proper security controls.
