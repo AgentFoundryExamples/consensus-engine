@@ -3,6 +3,18 @@
 ## Overview
 Successfully implemented the POST /v1/full-review endpoint that provides both synchronous and asynchronous workflows for expanding an idea, running all five persona reviews, and aggregating the results into a unified decision.
 
+**For comprehensive documentation on schema and prompt versioning strategy, see [docs/PROMPT_CONTRACTS.md](docs/PROMPT_CONTRACTS.md).**
+
+## Versioning Context
+
+This endpoint operates within the Consensus Engine's **single deployment-wide versioning model**:
+
+- **API Version**: `/v1` - Consistent across all endpoints
+- **Schema Version**: `1.0.0` - ExpandedProposal, PersonaReview, DecisionAggregation schemas
+- **Prompt Set Version**: `1.0.0` - Prompt templates for expand, review, and aggregate steps
+
+All runs include version metadata in responses and database records for reproducibility and audit. Breaking changes to schemas or prompts require incrementing to `/v2` API version.
+
 ## Migration to Asynchronous Processing
 
 **Key Change**: The `/v1/full-review` endpoint was migrated from synchronous processing to an asynchronous job-based architecture in December 2024.
