@@ -29,6 +29,9 @@ RUN npm run build
 # Stage 2: Serve with nginx
 FROM nginx:1.27-alpine AS runtime
 
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
 # Copy nginx configuration
 # Create a custom nginx config that supports runtime env var injection
 RUN rm /etc/nginx/conf.d/default.conf

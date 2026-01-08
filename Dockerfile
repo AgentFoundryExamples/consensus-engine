@@ -70,4 +70,5 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
 
 # Entrypoint with configurable workers
 # Can be overridden via Cloud Run command or docker-compose
-CMD ["uvicorn", "consensus_engine.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Use shell form to allow PORT env var expansion
+CMD uvicorn consensus_engine.app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
