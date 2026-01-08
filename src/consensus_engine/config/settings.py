@@ -168,6 +168,15 @@ class Settings(BaseSettings):
         description="Application environment mode",
     )
 
+    # CORS Configuration
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://localhost:3000",
+        description=(
+            "Comma-separated list of allowed CORS origins for the web frontend. "
+            "Example: http://localhost:5173,https://app.example.com"
+        ),
+    )
+
     # Database Configuration
     use_cloud_sql_connector: bool = Field(
         default=False,
@@ -405,6 +414,15 @@ class Settings(BaseSettings):
             True if in development environment, False otherwise
         """
         return self.env == Environment.DEVELOPMENT
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS origins from comma-separated string.
+
+        Returns:
+            List of allowed CORS origin URLs
+        """
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
     def database_url(self) -> str:

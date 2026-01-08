@@ -70,3 +70,9 @@ dmypy.json
 *.sqlite3
 postgres_data/
 pgadmin_data/
+
+# Frontend (webapp)
+webapp/node_modules/
+webapp/dist/
+webapp/.env
+webapp/.env.local
