@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Container } from '../components/layout';
-import { Button } from '../components/ui';
+import { Button, ErrorBoundary } from '../components/ui';
 import { IdeaForm } from '../components/IdeaForm';
 import { Timeline } from '../components/Timeline';
 import { useRunPolling } from '../hooks/useRunPolling';
@@ -193,15 +193,17 @@ export function RunDashboard() {
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Left column: Form */}
           <div>
-            <div className="rounded-lg bg-white p-6 shadow">
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Submit Your Idea</h2>
-              <IdeaForm onSubmit={handleSubmit} disabled={isSubmitting || hasActiveRun} />
-              {submitError && (
-                <div className="mt-4 rounded-md bg-red-50 p-3" role="alert">
-                  <p className="text-sm text-red-800">{submitError}</p>
-                </div>
-              )}
-            </div>
+            <ErrorBoundary>
+              <div className="rounded-lg bg-white p-6 shadow">
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">Submit Your Idea</h2>
+                <IdeaForm onSubmit={handleSubmit} disabled={isSubmitting || hasActiveRun} />
+                {submitError && (
+                  <div className="mt-4 rounded-md bg-red-50 p-3" role="alert">
+                    <p className="text-sm text-red-800">{submitError}</p>
+                  </div>
+                )}
+              </div>
+            </ErrorBoundary>
 
             {/* Run history */}
             {runs.length > 0 && (
@@ -270,85 +272,87 @@ export function RunDashboard() {
 
           {/* Right column: Timeline */}
           <div>
-            {showTimeline ? (
-              <div className="rounded-lg bg-white p-6 shadow">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">Review Progress</h2>
-                  {activeRunDetails.status === 'running' && (
-                    <span className="inline-flex items-center gap-2 text-sm text-blue-600">
-                      <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Processing...
-                    </span>
+            <ErrorBoundary>
+              {showTimeline ? (
+                <div className="rounded-lg bg-white p-6 shadow">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900">Review Progress</h2>
+                    {activeRunDetails.status === 'running' && (
+                      <span className="inline-flex items-center gap-2 text-sm text-blue-600">
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Processing...
+                      </span>
+                    )}
+                  </div>
+                  <Timeline steps={activeRunDetails.step_progress || []} />
+
+                  {/* Show decision when completed */}
+                  {activeRunDetails.status === 'completed' && activeRunDetails.decision && (
+                    <div className="mt-6 rounded-lg bg-gray-50 p-4">
+                      <h3 className="text-base font-semibold text-gray-900">Final Decision</h3>
+                      <div className="mt-2 space-y-2">
+                        <p className="text-sm">
+                          <span className="font-medium">Result: </span>
+                          <span
+                            className={`capitalize ${
+                              activeRunDetails.decision_label === 'approve'
+                                ? 'text-green-600'
+                                : activeRunDetails.decision_label === 'reject'
+                                  ? 'text-red-600'
+                                  : 'text-yellow-600'
+                            }`}
+                          >
+                            {activeRunDetails.decision_label}
+                          </span>
+                        </p>
+                        {activeRunDetails.overall_weighted_confidence !== null &&
+                          activeRunDetails.overall_weighted_confidence !== undefined && (
+                            <p className="text-sm">
+                              <span className="font-medium">Confidence: </span>
+                              {(activeRunDetails.overall_weighted_confidence * 100).toFixed(1)}%
+                            </p>
+                          )}
+                      </div>
+                    </div>
                   )}
                 </div>
-                <Timeline steps={activeRunDetails.step_progress || []} />
-
-                {/* Show decision when completed */}
-                {activeRunDetails.status === 'completed' && activeRunDetails.decision && (
-                  <div className="mt-6 rounded-lg bg-gray-50 p-4">
-                    <h3 className="text-base font-semibold text-gray-900">Final Decision</h3>
-                    <div className="mt-2 space-y-2">
-                      <p className="text-sm">
-                        <span className="font-medium">Result: </span>
-                        <span
-                          className={`capitalize ${
-                            activeRunDetails.decision_label === 'approve'
-                              ? 'text-green-600'
-                              : activeRunDetails.decision_label === 'reject'
-                                ? 'text-red-600'
-                                : 'text-yellow-600'
-                          }`}
-                        >
-                          {activeRunDetails.decision_label}
-                        </span>
-                      </p>
-                      {activeRunDetails.overall_weighted_confidence !== null &&
-                        activeRunDetails.overall_weighted_confidence !== undefined && (
-                          <p className="text-sm">
-                            <span className="font-medium">Confidence: </span>
-                            {(activeRunDetails.overall_weighted_confidence * 100).toFixed(1)}%
-                          </p>
-                        )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No active review</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Submit an idea to see the review progress
-                </p>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No active review</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Submit an idea to see the review progress
+                  </p>
+                </div>
+              )}
+            </ErrorBoundary>
           </div>
         </div>
       </div>

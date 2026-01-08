@@ -100,48 +100,60 @@ export function useRunPolling(
   const isPageVisibleRef = useRef(true);
   const isMountedRef = useRef(true);
 
+  // Use ref to store latest poll function to avoid stale closures in intervals
+  const pollRef = useRef<(() => Promise<void>) | undefined>(undefined);
+
   // Poll function that fetches run status
-  const poll = useCallback(async () => {
-    if (!runId) return;
+  useEffect(() => {
+    pollRef.current = async () => {
+      if (!runId) return;
 
-    try {
-      const result = await RunsService.getRunDetailV1RunsRunIdGet(runId);
+      try {
+        const result = await RunsService.getRunDetailV1RunsRunIdGet(runId);
 
-      if (!isMountedRef.current) return;
+        if (!isMountedRef.current) return;
 
-      setState((prev) => ({ ...prev, data: result, error: null }));
+        setState((prev) => ({ ...prev, data: result, error: null }));
 
-      // Check if terminal state reached
-      if (TERMINAL_STATUSES.includes(result.status)) {
-        setState((prev) => ({ ...prev, isPolling: false }));
-        if (intervalRef.current) {
-          window.clearInterval(intervalRef.current);
-          intervalRef.current = null;
+        // Check if terminal state reached
+        if (TERMINAL_STATUSES.includes(result.status)) {
+          setState((prev) => ({ ...prev, isPolling: false }));
+          if (intervalRef.current) {
+            window.clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          onComplete?.(result);
+        } else if (useBackoff) {
+          // Increase interval for next poll (exponential backoff)
+          currentIntervalRef.current = Math.min(
+            currentIntervalRef.current * 1.5,
+            maxInterval
+          );
         }
-        onComplete?.(result);
-      } else if (useBackoff) {
-        // Increase interval for next poll (exponential backoff)
-        currentIntervalRef.current = Math.min(currentIntervalRef.current * 1.5, maxInterval);
-      }
-    } catch (err) {
-      if (!isMountedRef.current) return;
+      } catch (err) {
+        if (!isMountedRef.current) return;
 
-      const error = err instanceof Error ? err : new Error('Unknown error during polling');
-      setState((prev) => ({ ...prev, error }));
-      onError?.(error);
+        const error =
+          err instanceof Error ? err : new Error('Unknown error during polling');
+        setState((prev) => ({ ...prev, error }));
+        onError?.(error);
 
-      // Continue polling even on error (transient network issues)
-      // but use backoff to avoid hammering a failing endpoint
-      if (useBackoff) {
-        currentIntervalRef.current = Math.min(currentIntervalRef.current * 2, maxInterval);
+        // Continue polling even on error (transient network issues)
+        // but use backoff to avoid hammering a failing endpoint
+        if (useBackoff) {
+          currentIntervalRef.current = Math.min(
+            currentIntervalRef.current * 2,
+            maxInterval
+          );
+        }
       }
-    }
+    };
   }, [runId, useBackoff, maxInterval, onComplete, onError]);
 
-  // Manual poll trigger
+  // Manual poll trigger using ref to avoid stale closures
   const pollNow = useCallback(async () => {
-    await poll();
-  }, [poll]);
+    await pollRef.current?.();
+  }, []);
 
   // Stop polling manually
   const stopPolling = useCallback(() => {
@@ -152,15 +164,18 @@ export function useRunPolling(
     }
   }, []);
 
-  // Handle page visibility changes
+  // Handle page visibility changes using ref to avoid stale closures
   useEffect(() => {
     const handleVisibilityChange = () => {
       isPageVisibleRef.current = !document.hidden;
 
       if (!document.hidden && state.isPolling && runId && !intervalRef.current) {
         // Resume polling when page becomes visible
-        poll(); // Immediate poll
-        intervalRef.current = window.setInterval(poll, currentIntervalRef.current);
+        pollRef.current?.(); // Immediate poll
+        intervalRef.current = window.setInterval(
+          () => pollRef.current?.(),
+          currentIntervalRef.current
+        );
       } else if (document.hidden && intervalRef.current) {
         // Pause polling when page is hidden
         window.clearInterval(intervalRef.current);
@@ -172,7 +187,7 @@ export function useRunPolling(
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [state.isPolling, runId, poll]);
+  }, [state.isPolling, runId]);
 
   // Start/stop polling based on runId and current status
   useEffect(() => {
@@ -188,20 +203,18 @@ export function useRunPolling(
     // Reset interval on new runId
     currentIntervalRef.current = initialInterval;
 
-    // Don't start if data shows terminal state
-    if (state.data && TERMINAL_STATUSES.includes(state.data.status)) {
-      return;
-    }
-
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState((prev) => ({ ...prev, isPolling: true }));
 
-    // Initial poll
-    poll();
+    // Initial poll using ref to avoid stale closure
+    pollRef.current?.();
 
-    // Set up interval only if page is visible
+    // Set up interval only if page is visible, using ref to avoid stale closure
     if (!document.hidden) {
-      intervalRef.current = window.setInterval(poll, currentIntervalRef.current);
+      intervalRef.current = window.setInterval(
+        () => pollRef.current?.(),
+        currentIntervalRef.current
+      );
     }
 
     return () => {
@@ -210,7 +223,7 @@ export function useRunPolling(
         intervalRef.current = null;
       }
     };
-  }, [runId, initialInterval, poll, state.data]);
+  }, [runId, initialInterval]);
 
   // Reset state when runId changes to null
   useEffect(() => {

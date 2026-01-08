@@ -13,3 +13,4 @@
 // limitations under the License.
 export { Button } from './Button';
 export { StatusBadge } from './StatusBadge';
+export { ErrorBoundary } from './ErrorBoundary';

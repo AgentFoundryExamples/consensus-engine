@@ -52,6 +52,7 @@ export const useRunsStore = create<RunsState>((set) => ({
   setActiveRun: (run_id) =>
     set({
       activeRunId: run_id,
+      activeRunDetails: null, // Clear stale details when switching runs
     }),
 
   setActiveRunDetails: (details) =>
