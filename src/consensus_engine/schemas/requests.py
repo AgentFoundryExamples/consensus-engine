@@ -416,6 +416,32 @@ class PersonaReviewSummary(BaseModel):
     )
 
 
+class StepProgressSummary(BaseModel):
+    """Summary of a step progress for run detail responses.
+
+    Attributes:
+        step_name: Canonical step name (e.g., 'expand', 'review_architect')
+        step_order: Integer ordering for deterministic step sequence
+        status: Current status of the step (pending, running, completed, failed)
+        started_at: ISO timestamp when step processing started (null until started)
+        completed_at: ISO timestamp when step finished (null until completed/failed)
+        error_message: Optional error message if step failed
+    """
+
+    step_name: str = Field(..., description="Canonical step name")
+    step_order: int = Field(..., description="Integer ordering for deterministic step sequence")
+    status: str = Field(..., description="Current status: pending, running, completed, or failed")
+    started_at: str | None = Field(
+        default=None, description="ISO timestamp when step processing started"
+    )
+    completed_at: str | None = Field(
+        default=None, description="ISO timestamp when step finished"
+    )
+    error_message: str | None = Field(
+        default=None, description="Optional error message if step failed"
+    )
+
+
 class RunListItemResponse(BaseModel):
     """Response model for individual items in GET /v1/runs list.
 
@@ -423,7 +449,12 @@ class RunListItemResponse(BaseModel):
         run_id: UUID of the run
         created_at: Timestamp when run was created
         status: Current status of the run
+        queued_at: Timestamp when run was queued
+        started_at: Timestamp when run processing started
+        completed_at: Timestamp when run finished
+        retry_count: Number of retry attempts for this run
         run_type: Whether this is an initial run or revision
+        priority: Priority level for run execution
         parent_run_id: Optional UUID of parent run for revisions
         overall_weighted_confidence: Final weighted confidence score
         decision_label: Final decision label
@@ -433,8 +464,19 @@ class RunListItemResponse(BaseModel):
 
     run_id: str = Field(..., description="UUID of the run")
     created_at: str = Field(..., description="ISO timestamp when run was created")
-    status: str = Field(..., description="Current status: running, completed, or failed")
+    status: str = Field(..., description="Current status: queued, running, completed, or failed")
+    queued_at: str | None = Field(
+        default=None, description="ISO timestamp when run was queued"
+    )
+    started_at: str | None = Field(
+        default=None, description="ISO timestamp when run processing started"
+    )
+    completed_at: str | None = Field(
+        default=None, description="ISO timestamp when run finished"
+    )
+    retry_count: int = Field(default=0, description="Number of retry attempts for this run")
     run_type: str = Field(..., description="Whether this is an initial run or revision")
+    priority: str = Field(..., description="Priority level: normal or high")
     parent_run_id: str | None = Field(
         default=None, description="Optional UUID of parent run for revisions"
     )
@@ -476,7 +518,12 @@ class RunDetailResponse(BaseModel):
         created_at: Timestamp when run was created
         updated_at: Timestamp when run was last updated
         status: Current status of the run
+        queued_at: Timestamp when run was queued
+        started_at: Timestamp when run processing started
+        completed_at: Timestamp when run finished
+        retry_count: Number of retry attempts for this run
         run_type: Whether this is an initial run or revision
+        priority: Priority level for run execution
         parent_run_id: Optional UUID of parent run for revisions
         input_idea: The original idea text
         extra_context: Optional additional context as JSON
@@ -488,13 +535,25 @@ class RunDetailResponse(BaseModel):
         proposal: Structured proposal JSON (nullable if run failed early)
         persona_reviews: Array of persona reviews with scores and blocking flags
         decision: Decision JSON (nullable if run failed or incomplete)
+        step_progress: Array of step progress records showing pipeline execution
     """
 
     run_id: str = Field(..., description="UUID of the run")
     created_at: str = Field(..., description="ISO timestamp when run was created")
     updated_at: str = Field(..., description="ISO timestamp when run was last updated")
-    status: str = Field(..., description="Current status: running, completed, or failed")
+    status: str = Field(..., description="Current status: queued, running, completed, or failed")
+    queued_at: str | None = Field(
+        default=None, description="ISO timestamp when run was queued"
+    )
+    started_at: str | None = Field(
+        default=None, description="ISO timestamp when run processing started"
+    )
+    completed_at: str | None = Field(
+        default=None, description="ISO timestamp when run finished"
+    )
+    retry_count: int = Field(default=0, description="Number of retry attempts for this run")
     run_type: str = Field(..., description="Whether this is an initial run or revision")
+    priority: str = Field(..., description="Priority level: normal or high")
     parent_run_id: str | None = Field(
         default=None, description="Optional UUID of parent run for revisions"
     )
@@ -522,6 +581,10 @@ class RunDetailResponse(BaseModel):
     )
     decision: dict[str, Any] | None = Field(
         default=None, description="Decision JSON (null if run failed or incomplete)"
+    )
+    step_progress: list[StepProgressSummary] = Field(
+        default_factory=list,
+        description="Array of step progress records showing pipeline execution ordered by step_order",
     )
 
 

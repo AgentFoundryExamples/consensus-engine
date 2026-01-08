@@ -30,6 +30,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -44,6 +45,7 @@ from consensus_engine.db import Base
 class RunStatus(str, enum.Enum):
     """Enumeration of run lifecycle states."""
 
+    QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -54,6 +56,22 @@ class RunType(str, enum.Enum):
 
     INITIAL = "initial"
     REVISION = "revision"
+
+
+class RunPriority(str, enum.Enum):
+    """Enumeration of run priority levels."""
+
+    NORMAL = "normal"
+    HIGH = "high"
+
+
+class StepStatus(str, enum.Enum):
+    """Enumeration of step execution states."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class Run(Base):
@@ -67,10 +85,15 @@ class Run(Base):
         created_at: Timestamp when run was created
         updated_at: Timestamp when run was last updated
         user_id: Optional UUID of the user who initiated the run
-        status: Current status of the run (running, completed, failed)
+        status: Current status of the run (queued, running, completed, failed)
+        queued_at: Timestamp when run was queued (nullable for backward compatibility)
+        started_at: Timestamp when run processing started (nullable until started)
+        completed_at: Timestamp when run finished (nullable until completed/failed)
+        retry_count: Number of retry attempts for this run
         input_idea: The original idea text provided by the user
         extra_context: Optional additional context as JSONB
         run_type: Whether this is an initial run or revision
+        priority: Priority level for run execution (normal or high)
         parent_run_id: Optional FK to parent run for revisions
         model: LLM model identifier used for this run
         temperature: Temperature parameter used for LLM calls
@@ -95,12 +118,27 @@ class Run(Base):
     )
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     status: Mapped[RunStatus] = mapped_column(
-        Enum(RunStatus, native_enum=False, length=20), nullable=False, default=RunStatus.RUNNING
+        Enum(RunStatus, native_enum=False, length=20), nullable=False, default=RunStatus.QUEUED
+    )
+    queued_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    retry_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
     )
     input_idea: Mapped[str] = mapped_column(Text, nullable=False)
     extra_context: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     run_type: Mapped[RunType] = mapped_column(
         Enum(RunType, native_enum=False, length=20), nullable=False
+    )
+    priority: Mapped[RunPriority] = mapped_column(
+        Enum(RunPriority, native_enum=False, length=20), nullable=False, default=RunPriority.NORMAL
     )
     parent_run_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"), nullable=True
@@ -129,17 +167,27 @@ class Run(Base):
     decision: Mapped["Decision | None"] = relationship(
         "Decision", back_populates="run", cascade="all, delete-orphan", uselist=False
     )
+    step_progress: Mapped[list["StepProgress"]] = relationship(
+        "StepProgress", back_populates="run", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("ix_runs_status", "status"),
         Index("ix_runs_parent_run_id", "parent_run_id"),
         Index("ix_runs_created_at", "created_at"),
+        Index("ix_runs_queued_at", "queued_at"),
+        Index("ix_runs_started_at", "started_at"),
+        Index("ix_runs_completed_at", "completed_at"),
+        Index("ix_runs_priority", "priority"),
         CheckConstraint(
             "temperature >= 0.0 AND temperature <= 2.0", name="ck_runs_temperature_range"
         ),
         CheckConstraint(
             "overall_weighted_confidence >= 0.0 AND overall_weighted_confidence <= 1.0",
             name="ck_runs_confidence_range",
+        ),
+        CheckConstraint(
+            "retry_count >= 0", name="ck_runs_retry_count_non_negative"
         ),
     )
 
@@ -297,4 +345,63 @@ class Decision(Base):
         return (
             f"<Decision(id={self.id}, run_id={self.run_id}, "
             f"confidence={self.overall_weighted_confidence})>"
+        )
+
+
+class StepProgress(Base):
+    """Model for tracking per-step progress within a run.
+
+    Each step in the consensus pipeline (expand, review_*, aggregate_decision)
+    generates a progress record. Steps are identified by their canonical name
+    and tracked with timestamps, status, and optional error information.
+
+    Attributes:
+        id: UUID primary key
+        run_id: UUID foreign key to parent run
+        step_name: Canonical step name (e.g., 'expand', 'review_architect')
+        step_order: Integer ordering for deterministic step sequence
+        status: Current status of the step (pending, running, completed, failed)
+        started_at: Timestamp when step processing started (nullable until started)
+        completed_at: Timestamp when step finished (nullable until completed/failed)
+        error_message: Optional error message if step failed
+    """
+
+    __tablename__ = "step_progress"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"), nullable=False
+    )
+    step_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    step_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[StepStatus] = mapped_column(
+        Enum(StepStatus, native_enum=False, length=20), nullable=False, default=StepStatus.PENDING
+    )
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Relationships
+    run: Mapped["Run"] = relationship("Run", back_populates="step_progress")
+
+    __table_args__ = (
+        UniqueConstraint("run_id", "step_name", name="uq_step_progress_run_step"),
+        Index("ix_step_progress_run_id", "run_id"),
+        Index("ix_step_progress_status", "status"),
+        CheckConstraint(
+            "step_order >= 0", name="ck_step_progress_order_non_negative"
+        ),
+    )
+
+    def __repr__(self) -> str:
+        """String representation of StepProgress."""
+        return (
+            f"<StepProgress(id={self.id}, run_id={self.run_id}, "
+            f"step_name={self.step_name}, status={self.status.value})>"
         )
