@@ -26,6 +26,13 @@ from pydantic import BaseModel, Field, field_validator
 # Import schemas for use in response models
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
 
+# Default validation limits (can be overridden by Settings at API route level)
+# These serve as schema-level hard limits to prevent parsing issues
+DEFAULT_MAX_IDEA_LENGTH = 10000
+DEFAULT_MAX_EXTRA_CONTEXT_LENGTH = 50000
+DEFAULT_MAX_EDITED_PROPOSAL_LENGTH = 100000
+DEFAULT_MAX_EDIT_NOTES_LENGTH = 10000
+
 
 def count_sentences(text: str) -> int:
     """Count sentences in text using basic punctuation rules.
@@ -163,11 +170,8 @@ class ExpandIdeaRequest(BaseModel):
                 "Please provide a more concise description."
             )
 
-        # Validate length (default limit: 10000 chars, configurable via env)
-        # Note: Actual limit will be enforced at the API route level with settings
-        # This is a reasonable hard limit to prevent parsing issues
-        max_length = 10000
-        validate_text_length(v, "idea", max_length=max_length)
+        # Validate length (uses default constant, actual limit enforced at API route level)
+        validate_text_length(v, "idea", max_length=DEFAULT_MAX_IDEA_LENGTH)
 
         return v
 
@@ -188,12 +192,11 @@ class ExpandIdeaRequest(BaseModel):
         if v is None:
             return v
 
-        # Validate based on type
-        max_length = 50000  # Default limit, configurable via env at API level
+        # Validate based on type (uses default constant, actual limit enforced at API route level)
         if isinstance(v, str):
-            validate_text_length(v, "extra_context", max_length=max_length)
+            validate_text_length(v, "extra_context", max_length=DEFAULT_MAX_EXTRA_CONTEXT_LENGTH)
         elif isinstance(v, dict):
-            validate_dict_json_size(v, "extra_context", max_length=max_length)
+            validate_dict_json_size(v, "extra_context", max_length=DEFAULT_MAX_EXTRA_CONTEXT_LENGTH)
 
         return v
 
@@ -340,7 +343,8 @@ class ReviewIdeaRequest(BaseModel):
             )
 
         # Validate length
-        max_length = 10000
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_IDEA_LENGTH
         validate_text_length(v, "idea", max_length=max_length)
 
         return v
@@ -362,7 +366,8 @@ class ReviewIdeaRequest(BaseModel):
         if v is None:
             return v
 
-        max_length = 50000
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EXTRA_CONTEXT_LENGTH
         if isinstance(v, str):
             validate_text_length(v, "extra_context", max_length=max_length)
         elif isinstance(v, dict):
@@ -480,7 +485,8 @@ class FullReviewRequest(BaseModel):
             )
 
         # Validate length
-        max_length = 10000
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_IDEA_LENGTH
         validate_text_length(v, "idea", max_length=max_length)
 
         return v
@@ -502,7 +508,8 @@ class FullReviewRequest(BaseModel):
         if v is None:
             return v
 
-        max_length = 50000
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EXTRA_CONTEXT_LENGTH
         if isinstance(v, str):
             validate_text_length(v, "extra_context", max_length=max_length)
         elif isinstance(v, dict):
@@ -842,7 +849,8 @@ class CreateRevisionRequest(BaseModel):
         if v is None:
             return v
 
-        max_length = 100000  # Default limit, configurable via env at API level
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EDITED_PROPOSAL_LENGTH
         if isinstance(v, str):
             validate_text_length(v, "edited_proposal", max_length=max_length)
         elif isinstance(v, dict):
@@ -867,7 +875,8 @@ class CreateRevisionRequest(BaseModel):
         if v is None:
             return v
 
-        max_length = 10000  # Default limit, configurable via env at API level
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EDIT_NOTES_LENGTH
         validate_text_length(v, "edit_notes", max_length=max_length)
 
         return v
@@ -889,7 +898,8 @@ class CreateRevisionRequest(BaseModel):
         if v is None:
             return v
 
-        max_length = 10000  # Default limit, configurable via env at API level
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EDIT_NOTES_LENGTH
         validate_text_length(v, "input_idea", max_length=max_length)
 
         return v
@@ -911,30 +921,13 @@ class CreateRevisionRequest(BaseModel):
         if v is None:
             return v
 
-        max_length = 50000
+        # Use default constant, actual limit enforced at API route level
+        max_length = DEFAULT_MAX_EXTRA_CONTEXT_LENGTH
         if isinstance(v, str):
             validate_text_length(v, "extra_context", max_length=max_length)
         elif isinstance(v, dict):
             validate_dict_json_size(v, "extra_context", max_length=max_length)
 
-        return v
-
-    @field_validator("edited_proposal", "edit_notes")
-    @classmethod
-    def require_at_least_one_edit_field(cls, v: Any, info: Any) -> Any:
-        """Validate that at least one of edited_proposal or edit_notes is provided.
-
-        Args:
-            v: Field value
-            info: Field info with context
-
-        Returns:
-            The validated field value
-
-        Note:
-            This validator runs per-field. Use the class-level validation in the
-            endpoint to ensure at least one edit field is provided.
-        """
         return v
 
 
