@@ -346,14 +346,17 @@ class RunStatusSchema:
         return DBRunStatus(self.status)
 
 
-# For RunStatus, we'll register metadata about the enum
+# For RunStatus, we'll register metadata about the enum with a simple wrapper model
+class RunStatusModel(BaseModel):
+    """Simple Pydantic model wrapper for RunStatus enum metadata."""
+
+    status: str
+
+
 _registry.register(
     schema_name="RunStatus",
     version="1.0.0",
-    schema_class=type("RunStatusModel", (BaseModel,), {
-        "__annotations__": {"status": str},
-        "status": None
-    }),
+    schema_class=RunStatusModel,
     description="Run lifecycle state enum (queued, running, completed, failed)",
     is_current=True,
     prompt_set_version="1.0.0",
