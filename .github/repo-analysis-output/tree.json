@@ -380,6 +380,38 @@
       "children": [
         {
           "type": "directory",
+          "name": "fixtures",
+          "children": [
+            {
+              "type": "directory",
+              "name": "schemas",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "decision_aggregation_v1.0.0.json"
+                },
+                {
+                  "type": "file",
+                  "name": "expanded_proposal_v1.0.0.json"
+                },
+                {
+                  "type": "file",
+                  "name": "persona_review_v1.0.0.json"
+                },
+                {
+                  "type": "file",
+                  "name": "run_status_v1.0.0.json"
+                }
+              ]
+            },
+            {
+              "type": "file",
+              "name": "README.md"
+            }
+          ]
+        },
+        {
+          "type": "directory",
           "name": "integration",
           "children": [
             {
@@ -565,6 +597,10 @@
         {
           "type": "file",
           "name": "conftest.py"
+        },
+        {
+          "type": "file",
+          "name": "README.md"
         }
       ]
     },

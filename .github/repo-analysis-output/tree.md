@@ -85,6 +85,13 @@
     ├── app.py
     └── exceptions.py
 ├── tests
+  ├── fixtures
+    ├── schemas
+      ├── decision_aggregation_v1.0.0.json
+      ├── expanded_proposal_v1.0.0.json
+      ├── persona_review_v1.0.0.json
+      └── run_status_v1.0.0.json
+    └── README.md
   ├── integration
     ├── __init__.py
     ├── test_acceptance_criteria.py
@@ -130,7 +137,8 @@
     ├── test_validation.py
     └── test_version_tracking.py
   ├── __init__.py
-  └── conftest.py
+  ├── conftest.py
+  └── README.md
 ├── .env.example
 ├── .gitignore
 ├── alembic.ini

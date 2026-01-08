@@ -1033,8 +1033,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 10308,
-        "loc": 178,
+        "size_bytes": 26251,
+        "loc": 506,
         "todo_count": 0
       }
     },
@@ -1215,8 +1215,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 19989,
-        "loc": 422,
+        "size_bytes": 36646,
+        "loc": 688,
         "todo_count": 0
       }
     },

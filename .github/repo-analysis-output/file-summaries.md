@@ -668,8 +668,8 @@ Total files: 90
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 10.07 KB  
-**LOC:** 178  
+**Size:** 25.64 KB  
+**LOC:** 506  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_llm_steps.py
@@ -785,8 +785,8 @@ Total files: 90
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 19.52 KB  
-**LOC:** 422  
+**Size:** 35.79 KB  
+**LOC:** 688  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/test_schema_validation.py

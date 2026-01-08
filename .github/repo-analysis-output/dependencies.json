@@ -1148,7 +1148,9 @@
       "path": "tests/unit/test_instruction_builder.py",
       "type": "file",
       "external_dependencies": {
-        "stdlib": [],
+        "stdlib": [
+          "re"
+        ],
         "third-party": [
           "pytest"
         ]
@@ -1335,7 +1337,8 @@
       "type": "file",
       "external_dependencies": {
         "stdlib": [
-          "json"
+          "json",
+          "pathlib.Path"
         ],
         "third-party": [
           "pydantic.ValidationError",
