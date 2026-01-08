@@ -37,6 +37,10 @@ from consensus_engine.config.settings import Settings
 
 logger = get_logger(__name__)
 
+# Pub/Sub publish timeout and warning threshold
+PUBLISH_TIMEOUT_SECONDS = 30.0
+PUBLISH_LATENCY_WARNING_MS = 30000  # Log warning if publish takes > 30s
+
 
 class PubSubPublishError(Exception):
     """Exception raised when message publishing fails after retries."""
@@ -238,13 +242,13 @@ class PubSubPublisher:
             )
 
             # Wait for publish to complete (with timeout)
-            message_id = future.result(timeout=30.0)
+            message_id = future.result(timeout=PUBLISH_TIMEOUT_SECONDS)
 
             # Calculate publish latency
             publish_latency_ms = (time.time() - start_time) * 1000
 
-            # Log warning if latency exceeds 30 seconds (even though request succeeded)
-            if publish_latency_ms > 30000:
+            # Log warning if latency exceeds threshold (even though request succeeded)
+            if publish_latency_ms > PUBLISH_LATENCY_WARNING_MS:
                 logger.warning(
                     "Pub/Sub publish latency exceeded 30 seconds",
                     extra={
