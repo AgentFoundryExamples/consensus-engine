@@ -207,8 +207,8 @@
       "summary": "Python core implementation",
       "summary_text": "Python core implementation",
       "metrics": {
-        "size_bytes": 29494,
-        "loc": 690,
+        "size_bytes": 31625,
+        "loc": 730,
         "todo_count": 0
       }
     },
@@ -375,8 +375,8 @@
       "summary": "Python data access layer (role: data-access)",
       "summary_text": "Python data access layer (role: data-access)",
       "metrics": {
-        "size_bytes": 24315,
-        "loc": 564,
+        "size_bytes": 24524,
+        "loc": 573,
         "todo_count": 0
       }
     },
@@ -795,8 +795,8 @@
       "summary": "Python test file (role: test)",
       "summary_text": "Python test file (role: test)",
       "metrics": {
-        "size_bytes": 23001,
-        "loc": 463,
+        "size_bytes": 38847,
+        "loc": 798,
         "todo_count": 0
       }
     },

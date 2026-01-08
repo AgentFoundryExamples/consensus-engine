@@ -137,8 +137,8 @@ Total files: 76
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** Python core implementation  
-**Size:** 28.80 KB  
-**LOC:** 690  
+**Size:** 30.88 KB  
+**LOC:** 730  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/app.py
@@ -245,8 +245,8 @@ Total files: 76
 **Role:** data-access  
 **Role Justification:** data access name 'repositories'  
 **Summary:** Python data access layer (role: data-access)  
-**Size:** 23.75 KB  
-**LOC:** 564  
+**Size:** 23.95 KB  
+**LOC:** 573  
 **TODOs/FIXMEs:** 0  
 
 ## src/consensus_engine/exceptions.py
@@ -515,8 +515,8 @@ Total files: 76
 **Role:** test  
 **Role Justification:** filename starts with 'test_'  
 **Summary:** Python test file (role: test)  
-**Size:** 22.46 KB  
-**LOC:** 463  
+**Size:** 37.94 KB  
+**LOC:** 798  
 **TODOs/FIXMEs:** 0  
 
 ## tests/unit/__init__.py
