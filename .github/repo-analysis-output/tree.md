@@ -203,15 +203,19 @@
         ├── ErrorBoundary.tsx
         ├── index.ts
         └── StatusBadge.tsx
+      ├── DiffView.tsx
       ├── IdeaForm.tsx
       ├── JsonToggle.tsx
       ├── MinorityReport.tsx
       ├── PersonaReviewModal.tsx
+      ├── RevisionModal.tsx
       ├── RoadmapPacket.tsx
+      ├── RunHistoryList.tsx
       └── Timeline.tsx
     ├── config
       └── index.ts
     ├── hooks
+      ├── useRunHistory.ts
       └── useRunPolling.ts
     ├── pages
       └── RunDashboard.tsx

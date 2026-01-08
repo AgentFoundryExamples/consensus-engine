@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 138
+Total files: 139
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -1203,6 +1203,15 @@ Total files: 138
 **LOC:** 54  
 **TODOs/FIXMEs:** 0  
 
+## webapp/src/hooks/useRunHistory.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for useRunHistory  
+**Size:** 5.44 KB  
+**LOC:** 174  
+**TODOs/FIXMEs:** 0  
+
 ## webapp/src/hooks/useRunPolling.ts
 **Language:** TypeScript  
 **Role:** implementation  
@@ -1217,8 +1226,8 @@ Total files: 138
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for runs  
-**Size:** 2.32 KB  
-**LOC:** 53  
+**Size:** 3.32 KB  
+**LOC:** 78  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/state/selectors.ts

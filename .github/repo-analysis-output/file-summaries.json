@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 138,
+  "total_files": 139,
   "files": [
     {
       "schema_version": "2.0",
@@ -1467,7 +1467,7 @@
       "summary": "TypeScript module for DecisionEnum",
       "summary_text": "TypeScript module for DecisionEnum",
       "metrics": {
-        "size_bytes": 958,
+        "size_bytes": 960,
         "loc": 13,
         "todo_count": 0
       }
@@ -1866,6 +1866,20 @@
     },
     {
       "schema_version": "2.0",
+      "path": "webapp/src/hooks/useRunHistory.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for useRunHistory",
+      "summary_text": "TypeScript module for useRunHistory",
+      "metrics": {
+        "size_bytes": 5574,
+        "loc": 174,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "webapp/src/hooks/useRunPolling.ts",
       "language": "TypeScript",
       "role": "implementation",
@@ -1887,8 +1901,8 @@
       "summary": "TypeScript module for runs",
       "summary_text": "TypeScript module for runs",
       "metrics": {
-        "size_bytes": 2375,
-        "loc": 53,
+        "size_bytes": 3402,
+        "loc": 78,
         "todo_count": 0
       }
     },

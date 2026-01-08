@@ -1784,6 +1784,17 @@
       }
     },
     {
+      "id": "webapp/src/hooks/useRunHistory.ts",
+      "path": "webapp/src/hooks/useRunHistory.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "react"
+        ]
+      }
+    },
+    {
       "id": "webapp/src/hooks/useRunPolling.ts",
       "path": "webapp/src/hooks/useRunPolling.ts",
       "type": "file",
@@ -3112,6 +3123,18 @@
     {
       "source": "webapp/src/api/generated/services/RunsService.ts",
       "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/hooks/useRunHistory.ts",
+      "target": "webapp/src/api/client.ts"
+    },
+    {
+      "source": "webapp/src/hooks/useRunHistory.ts",
+      "target": "webapp/src/api/generated/index.ts"
+    },
+    {
+      "source": "webapp/src/hooks/useRunHistory.ts",
+      "target": "webapp/src/state/runs.ts"
     },
     {
       "source": "webapp/src/hooks/useRunPolling.ts",
