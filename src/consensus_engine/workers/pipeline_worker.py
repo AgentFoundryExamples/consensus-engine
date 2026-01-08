@@ -31,6 +31,7 @@ from consensus_engine.config.personas import get_all_personas
 from consensus_engine.config.settings import Settings, get_settings
 from consensus_engine.db.dependencies import get_engine
 from consensus_engine.db.models import (
+    Decision,
     PersonaReview as PersonaReviewModel,
     ProposalVersion,
     Run,
@@ -579,8 +580,6 @@ class PipelineWorker:
             decision_aggregation = aggregate_persona_reviews(persona_reviews)
             
             # Check if decision already exists (idempotency)
-            from consensus_engine.db.models import Decision
-            
             existing_decision = session.execute(
                 select(Decision).where(Decision.run_id == run.id)
             ).scalar_one_or_none()
@@ -673,7 +672,7 @@ class PipelineWorker:
                     "run_id": str(run_id),
                     "job_latency_ms": job_latency_ms,
                     "decision": run.decision_label,
-                    "confidence": float(run.overall_weighted_confidence) if run.overall_weighted_confidence else None,
+                    "confidence": run.overall_weighted_confidence,
                     "lifecycle_event": "job_completed",
                 },
             )
