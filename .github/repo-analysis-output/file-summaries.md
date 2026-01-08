@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 135
+Total files: 137
 
 ## examples/test_full_review.py
 **Language:** Python  
@@ -884,8 +884,8 @@ Total files: 135
 **Role:** api  
 **Role Justification:** filename contains 'api'  
 **Summary:** TypeScript API implementation (role: api)  
-**Size:** 1.51 KB  
-**LOC:** 29  
+**Size:** 1.49 KB  
+**LOC:** 28  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/core/request.ts
@@ -902,8 +902,8 @@ Total files: 135
 **Role:** entry-point  
 **Role Justification:** common entry point name 'index'  
 **Summary:** TypeScript main entry point (role: entry-point)  
-**Size:** 2.86 KB  
-**LOC:** 38  
+**Size:** 2.84 KB  
+**LOC:** 37  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/BlockingIssue.ts
@@ -911,8 +911,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for BlockingIssue  
-**Size:** 1.17 KB  
-**LOC:** 22  
+**Size:** 1.15 KB  
+**LOC:** 21  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/Concern.ts
@@ -920,8 +920,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for Concern  
-**Size:** 1.03 KB  
-**LOC:** 21  
+**Size:** 1.01 KB  
+**LOC:** 20  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/CreateRevisionRequest.ts
@@ -938,8 +938,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for DecisionAggregation  
-**Size:** 2.76 KB  
-**LOC:** 55  
+**Size:** 2.74 KB  
+**LOC:** 54  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/DecisionEnum.ts
@@ -947,8 +947,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for DecisionEnum  
-**Size:** 0.85 KB  
-**LOC:** 12  
+**Size:** 0.94 KB  
+**LOC:** 13  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/DetailedScoreBreakdown.ts
@@ -956,8 +956,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for DetailedScoreBreakdown  
-**Size:** 1.67 KB  
-**LOC:** 34  
+**Size:** 1.65 KB  
+**LOC:** 33  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/ExpandIdeaRequest.ts
@@ -992,8 +992,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for HTTPValidationError  
-**Size:** 0.84 KB  
-**LOC:** 8  
+**Size:** 0.82 KB  
+**LOC:** 7  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/HealthResponse.ts
@@ -1001,8 +1001,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for HealthResponse  
-**Size:** 1.57 KB  
-**LOC:** 46  
+**Size:** 1.55 KB  
+**LOC:** 45  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/JobEnqueuedResponse.ts
@@ -1010,8 +1010,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for JobEnqueuedResponse  
-**Size:** 1.89 KB  
-**LOC:** 50  
+**Size:** 1.88 KB  
+**LOC:** 49  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/MinorityReport.ts
@@ -1019,8 +1019,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for MinorityReport  
-**Size:** 1.96 KB  
-**LOC:** 46  
+**Size:** 1.94 KB  
+**LOC:** 45  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/PersonaReview.ts
@@ -1046,8 +1046,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for PersonaScoreBreakdown  
-**Size:** 1.23 KB  
-**LOC:** 24  
+**Size:** 1.21 KB  
+**LOC:** 23  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/ReviewIdeaRequest.ts
@@ -1064,8 +1064,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for ReviewIdeaResponse  
-**Size:** 1.84 KB  
-**LOC:** 39  
+**Size:** 1.82 KB  
+**LOC:** 38  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/RunDetailResponse.ts
@@ -1091,8 +1091,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for RunListItemResponse  
-**Size:** 2.66 KB  
-**LOC:** 81  
+**Size:** 2.64 KB  
+**LOC:** 80  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/RunListResponse.ts
@@ -1100,8 +1100,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for RunListResponse  
-**Size:** 1.25 KB  
-**LOC:** 32  
+**Size:** 1.23 KB  
+**LOC:** 31  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/StepProgressSummary.ts
@@ -1109,8 +1109,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for StepProgressSummary  
-**Size:** 1.73 KB  
-**LOC:** 41  
+**Size:** 1.71 KB  
+**LOC:** 40  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/models/ValidationError.ts
@@ -1118,8 +1118,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for ValidationError  
-**Size:** 0.80 KB  
-**LOC:** 9  
+**Size:** 0.78 KB  
+**LOC:** 8  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/services/ExpandService.ts
@@ -1127,8 +1127,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for ExpandService  
-**Size:** 2.62 KB  
-**LOC:** 52  
+**Size:** 2.60 KB  
+**LOC:** 51  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/services/FullReviewService.ts
@@ -1136,8 +1136,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for FullReviewService  
-**Size:** 2.48 KB  
-**LOC:** 49  
+**Size:** 2.46 KB  
+**LOC:** 48  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/services/HealthService.ts
@@ -1145,8 +1145,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for HealthService  
-**Size:** 1.42 KB  
-**LOC:** 22  
+**Size:** 1.40 KB  
+**LOC:** 21  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/services/ReviewService.ts
@@ -1154,8 +1154,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for ReviewService  
-**Size:** 2.62 KB  
-**LOC:** 50  
+**Size:** 2.60 KB  
+**LOC:** 49  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/api/generated/services/RootService.ts
@@ -1172,8 +1172,8 @@ Total files: 135
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
 **Summary:** TypeScript module for RunsService  
-**Size:** 5.87 KB  
-**LOC:** 148  
+**Size:** 5.85 KB  
+**LOC:** 147  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/components/layout/index.ts
@@ -1190,8 +1190,8 @@ Total files: 135
 **Role:** entry-point  
 **Role Justification:** common entry point name 'index'  
 **Summary:** TypeScript main entry point (role: entry-point)  
-**Size:** 0.66 KB  
-**LOC:** 2  
+**Size:** 0.70 KB  
+**LOC:** 3  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/src/config/index.ts
@@ -1201,6 +1201,24 @@ Total files: 135
 **Summary:** TypeScript main entry point (role: entry-point)  
 **Size:** 2.68 KB  
 **LOC:** 54  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/hooks/useRunPolling.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for useRunPolling  
+**Size:** 7.25 KB  
+**LOC:** 195  
+**TODOs/FIXMEs:** 0  
+
+## webapp/src/state/runs.ts
+**Language:** TypeScript  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Summary:** TypeScript module for runs  
+**Size:** 2.32 KB  
+**LOC:** 53  
 **TODOs/FIXMEs:** 0  
 
 ## webapp/tailwind.config.js

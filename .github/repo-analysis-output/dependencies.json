@@ -1784,6 +1784,28 @@
       }
     },
     {
+      "id": "webapp/src/hooks/useRunPolling.ts",
+      "path": "webapp/src/hooks/useRunPolling.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "react"
+        ]
+      }
+    },
+    {
+      "id": "webapp/src/state/runs.ts",
+      "path": "webapp/src/state/runs.ts",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "zustand"
+        ]
+      }
+    },
+    {
       "id": "webapp/tailwind.config.js",
       "path": "webapp/tailwind.config.js",
       "type": "file",
@@ -3081,6 +3103,18 @@
     {
       "source": "webapp/src/api/generated/services/RunsService.ts",
       "target": "webapp/src/api/generated/core/request.ts"
+    },
+    {
+      "source": "webapp/src/hooks/useRunPolling.ts",
+      "target": "webapp/src/api/client.ts"
+    },
+    {
+      "source": "webapp/src/hooks/useRunPolling.ts",
+      "target": "webapp/src/api/generated/index.ts"
+    },
+    {
+      "source": "webapp/src/state/runs.ts",
+      "target": "webapp/src/api/generated/index.ts"
     }
   ],
   "external_dependencies_summary": {
@@ -3170,6 +3204,7 @@
       "pydantic_settings.BaseSettings",
       "pydantic_settings.SettingsConfigDict",
       "pytest",
+      "react",
       "sqlalchemy",
       "sqlalchemy.",
       "sqlalchemy.Boolean",
@@ -3209,9 +3244,10 @@
       "sqlalchemy.select",
       "sqlalchemy.text",
       "typescript-eslint",
-      "vite"
+      "vite",
+      "zustand"
     ],
     "stdlib_count": 39,
-    "third-party_count": 84
+    "third-party_count": 86
   }
 }

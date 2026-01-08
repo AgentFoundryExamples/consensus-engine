@@ -197,12 +197,21 @@
         ├── Container.tsx
         ├── Header.tsx
         └── index.ts
-      └── ui
+      ├── ui
         ├── Button.tsx
+        ├── ErrorBoundary.tsx
         ├── index.ts
         └── StatusBadge.tsx
+      ├── IdeaForm.tsx
+      └── Timeline.tsx
     ├── config
       └── index.ts
+    ├── hooks
+      └── useRunPolling.ts
+    ├── pages
+      └── RunDashboard.tsx
+    ├── state
+      └── runs.ts
     ├── App.css
     ├── App.tsx
     ├── index.css

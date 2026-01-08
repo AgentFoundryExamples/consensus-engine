@@ -8,10 +8,10 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 135
-- **Intra-repo dependencies**: 319
+- **Total files**: 137
+- **Intra-repo dependencies**: 322
 - **External stdlib dependencies**: 39
-- **External third-party dependencies**: 84
+- **External third-party dependencies**: 86
 
 ## External Dependencies
 
@@ -43,7 +43,7 @@ Total: 39 unique modules
 
 ### Third-Party Packages
 
-Total: 84 unique packages
+Total: 86 unique packages
 
 - `@eslint/js`
 - `@vitejs/plugin-react`
@@ -65,7 +65,7 @@ Total: 84 unique packages
 - `fastapi.Response`
 - `fastapi.exceptions.RequestValidationError`
 - `fastapi.middleware.cors.CORSMiddleware`
-- ... and 64 more (see JSON for full list)
+- ... and 66 more (see JSON for full list)
 
 ## Most Depended Upon Files (Intra-Repo)
 

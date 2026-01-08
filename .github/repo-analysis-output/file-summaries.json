@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 135,
+  "total_files": 137,
   "files": [
     {
       "schema_version": "2.0",
@@ -1369,8 +1369,8 @@
       "summary": "TypeScript API implementation (role: api)",
       "summary_text": "TypeScript API implementation (role: api)",
       "metrics": {
-        "size_bytes": 1543,
-        "loc": 29,
+        "size_bytes": 1523,
+        "loc": 28,
         "todo_count": 0
       }
     },
@@ -1397,8 +1397,8 @@
       "summary": "TypeScript main entry point (role: entry-point)",
       "summary_text": "TypeScript main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 2925,
-        "loc": 38,
+        "size_bytes": 2905,
+        "loc": 37,
         "todo_count": 0
       }
     },
@@ -1411,8 +1411,8 @@
       "summary": "TypeScript module for BlockingIssue",
       "summary_text": "TypeScript module for BlockingIssue",
       "metrics": {
-        "size_bytes": 1194,
-        "loc": 22,
+        "size_bytes": 1174,
+        "loc": 21,
         "todo_count": 0
       }
     },
@@ -1425,8 +1425,8 @@
       "summary": "TypeScript module for Concern",
       "summary_text": "TypeScript module for Concern",
       "metrics": {
-        "size_bytes": 1051,
-        "loc": 21,
+        "size_bytes": 1031,
+        "loc": 20,
         "todo_count": 0
       }
     },
@@ -1453,8 +1453,8 @@
       "summary": "TypeScript module for DecisionAggregation",
       "summary_text": "TypeScript module for DecisionAggregation",
       "metrics": {
-        "size_bytes": 2828,
-        "loc": 55,
+        "size_bytes": 2808,
+        "loc": 54,
         "todo_count": 0
       }
     },
@@ -1467,8 +1467,8 @@
       "summary": "TypeScript module for DecisionEnum",
       "summary_text": "TypeScript module for DecisionEnum",
       "metrics": {
-        "size_bytes": 872,
-        "loc": 12,
+        "size_bytes": 958,
+        "loc": 13,
         "todo_count": 0
       }
     },
@@ -1481,8 +1481,8 @@
       "summary": "TypeScript module for DetailedScoreBreakdown",
       "summary_text": "TypeScript module for DetailedScoreBreakdown",
       "metrics": {
-        "size_bytes": 1709,
-        "loc": 34,
+        "size_bytes": 1689,
+        "loc": 33,
         "todo_count": 0
       }
     },
@@ -1537,8 +1537,8 @@
       "summary": "TypeScript module for HTTPValidationError",
       "summary_text": "TypeScript module for HTTPValidationError",
       "metrics": {
-        "size_bytes": 856,
-        "loc": 8,
+        "size_bytes": 836,
+        "loc": 7,
         "todo_count": 0
       }
     },
@@ -1551,8 +1551,8 @@
       "summary": "TypeScript module for HealthResponse",
       "summary_text": "TypeScript module for HealthResponse",
       "metrics": {
-        "size_bytes": 1610,
-        "loc": 46,
+        "size_bytes": 1590,
+        "loc": 45,
         "todo_count": 0
       }
     },
@@ -1565,8 +1565,8 @@
       "summary": "TypeScript module for JobEnqueuedResponse",
       "summary_text": "TypeScript module for JobEnqueuedResponse",
       "metrics": {
-        "size_bytes": 1940,
-        "loc": 50,
+        "size_bytes": 1920,
+        "loc": 49,
         "todo_count": 0
       }
     },
@@ -1579,8 +1579,8 @@
       "summary": "TypeScript module for MinorityReport",
       "summary_text": "TypeScript module for MinorityReport",
       "metrics": {
-        "size_bytes": 2011,
-        "loc": 46,
+        "size_bytes": 1991,
+        "loc": 45,
         "todo_count": 0
       }
     },
@@ -1621,8 +1621,8 @@
       "summary": "TypeScript module for PersonaScoreBreakdown",
       "summary_text": "TypeScript module for PersonaScoreBreakdown",
       "metrics": {
-        "size_bytes": 1263,
-        "loc": 24,
+        "size_bytes": 1243,
+        "loc": 23,
         "todo_count": 0
       }
     },
@@ -1649,8 +1649,8 @@
       "summary": "TypeScript module for ReviewIdeaResponse",
       "summary_text": "TypeScript module for ReviewIdeaResponse",
       "metrics": {
-        "size_bytes": 1888,
-        "loc": 39,
+        "size_bytes": 1868,
+        "loc": 38,
         "todo_count": 0
       }
     },
@@ -1691,8 +1691,8 @@
       "summary": "TypeScript module for RunListItemResponse",
       "summary_text": "TypeScript module for RunListItemResponse",
       "metrics": {
-        "size_bytes": 2727,
-        "loc": 81,
+        "size_bytes": 2707,
+        "loc": 80,
         "todo_count": 0
       }
     },
@@ -1705,8 +1705,8 @@
       "summary": "TypeScript module for RunListResponse",
       "summary_text": "TypeScript module for RunListResponse",
       "metrics": {
-        "size_bytes": 1284,
-        "loc": 32,
+        "size_bytes": 1264,
+        "loc": 31,
         "todo_count": 0
       }
     },
@@ -1719,8 +1719,8 @@
       "summary": "TypeScript module for StepProgressSummary",
       "summary_text": "TypeScript module for StepProgressSummary",
       "metrics": {
-        "size_bytes": 1767,
-        "loc": 41,
+        "size_bytes": 1747,
+        "loc": 40,
         "todo_count": 0
       }
     },
@@ -1733,8 +1733,8 @@
       "summary": "TypeScript module for ValidationError",
       "summary_text": "TypeScript module for ValidationError",
       "metrics": {
-        "size_bytes": 821,
-        "loc": 9,
+        "size_bytes": 801,
+        "loc": 8,
         "todo_count": 0
       }
     },
@@ -1747,8 +1747,8 @@
       "summary": "TypeScript module for ExpandService",
       "summary_text": "TypeScript module for ExpandService",
       "metrics": {
-        "size_bytes": 2678,
-        "loc": 52,
+        "size_bytes": 2658,
+        "loc": 51,
         "todo_count": 0
       }
     },
@@ -1761,8 +1761,8 @@
       "summary": "TypeScript module for FullReviewService",
       "summary_text": "TypeScript module for FullReviewService",
       "metrics": {
-        "size_bytes": 2540,
-        "loc": 49,
+        "size_bytes": 2520,
+        "loc": 48,
         "todo_count": 0
       }
     },
@@ -1775,8 +1775,8 @@
       "summary": "TypeScript module for HealthService",
       "summary_text": "TypeScript module for HealthService",
       "metrics": {
-        "size_bytes": 1458,
-        "loc": 22,
+        "size_bytes": 1438,
+        "loc": 21,
         "todo_count": 0
       }
     },
@@ -1789,8 +1789,8 @@
       "summary": "TypeScript module for ReviewService",
       "summary_text": "TypeScript module for ReviewService",
       "metrics": {
-        "size_bytes": 2686,
-        "loc": 50,
+        "size_bytes": 2666,
+        "loc": 49,
         "todo_count": 0
       }
     },
@@ -1817,8 +1817,8 @@
       "summary": "TypeScript module for RunsService",
       "summary_text": "TypeScript module for RunsService",
       "metrics": {
-        "size_bytes": 6014,
-        "loc": 148,
+        "size_bytes": 5994,
+        "loc": 147,
         "todo_count": 0
       }
     },
@@ -1845,8 +1845,8 @@
       "summary": "TypeScript main entry point (role: entry-point)",
       "summary_text": "TypeScript main entry point (role: entry-point)",
       "metrics": {
-        "size_bytes": 671,
-        "loc": 2,
+        "size_bytes": 720,
+        "loc": 3,
         "todo_count": 0
       }
     },
@@ -1861,6 +1861,34 @@
       "metrics": {
         "size_bytes": 2748,
         "loc": 54,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/hooks/useRunPolling.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for useRunPolling",
+      "summary_text": "TypeScript module for useRunPolling",
+      "metrics": {
+        "size_bytes": 7423,
+        "loc": 195,
+        "todo_count": 0
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "webapp/src/state/runs.ts",
+      "language": "TypeScript",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "summary": "TypeScript module for runs",
+      "summary_text": "TypeScript module for runs",
+      "metrics": {
+        "size_bytes": 2375,
+        "loc": 53,
         "todo_count": 0
       }
     },

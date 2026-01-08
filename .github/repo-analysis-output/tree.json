@@ -864,6 +864,10 @@
                     },
                     {
                       "type": "file",
+                      "name": "ErrorBoundary.tsx"
+                    },
+                    {
+                      "type": "file",
                       "name": "index.ts"
                     },
                     {
@@ -871,6 +875,14 @@
                       "name": "StatusBadge.tsx"
                     }
                   ]
+                },
+                {
+                  "type": "file",
+                  "name": "IdeaForm.tsx"
+                },
+                {
+                  "type": "file",
+                  "name": "Timeline.tsx"
                 }
               ]
             },
@@ -881,6 +893,36 @@
                 {
                   "type": "file",
                   "name": "index.ts"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "hooks",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "useRunPolling.ts"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "pages",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "RunDashboard.tsx"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "state",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "runs.ts"
                 }
               ]
             },
