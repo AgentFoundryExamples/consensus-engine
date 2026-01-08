@@ -24,6 +24,7 @@ dependencies = [
     "alembic==1.14.0",
     "psycopg[binary]==3.2.3",
     "cloud-sql-python-connector[pg8000]==1.19.0",
+    "google-cloud-pubsub==2.26.1",
 ]
 
 [project.optional-dependencies]

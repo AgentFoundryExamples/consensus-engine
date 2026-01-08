@@ -29,21 +29,24 @@ from fastapi import status as http_status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from consensus_engine.clients.pubsub import PubSubPublishError, get_publisher
 from consensus_engine.config import Settings, get_settings
 from consensus_engine.config.logging import get_logger
 from consensus_engine.db.dependencies import get_db_session
-from consensus_engine.db.models import RunStatus, RunType
+from consensus_engine.db.models import RunPriority, RunStatus, RunType, StepStatus
 from consensus_engine.db.repositories import (
     DecisionRepository,
     PersonaReviewRepository,
     ProposalVersionRepository,
     RunRepository,
+    StepProgressRepository,
 )
 from consensus_engine.exceptions import ConsensusEngineError
 from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.requests import (
     CreateRevisionRequest,
     CreateRevisionResponse,
+    JobEnqueuedResponse,
     PersonaReviewSummary,
     RunDetailResponse,
     RunDiffResponse,
@@ -529,13 +532,14 @@ async def get_run_diff(
 
 @router.post(
     "/runs/{run_id}/revisions",
-    response_model=CreateRevisionResponse,
-    status_code=http_status.HTTP_201_CREATED,
-    summary="Create a revision run from an existing run",
+    response_model=JobEnqueuedResponse,
+    status_code=http_status.HTTP_202_ACCEPTED,
+    summary="Enqueue a revision job from an existing run",
     description=(
-        "Creates a revision run that re-expands the proposal with edits and selectively "
-        "re-runs personas based on confidence scores and blocking issues. Returns metadata "
-        "about which personas were rerun vs reused."
+        "Creates a revision run with status='queued', initializes StepProgress entries, "
+        "publishes a job message to Pub/Sub, and returns run metadata immediately. "
+        "Clients should poll GET /v1/runs/{run_id} to check status and retrieve "
+        "results once processing completes."
     ),
 )
 async def create_revision(
@@ -543,16 +547,16 @@ async def create_revision(
     request: CreateRevisionRequest,
     settings: Settings = Depends(get_settings),
     db_session: Session = Depends(get_db_session),
-) -> CreateRevisionResponse:
-    """Create a revision run from an existing run.
+) -> JobEnqueuedResponse:
+    """Enqueue a revision job and return run metadata immediately.
 
     This endpoint:
     1. Validates the parent run exists and completed successfully
-    2. Re-expands the proposal with edits
-    3. Determines which personas to re-run based on criteria
-    4. Re-runs selected personas, reuses others
-    5. Aggregates decision across mixed reviews
-    6. Persists new Run with all data
+    2. Creates a Run with status='queued' and run_type='revision'
+    3. Initializes StepProgress entries for all pipeline steps
+    4. Publishes a job message to Pub/Sub with run_id, run_type='revision', priority, and payload
+    5. Returns run_id and metadata immediately
+    6. Rolls back database changes if Pub/Sub publish fails
 
     Args:
         run_id: UUID of the parent run
@@ -561,19 +565,20 @@ async def create_revision(
         db_session: Database session
 
     Returns:
-        CreateRevisionResponse with new run metadata
+        JobEnqueuedResponse with run_id, status='queued', and timestamps
 
     Raises:
-        HTTPException: 400 for invalid input, 404 for missing run, 409 for failed parent
+        HTTPException: 400 for invalid input, 404 for missing run, 409 for failed parent, 500 for errors
     """
     logger.info(
-        f"Creating revision for run {run_id}",
+        f"Enqueuing revision job for run {run_id}",
         extra={"parent_run_id": run_id},
     )
 
     # Pre-generate new run_id and start timing
     new_run_id = uuid.uuid4()
     start_time = time.time()
+    db_committed = False
 
     try:
         # Validate request has at least one edit input
@@ -592,7 +597,7 @@ async def create_revision(
                 detail=f"Invalid run_id UUID: {run_id}",
             ) from e
 
-        # Retrieve parent run with all relations
+        # Retrieve parent run with all relations to validate it has required data
         try:
             parent_run = RunRepository.get_run_with_relations(db_session, parent_run_uuid)
         except Exception as e:
@@ -622,28 +627,19 @@ async def create_revision(
                 ),
             )
 
-        # Validate parent has required data
-        if not parent_run.proposal_version:
+        # Validate parent has required data for revision processing
+        # This prevents enqueueing jobs that will fail when the worker tries to process them
+        if not hasattr(parent_run, 'proposal_version') or parent_run.proposal_version is None:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Parent run missing proposal version data",
+                detail="Parent run missing proposal version data. Cannot create revision.",
             )
 
-        if not parent_run.persona_reviews:
+        if not hasattr(parent_run, 'persona_reviews') or not parent_run.persona_reviews:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Parent run missing persona reviews data",
+                detail="Parent run missing persona reviews data. Cannot create revision.",
             )
-
-        # Extract parent data
-        parent_proposal_json = parent_run.proposal_version.expanded_proposal_json
-        parent_proposal = ExpandedProposal(**parent_proposal_json)
-
-        # Extract parent reviews with security_concerns_present from DB
-        parent_reviews_data: list[tuple[str, dict[str, Any], bool]] = [
-            (review.persona_id, review.review_json, review.security_concerns_present)
-            for review in parent_run.persona_reviews
-        ]
 
         # Determine parameters (merge with parent)
         input_idea = request.input_idea if request.input_idea is not None else parent_run.input_idea
@@ -669,7 +665,11 @@ async def create_revision(
             if request.parameters_json is not None
             else parent_run.parameters_json
         )
-        # Step 1: Create new Run record
+
+        # Determine priority (inherit from parent or default to normal)
+        priority = parent_run.priority if parent_run.priority else RunPriority.NORMAL
+
+        # Step 1: Create new Run with status='queued'
         new_run = RunRepository.create_run(
             session=db_session,
             run_id=new_run_id,
@@ -680,169 +680,144 @@ async def create_revision(
             temperature=temperature,
             parameters_json=parameters_json,
             parent_run_id=parent_run_uuid,
+            priority=priority,
+            status=RunStatus.QUEUED,
         )
 
         logger.info(
-            f"Created new revision run {new_run_id}",
+            f"Created revision run {new_run_id} with status='queued'",
+            extra={"run_id": str(new_run_id), "parent_run_id": run_id, "priority": priority.value},
+        )
+
+        # Step 2: Initialize StepProgress entries for all pipeline steps
+        for step_name in StepProgressRepository.VALID_STEP_NAMES:
+            StepProgressRepository.upsert_step_progress(
+                session=db_session,
+                run_id=new_run_id,
+                step_name=step_name,
+                status=StepStatus.PENDING,
+            )
+        logger.info(
+            f"Initialized {len(StepProgressRepository.VALID_STEP_NAMES)} StepProgress entries",
+            extra={"run_id": str(new_run_id)},
+        )
+
+        # All database operations successful, commit the transaction first
+        db_session.commit()
+        db_committed = True
+        logger.info(
+            "Revision run and StepProgress records committed to database",
             extra={"run_id": str(new_run_id), "parent_run_id": run_id},
         )
 
-        # Flush to ensure run is persisted before potential failures
-        db_session.flush()
+        # Step 3: Publish job message to Pub/Sub
+        # Build sanitized payload (include revision-specific data)
+        payload = {
+            "parent_run_id": run_id,
+            "input_idea": input_idea,
+            "extra_context": extra_context_dict,
+            "edited_proposal": request.edited_proposal,
+            "edit_notes": request.edit_notes,
+            "parameters": parameters_json,
+        }
 
-        # Step 2: Expand with edits
         try:
-            new_proposal, expand_metadata, diff_json = expand_with_edits(
-                parent_proposal=parent_proposal,
-                edited_proposal=request.edited_proposal,
-                edit_notes=request.edit_notes,
-                settings=settings,
+            publisher = get_publisher(settings)
+            message_id = publisher.publish(
+                run_id=str(new_run_id),
+                run_type=RunType.REVISION.value,
+                priority=priority.value,
+                payload=payload,
             )
-        except ConsensusEngineError as e:
-            # Mark run as failed and let outer exception handler rollback
-            RunRepository.update_run_status(db_session, new_run_id, RunStatus.FAILED)
+            logger.info(
+                "Published revision job message to Pub/Sub",
+                extra={
+                    "run_id": str(new_run_id),
+                    "parent_run_id": run_id,
+                    "message_id": message_id,
+                    "publish_latency_ms": (time.time() - start_time) * 1000,
+                },
+            )
+
+        except PubSubPublishError as e:
+            # The run is already committed, so we can't roll back.
+            # The API should return an error, and a background job
+            # could be used to find and retry publishing for such orphaned runs.
+            logger.error(
+                "Failed to publish revision job message after committing database changes",
+                extra={
+                    "run_id": str(new_run_id),
+                    "parent_run_id": run_id,
+                    "error": str(e),
+                    "mitigation": "A background job should retry publishing for this run_id.",
+                },
+                exc_info=True,
+            )
             raise HTTPException(
-                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to expand proposal with edits: {str(e)}",
+                status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Failed to enqueue revision job: Pub/Sub publish failed after run creation",
             ) from e
 
-        # Step 3: Persist new proposal version
-        persona_template_version = "v1"  # TODO: Make configurable
-        proposal_version = ProposalVersionRepository.create_proposal_version(
-            session=db_session,
-            run_id=new_run_id,
-            expanded_proposal=new_proposal,
-            persona_template_version=persona_template_version,
-            proposal_diff_json=diff_json,
-            edit_notes=request.edit_notes,
-        )
-
+        # All operations successful
         logger.info(
-            f"Created proposal version for revision run {new_run_id}",
-            extra={
-                "run_id": str(new_run_id),
-                "proposal_version_id": str(proposal_version.id),
-            },
+            "Revision job enqueued successfully, transaction committed",
+            extra={"run_id": str(new_run_id), "parent_run_id": run_id},
         )
 
-        # Step 4: Determine personas to rerun
-        personas_to_rerun = determine_personas_to_rerun(parent_reviews_data)
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (already have proper status codes)
+        # Only rollback if we haven't committed yet
+        if not db_committed:
+            db_session.rollback()
+        raise
 
-        # Step 5: Review with selective personas
-        try:
-            persona_reviews, orchestration_metadata = review_with_selective_personas(
-                expanded_proposal=new_proposal,
-                parent_persona_reviews=parent_reviews_data,
-                personas_to_rerun=personas_to_rerun,
-                settings=settings,
-            )
-        except (ConsensusEngineError, ValueError) as e:
-            # Mark run as failed and let outer exception handler rollback
-            RunRepository.update_run_status(db_session, new_run_id, RunStatus.FAILED)
-            raise HTTPException(
-                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to review proposal with personas: {str(e)}",
-            ) from e
-
-        # Step 6: Persist persona reviews
-        for review in persona_reviews:
-            prompt_params = {
-                "model": settings.review_model,
-                "temperature": settings.review_temperature,
-                "persona_template_version": persona_template_version,
-                "reused": review.internal_metadata.get("reused", False)
-                if review.internal_metadata
-                else False,
-            }
-
-            PersonaReviewRepository.create_persona_review(
-                session=db_session,
-                run_id=new_run_id,
-                persona_review=review,
-                prompt_parameters_json=prompt_params,
-            )
-
-        logger.info(
-            f"Created {len(persona_reviews)} persona reviews for revision run {new_run_id}",
-            extra={"run_id": str(new_run_id), "review_count": len(persona_reviews)},
-        )
-
-        # Step 7: Aggregate decision
-        decision_aggregation = aggregate_persona_reviews(persona_reviews)
-
-        # Step 8: Persist decision
-        decision = DecisionRepository.create_decision(
-            session=db_session,
-            run_id=new_run_id,
-            decision_aggregation=decision_aggregation,
-        )
-
-        logger.info(
-            f"Created decision for revision run {new_run_id}",
-            extra={
-                "run_id": str(new_run_id),
-                "decision_id": str(decision.id),
-                "decision": decision_aggregation.decision.value,
-                "confidence": decision_aggregation.overall_weighted_confidence,
-            },
-        )
-
-        # Step 9: Update run status to completed
-        RunRepository.update_run_status(
-            session=db_session,
-            run_id=new_run_id,
-            status=RunStatus.COMPLETED,
-            overall_weighted_confidence=decision_aggregation.overall_weighted_confidence,
-            decision_label=decision_aggregation.decision.value,
-        )
-
-        # Commit transaction
-        db_session.commit()
-
-        elapsed_time = time.time() - start_time
-
-        # Build list of personas reused
-        personas_reused = [
-            pid for pid, _ in parent_reviews_data if pid not in personas_to_rerun
-        ]
-
-        logger.info(
-            f"Successfully created revision run {new_run_id} in {elapsed_time:.2f}s",
-            extra={
-                "run_id": str(new_run_id),
-                "parent_run_id": run_id,
-                "elapsed_time": elapsed_time,
-                "personas_rerun": personas_to_rerun,
-                "personas_reused": personas_reused,
-            },
-        )
-
-        return CreateRevisionResponse(
-            run_id=str(new_run_id),
-            parent_run_id=run_id,
-            status=RunStatus.COMPLETED.value,
-            created_at=new_run.created_at.isoformat(),
-            personas_rerun=personas_to_rerun,
-            personas_reused=personas_reused,
-            message=(
-                f"Revision created successfully. "
-                f"Re-ran {len(personas_to_rerun)} persona(s), "
-                f"reused {len(personas_reused)} review(s)."
-            ),
-        )
-
-    except Exception as e:
-        # Catch all errors (including HTTPExceptions from validation)
-        db_session.rollback()
+    except SQLAlchemyError as e:
+        # Database error, rollback only if not committed
+        if not db_committed:
+            db_session.rollback()
         logger.error(
-            f"Error creating revision for run {run_id}, rolling back transaction",
-            extra={"parent_run_id": run_id},
+            "Database error while enqueueing revision job",
+            extra={"run_id": str(new_run_id), "parent_run_id": run_id, "error": str(e)},
             exc_info=True,
         )
-        # Re-raise HTTPException as-is, wrap others
-        if isinstance(e, HTTPException):
-            raise
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create revision: {str(e)}",
+            detail="Failed to create revision run: Database operation failed",
         ) from e
+
+    except Exception as e:
+        # Unexpected error, rollback only if not committed
+        if not db_committed:
+            db_session.rollback()
+        logger.error(
+            "Unexpected error while enqueueing revision job",
+            extra={"run_id": str(new_run_id), "parent_run_id": run_id, "error": str(e)},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to enqueue revision job: {str(e)}",
+        ) from e
+
+    # Build successful response
+    response = JobEnqueuedResponse(
+        run_id=str(new_run_id),
+        status=RunStatus.QUEUED.value,
+        run_type=RunType.REVISION.value,
+        priority=priority.value,
+        created_at=new_run.created_at.isoformat(),
+        queued_at=new_run.queued_at.isoformat() if new_run.queued_at else new_run.created_at.isoformat(),
+        message=f"Revision job enqueued successfully. Poll GET /v1/runs/{new_run_id} for status.",
+    )
+
+    logger.info(
+        "Revision job enqueued successfully",
+        extra={
+            "run_id": str(new_run_id),
+            "parent_run_id": run_id,
+            "status": "queued",
+            "elapsed_time": time.time() - start_time,
+        },
+    )
+
+    return response
