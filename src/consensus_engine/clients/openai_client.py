@@ -34,7 +34,6 @@ from consensus_engine.exceptions import (
     LLMTimeoutError,
     SchemaValidationError,
 )
-from consensus_engine.schemas.registry import get_current_schema
 from consensus_engine.schemas.validation import get_schema_version_info, validate_against_schema
 
 if TYPE_CHECKING:
@@ -155,7 +154,9 @@ class OpenAIClientWrapper:
                 "temperature": temperature,
                 "max_retries": max_retries_count,
                 "schema_name": schema_name,
-                "schema_version": schema_version_info["schema_version"] if schema_version_info else None,
+                "schema_version": (
+                    schema_version_info["schema_version"] if schema_version_info else None
+                ),
             },
         )
 
@@ -278,7 +279,9 @@ class OpenAIClientWrapper:
                         "attempt_count": attempt,
                         "status": "success",
                         "schema_name": schema_name,
-                        "schema_version": schema_version_info["schema_version"] if schema_version_info else None,
+                        "schema_version": (
+                            schema_version_info["schema_version"] if schema_version_info else None
+                        ),
                     },
                 )
 

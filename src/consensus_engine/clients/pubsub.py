@@ -239,7 +239,7 @@ class PubSubPublisher:
                 multiplier=2.0,  # Exponential backoff multiplier
                 deadline=PUBLISH_TIMEOUT_SECONDS,  # Overall deadline
             )
-            
+
             future = self.client.publish(
                 self.topic_path,
                 message_bytes,
