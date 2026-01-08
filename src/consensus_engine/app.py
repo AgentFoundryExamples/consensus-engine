@@ -104,9 +104,10 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins_list,
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"],
+        allow_headers=settings.cors_allow_headers_list,
     )
     logger.info(f"CORS configured with origins: {settings.cors_origins_list}")
+    logger.info(f"CORS configured with headers: {settings.cors_allow_headers_list}")
 
     # Register middleware
     @app.middleware("http")

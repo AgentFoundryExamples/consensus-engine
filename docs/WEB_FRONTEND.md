@@ -553,6 +553,754 @@ gcloud compute url-maps create consensus-web-map \
   --default-backend-bucket=consensus-web-backend
 ```
 
+## Production Deployment with IAP and IAM
+
+This section covers deploying the frontend and backend as separate Cloud Run services with proper security controls.
+
+### Architecture Overview
+
+```mermaid
+graph TB
+    User[User Browser]
+    IAP[Identity-Aware Proxy]
+    Frontend[Cloud Run: Frontend<br/>IAP Protected]
+    Backend[Cloud Run: Backend<br/>IAM Protected]
+    
+    User -->|1. HTTPS| IAP
+    IAP -->|2. Authenticated + Identity Token| Frontend
+    Frontend -->|3. API Call + Bearer Token| Backend
+    Backend -->|4. Validates Token| Backend
+    Backend -->|5. Response| Frontend
+    
+    style IAP fill:#e1f5ff
+    style Frontend fill:#fff3e0
+    style Backend fill:#f3e5f5
+```
+
+### Security Model
+
+- **Frontend**: Protected by Identity-Aware Proxy (IAP) for user authentication
+- **Backend**: Protected by IAM authentication (no public access without valid token)
+- **Communication**: Frontend → Backend uses signed identity tokens
+
+### Prerequisites
+
+1. **GCP Project**: With billing enabled
+2. **APIs Enabled**:
+   - Cloud Run API
+   - Cloud Build API
+   - IAM Service Account Credentials API
+   - Identity-Aware Proxy API
+3. **Service Accounts Created**: See [Infrastructure README](../infra/cloudrun/README.md)
+
+### Step 1: Build and Deploy Backend
+
+#### Create Dockerfile for Backend
+
+Create `Dockerfile` in repository root:
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir -e .
+
+# Copy application code
+COPY src/ ./src/
+COPY alembic.ini ./
+COPY migrations/ ./migrations/
+
+# Expose port
+EXPOSE 8000
+
+# Run application
+CMD ["uvicorn", "consensus_engine.app:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+#### Build and Push Backend Image
+
+```bash
+export PROJECT_ID="your-project-id"
+export REGION="us-central1"
+
+# Build backend image
+gcloud builds submit --tag gcr.io/$PROJECT_ID/consensus-api:latest
+
+# Or use Docker
+docker build -t gcr.io/$PROJECT_ID/consensus-api:latest .
+docker push gcr.io/$PROJECT_ID/consensus-api:latest
+```
+
+#### Deploy Backend with IAM Authentication
+
+```bash
+gcloud run deploy consensus-api \
+  --image gcr.io/$PROJECT_ID/consensus-api:latest \
+  --platform managed \
+  --region $REGION \
+  --service-account consensus-api-sa@$PROJECT_ID.iam.gserviceaccount.com \
+  --no-allow-unauthenticated \
+  --min-instances 1 \
+  --max-instances 20 \
+  --cpu 2 \
+  --memory 2Gi \
+  --timeout 300 \
+  --set-env-vars "$(cat <<EOF
+ENV=production,
+OPENAI_MODEL=gpt-5.1,
+CORS_ORIGINS=https://consensus-web-xxx-uc.a.run.app,
+CORS_ALLOW_HEADERS=Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version,
+USE_CLOUD_SQL_CONNECTOR=true,
+DB_INSTANCE_CONNECTION_NAME=$PROJECT_ID:$REGION:consensus-db,
+DB_NAME=consensus_engine,
+DB_USER=consensus-api-sa@$PROJECT_ID.iam,
+DB_IAM_AUTH=true,
+PUBSUB_PROJECT_ID=$PROJECT_ID,
+PUBSUB_TOPIC=consensus-engine-jobs
+EOF
+)" \
+  --add-cloudsql-instances $PROJECT_ID:$REGION:consensus-db \
+  --set-secrets OPENAI_API_KEY=openai-api-key:latest
+```
+
+**Note**: Replace `consensus-web-xxx-uc.a.run.app` with your actual frontend URL after deployment.
+
+### Step 2: Build and Deploy Frontend
+
+#### Create Dockerfile for Frontend
+
+Create `webapp/Dockerfile`:
+
+```dockerfile
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build application (environment variables will be set at runtime)
+ARG VITE_API_BASE_URL
+ARG VITE_ENVIRONMENT=production
+ARG VITE_POLLING_INTERVAL_MS=5000
+
+# Build the app
+RUN npm run build
+
+# Stage 2: Serve with nginx
+FROM nginx:alpine
+
+# Copy built assets
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 8080 (Cloud Run default)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### Create nginx.conf
+
+Create `webapp/nginx.conf`:
+
+```nginx
+events {
+  worker_connections 1024;
+}
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+  
+  # Logging
+  access_log /var/log/nginx/access.log;
+  error_log /var/log/nginx/error.log warn;
+  
+  # Performance
+  sendfile on;
+  tcp_nopush on;
+  tcp_nodelay on;
+  keepalive_timeout 65;
+  types_hash_max_size 2048;
+  
+  # Security headers
+  add_header X-Frame-Options "SAMEORIGIN" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-XSS-Protection "1; mode=block" always;
+  add_header Referrer-Policy "no-referrer-when-downgrade" always;
+  
+  # Gzip compression
+  gzip on;
+  gzip_vary on;
+  gzip_types text/plain text/css text/xml text/javascript 
+             application/x-javascript application/xml+rss application/json;
+  
+  server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    # SPA routing - serve index.html for all routes
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+    
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+      expires 1y;
+      add_header Cache-Control "public, immutable";
+    }
+    
+    # Health check endpoint
+    location /health {
+      access_log off;
+      return 200 "healthy\n";
+      add_header Content-Type text/plain;
+    }
+  }
+}
+```
+
+#### Build and Push Frontend Image
+
+```bash
+cd webapp
+
+# Build with API URL (replace with your backend URL)
+export BACKEND_URL="https://consensus-api-xxx-uc.a.run.app"
+
+gcloud builds submit --tag gcr.io/$PROJECT_ID/consensus-web:latest \
+  --substitutions=_VITE_API_BASE_URL=$BACKEND_URL
+
+# Or with Docker
+docker build \
+  --build-arg VITE_API_BASE_URL=$BACKEND_URL \
+  --build-arg VITE_ENVIRONMENT=production \
+  -t gcr.io/$PROJECT_ID/consensus-web:latest .
+docker push gcr.io/$PROJECT_ID/consensus-web:latest
+```
+
+#### Deploy Frontend (Initially Without IAP)
+
+```bash
+gcloud run deploy consensus-web \
+  --image gcr.io/$PROJECT_ID/consensus-web:latest \
+  --platform managed \
+  --region $REGION \
+  --service-account consensus-web-sa@$PROJECT_ID.iam.gserviceaccount.com \
+  --allow-unauthenticated \
+  --min-instances 0 \
+  --max-instances 10 \
+  --cpu 1 \
+  --memory 512Mi \
+  --timeout 300 \
+  --set-env-vars "VITE_API_BASE_URL=$BACKEND_URL,VITE_ENVIRONMENT=production"
+
+# Get frontend URL
+export FRONTEND_URL=$(gcloud run services describe consensus-web --region $REGION --format 'value(status.url)')
+echo "Frontend URL: $FRONTEND_URL"
+```
+
+### Step 3: Update Backend CORS Configuration
+
+Now that you have the frontend URL, update backend CORS settings:
+
+```bash
+gcloud run services update consensus-api \
+  --region $REGION \
+  --update-env-vars "CORS_ORIGINS=$FRONTEND_URL"
+```
+
+### Step 4: Configure IAM for Service-to-Service Auth
+
+Grant frontend service account permission to invoke backend:
+
+```bash
+gcloud run services add-iam-policy-binding consensus-api \
+  --member="serviceAccount:consensus-web-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --region=$REGION
+```
+
+### Step 5: Enable Identity-Aware Proxy (IAP) for Frontend
+
+IAP adds user authentication in front of the Cloud Run service.
+
+#### Enable IAP via Console (Recommended)
+
+1. Navigate to [Security > Identity-Aware Proxy](https://console.cloud.google.com/security/iap)
+2. Enable IAP API if prompted
+3. Click "CONFIGURE CONSENT SCREEN" if needed:
+   - Select "Internal" for organization-only access
+   - Fill in app name, support email, developer contact
+   - Add scopes: email, profile, openid
+   - Save
+4. Find your Cloud Run service (`consensus-web`)
+5. Toggle IAP to **ON**
+6. Click "Add Principal" to grant access:
+   - Add user emails or groups (e.g., `alice@example.com`)
+   - Select role: `IAP-secured Web App User`
+   - Save
+
+#### Enable IAP via gcloud
+
+```bash
+# Enable IAP (requires OAuth consent screen configured)
+gcloud iap web enable \
+  --resource-type=backend-services \
+  --service=consensus-web
+
+# Grant user access
+gcloud iap web add-iam-policy-binding \
+  --resource-type=backend-services \
+  --service=consensus-web \
+  --member=user:alice@example.com \
+  --role=roles/iap.httpsResourceAccessor
+```
+
+### Step 6: Configure Frontend to Use Identity Tokens
+
+Update `webapp/src/api/client.ts` to extract and use IAP identity tokens:
+
+```typescript
+import { OpenAPI } from './generated';
+
+/**
+ * Configure the API client with authentication
+ */
+export function configureApiClient() {
+  // Set base URL from environment
+  OpenAPI.BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  
+  // Set credentials to include cookies (for IAP)
+  OpenAPI.CREDENTIALS = 'include';
+  
+  // Add token interceptor for authenticated requests
+  OpenAPI.TOKEN = async () => {
+    // In production with IAP, get service account identity token for backend
+    // Note: This uses the Cloud Run service account's identity, not the user's IAP token.
+    // The service account must have roles/run.invoker on the backend service.
+    // For user context, consider alternative approaches like forwarding IAP headers.
+    
+    if (import.meta.env.VITE_ENVIRONMENT === 'production') {
+      try {
+        // Get identity token for backend audience from metadata service
+        const metadata = await fetch(
+          'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=' +
+            encodeURIComponent(import.meta.env.VITE_API_BASE_URL),
+          {
+            headers: { 'Metadata-Flavor': 'Google' },
+          }
+        );
+
+        if (metadata.ok) {
+          return await metadata.text();
+        }
+        
+        // Throw an error if token could not be fetched
+        throw new Error(`Failed to fetch identity token: ${metadata.status} ${metadata.statusText}`);
+      } catch (error) {
+        console.error('Failed to get identity token:', error);
+        // Re-throw the error to be handled by the caller
+        throw error;
+      }
+    }
+    
+    // For local development, no token needed
+    return '';
+  };
+}
+```
+
+**Important Notes on Token Flow:**
+
+The code above uses the Cloud Run **service account identity token** from the metadata service. This means:
+- Backend receives requests authenticated as the frontend service account (not the end user)
+- Backend cannot identify individual users unless additional mechanisms are used
+- This is suitable for service-to-service authentication where user identity is not required
+
+**Alternative Approaches for User Context:**
+If the backend needs to know the actual user identity, consider:
+1. **IAP Header Forwarding**: Configure the backend to validate the `X-Goog-IAP-JWT-Assertion` header forwarded from IAP
+2. **Custom Token Exchange**: Frontend extracts IAP assertion and exchanges it for a backend-compatible token
+3. **Session-based Auth**: Frontend establishes sessions with backend using IAP-verified user identity
+
+For most service-to-service scenarios, the metadata service approach is sufficient and recommended.
+
+### Step 7: Verify CORS and Authentication
+
+#### Test CORS Preflight
+
+```bash
+curl -X OPTIONS $BACKEND_URL/v1/runs \
+  -H "Origin: $FRONTEND_URL" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+  -v
+```
+
+**Expected response headers:**
+```
+HTTP/2 200
+access-control-allow-origin: https://consensus-web-xxx-uc.a.run.app
+access-control-allow-credentials: true
+access-control-allow-methods: *
+access-control-allow-headers: Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version
+```
+
+#### Test Backend Authentication
+
+```bash
+# Get identity token for backend audience
+TOKEN=$(gcloud auth print-identity-token \
+  --impersonate-service-account=consensus-web-sa@$PROJECT_ID.iam.gserviceaccount.com \
+  --audiences=$BACKEND_URL)
+
+# Test API call
+curl -H "Authorization: Bearer $TOKEN" \
+  $BACKEND_URL/health
+
+# Test with actual endpoint
+curl -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  $BACKEND_URL/v1/runs
+```
+
+#### Test Frontend Access
+
+```bash
+# Should redirect to Google login
+curl -I $FRONTEND_URL
+```
+
+Access via browser and verify:
+1. Redirected to Google login
+2. After login, can access frontend
+3. Frontend can successfully call backend API
+4. Check browser DevTools Network tab for proper CORS headers
+
+## Service-to-Service Authentication Details
+
+### Identity Token Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant IAP
+    participant Frontend
+    participant Metadata
+    participant Backend
+    
+    User->>IAP: 1. HTTPS Request
+    IAP->>IAP: 2. Authenticate User
+    IAP->>Frontend: 3. Forward with X-Goog-IAP-JWT-Assertion
+    Frontend->>Metadata: 4. Request Identity Token for Backend Audience
+    Metadata->>Frontend: 5. Return Signed Token
+    Frontend->>Backend: 6. API Call with Bearer Token
+    Backend->>Backend: 7. Validate Token
+    Backend->>Frontend: 8. Response
+    Frontend->>User: 9. Render Data
+```
+
+### Token Generation Methods
+
+#### Method 1: Service Account Identity Token (Recommended)
+
+Frontend service account generates token for backend audience:
+
+```typescript
+// Get token from metadata service
+const metadata = await fetch(
+  'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity' +
+  '?audience=' + encodeURIComponent(BACKEND_URL),
+  { headers: { 'Metadata-Flavor': 'Google' } }
+);
+const token = await metadata.text();
+```
+
+#### Method 2: User Identity Token (For User Context)
+
+If backend needs to know user identity, forward IAP JWT:
+
+```typescript
+// Backend must validate IAP JWT
+// Frontend extracts from X-Goog-IAP-JWT-Assertion header
+// (requires special configuration)
+```
+
+### Token Validation (Backend)
+
+Backend automatically validates tokens using Cloud Run's built-in authentication. No additional code needed when:
+- Service is deployed with `--no-allow-unauthenticated`
+- Request includes valid `Authorization: Bearer <token>` header
+
+### Testing Locally
+
+#### Without Cloud Run
+
+```bash
+# Get token for your user
+export TOKEN=$(gcloud auth print-identity-token)
+
+# Test backend
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/health
+```
+
+#### With Cloud Run Auth Emulation
+
+```bash
+# Use service account impersonation
+export TOKEN=$(gcloud auth print-identity-token \
+  --impersonate-service-account=consensus-web-sa@$PROJECT_ID.iam.gserviceaccount.com \
+  --audiences=http://localhost:8000)
+
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/v1/runs
+```
+
+## CORS Configuration Best Practices
+
+### Environment-Specific Origins
+
+Use different origins for each environment:
+
+```bash
+# Development
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Staging
+CORS_ORIGINS=https://consensus-web-staging-xxx-uc.a.run.app
+
+# Production
+CORS_ORIGINS=https://consensus-web-prod-xxx-uc.a.run.app
+
+# Multiple environments
+CORS_ORIGINS=https://consensus-web-staging-xxx-uc.a.run.app,https://consensus-web-prod-xxx-uc.a.run.app
+```
+
+### Allowed Headers
+
+Restrict headers in production:
+
+```bash
+# Development - allow all
+CORS_ALLOW_HEADERS=*
+
+# Production - explicit list
+CORS_ALLOW_HEADERS=Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version
+```
+
+### Common CORS Issues and Solutions
+
+#### Issue: "CORS policy: No 'Access-Control-Allow-Origin' header"
+
+**Cause**: Backend CORS_ORIGINS doesn't include frontend URL
+
+**Solution**:
+```bash
+# Check current CORS settings
+gcloud run services describe consensus-api --region $REGION --format 'value(spec.template.spec.containers[0].env)'
+
+# Update CORS origins
+gcloud run services update consensus-api \
+  --region $REGION \
+  --update-env-vars "CORS_ORIGINS=$FRONTEND_URL"
+```
+
+#### Issue: "CORS policy: Credentials flag is true, but Access-Control-Allow-Credentials is false"
+
+**Cause**: Backend not configured to allow credentials
+
+**Solution**: FastAPI CORSMiddleware automatically sets `allow_credentials=True` in our configuration. Verify middleware is configured correctly in `app.py`.
+
+#### Issue: "CORS policy: Request header field authorization is not allowed"
+
+**Cause**: CORS_ALLOW_HEADERS doesn't include Authorization
+
+**Solution**:
+```bash
+gcloud run services update consensus-api \
+  --region $REGION \
+  --update-env-vars "CORS_ALLOW_HEADERS=Content-Type,Authorization,X-Request-ID"
+```
+
+### Testing CORS Locally
+
+```bash
+# Test preflight
+curl -X OPTIONS http://localhost:8000/v1/runs \
+  -H "Origin: http://localhost:5173" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+  -v
+
+# Test actual request
+curl -X POST http://localhost:8000/v1/expand-idea \
+  -H "Origin: http://localhost:5173" \
+  -H "Content-Type: application/json" \
+  -d '{"idea": "Test idea"}' \
+  -v
+```
+
+## Monitoring and Logging
+
+### Cloud Logging Queries
+
+#### Frontend Logs
+
+```bash
+# View frontend logs
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=consensus-web" \
+  --limit 50 \
+  --format json
+
+# Filter by severity
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=consensus-web AND severity>=ERROR" \
+  --limit 20
+```
+
+#### Backend API Logs
+
+```bash
+# View backend logs
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=consensus-api" \
+  --limit 50
+
+# Find slow requests
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=consensus-api AND jsonPayload.elapsed_time>5" \
+  --limit 20
+
+# CORS-related errors
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=consensus-api AND textPayload:CORS" \
+  --limit 20
+```
+
+### Key Metrics to Monitor
+
+1. **Request Latency**: `run.googleapis.com/request_latencies`
+2. **Error Rate**: `run.googleapis.com/request_count` with `response_code_class=5xx`
+3. **Instance Count**: `run.googleapis.com/container/instance_count`
+4. **CPU Utilization**: `run.googleapis.com/container/cpu/utilizations`
+5. **Memory Utilization**: `run.googleapis.com/container/memory/utilizations`
+
+### Setting Up Alerts
+
+```bash
+# Alert on high error rate
+gcloud alpha monitoring policies create \
+  --notification-channels=CHANNEL_ID \
+  --display-name="High Frontend Error Rate" \
+  --condition-threshold-value=0.05 \
+  --condition-threshold-duration=300s \
+  --condition-threshold-comparison=COMPARISON_GT
+```
+
+## Rollback Strategies
+
+### Rolling Back a Service
+
+```bash
+# List revisions
+gcloud run revisions list \
+  --service=consensus-web \
+  --region=$REGION
+
+# Rollback to previous revision
+gcloud run services update-traffic consensus-web \
+  --to-revisions=consensus-web-00042-abc=100 \
+  --region=$REGION
+```
+
+### Canary Deployment
+
+```bash
+# Route 10% traffic to new revision
+gcloud run services update-traffic consensus-web \
+  --to-revisions=consensus-web-00043-xyz=10,consensus-web-00042-abc=90 \
+  --region=$REGION
+
+# Monitor metrics, then increase traffic
+gcloud run services update-traffic consensus-web \
+  --to-revisions=consensus-web-00043-xyz=50,consensus-web-00042-abc=50 \
+  --region=$REGION
+
+# Full cutover
+gcloud run services update-traffic consensus-web \
+  --to-revisions=consensus-web-00043-xyz=100 \
+  --region=$REGION
+```
+
+### Coordinated Frontend/Backend Releases
+
+**Best Practices**:
+
+1. **Deploy backend first** with backward-compatible changes
+2. **Test backend** with old frontend
+3. **Deploy new frontend** using new backend features
+4. **Monitor both services** for errors
+5. **Rollback backend first if needed**, then frontend
+
+**Example Workflow**:
+
+```bash
+# 1. Deploy new backend (backward compatible)
+gcloud run deploy consensus-api --image gcr.io/$PROJECT_ID/consensus-api:v2
+
+# 2. Test with old frontend
+curl -H "Authorization: Bearer $TOKEN" https://consensus-api-xxx/v1/runs
+
+# 3. Deploy new frontend
+gcloud run deploy consensus-web --image gcr.io/$PROJECT_ID/consensus-web:v2
+
+# 4. Monitor logs and metrics
+gcloud logging tail "resource.type=cloud_run_revision"
+
+# 5. Rollback if needed (backend first)
+gcloud run services update-traffic consensus-api --to-revisions=consensus-api-v1=100
+gcloud run services update-traffic consensus-web --to-revisions=consensus-web-v1=100
+```
+
+## Security Best Practices
+
+1. **Never use wildcard CORS** (`*`) in production
+2. **Always require authentication** on backend API (IAM)
+3. **Enable IAP on frontend** for user authentication
+4. **Use HTTPS everywhere** (enforced by Cloud Run)
+5. **Validate tokens on backend** (automatic with Cloud Run IAM)
+6. **Set security headers** in nginx (X-Frame-Options, X-Content-Type-Options, etc.)
+7. **Use least-privilege IAM roles** for service accounts
+8. **Store secrets in Secret Manager**, not environment variables
+9. **Enable audit logging** for security events
+10. **Regularly update dependencies** to patch vulnerabilities
+
+## Additional Resources
+
+- [Infrastructure Documentation](../infra/cloudrun/README.md) - Detailed infrastructure setup
+- [Cloud Run Documentation](https://cloud.google.com/run/docs)
+- [Identity-Aware Proxy](https://cloud.google.com/iap/docs)
+- [Service-to-Service Authentication](https://cloud.google.com/run/docs/authenticating/service-to-service)
+- [CORS Middleware](https://fastapi.tiangolo.com/tutorial/cors/)
+
 ## Troubleshooting
 
 ### CORS Errors
