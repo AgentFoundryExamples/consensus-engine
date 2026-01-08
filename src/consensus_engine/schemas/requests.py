@@ -110,6 +110,8 @@ class ExpandIdeaResponse(BaseModel):
         summary: Optional brief summary of the proposal
         raw_idea: Optional original idea text before expansion
         raw_expanded_proposal: Optional complete proposal text
+        schema_version: Schema version used for this response
+        prompt_set_version: Prompt set version used for this response
         metadata: Request metadata (request_id, model, timing, etc.)
     """
 
@@ -133,6 +135,12 @@ class ExpandIdeaResponse(BaseModel):
     )
     raw_expanded_proposal: str | None = Field(
         default=None, description="Optional complete expanded proposal text or additional notes"
+    )
+    schema_version: str = Field(
+        ..., description="Schema version used for this response (e.g., '1.0.0')"
+    )
+    prompt_set_version: str = Field(
+        ..., description="Prompt set version used for this response (e.g., '1.0.0')"
     )
     metadata: dict[str, Any] = Field(
         ...,
@@ -532,6 +540,8 @@ class RunDetailResponse(BaseModel):
         parameters_json: Additional LLM parameters as JSON
         overall_weighted_confidence: Final weighted confidence score
         decision_label: Final decision label
+        schema_version: Schema version used for this run's outputs
+        prompt_set_version: Prompt set version used for this run
         proposal: Structured proposal JSON (nullable if run failed early)
         persona_reviews: Array of persona reviews with scores and blocking flags
         decision: Decision JSON (nullable if run failed or incomplete)
@@ -571,6 +581,12 @@ class RunDetailResponse(BaseModel):
     )
     decision_label: str | None = Field(
         default=None, description="Final decision label (null until decision)"
+    )
+    schema_version: str = Field(
+        ..., description="Schema version used for this run's outputs (e.g., '1.0.0')"
+    )
+    prompt_set_version: str = Field(
+        ..., description="Prompt set version used for this run (e.g., '1.0.0')"
     )
     proposal: dict[str, Any] | None = Field(
         default=None, description="Structured proposal JSON (null if run failed early)"

@@ -24,6 +24,7 @@ from consensus_engine.config.personas import (
     REVISE_THRESHOLD,
     get_persona_weights,
 )
+from consensus_engine.schemas.registry import get_current_schema
 from consensus_engine.schemas.review import (
     DecisionAggregation,
     DecisionEnum,
@@ -31,6 +32,7 @@ from consensus_engine.schemas.review import (
     MinorityReport,
     PersonaReview,
 )
+from consensus_engine.schemas.validation import validate_against_schema
 
 logger = get_logger(__name__)
 
@@ -166,6 +168,29 @@ def aggregate_persona_reviews(
         detailed_score_breakdown=detailed_breakdown,
         minority_reports=minority_reports if minority_reports else None,
     )
+
+    # Validate the aggregation against registry schema
+    try:
+        schema_version = get_current_schema("DecisionAggregation")
+        validate_against_schema(
+            instance=aggregation,
+            schema_name="DecisionAggregation",
+            schema_version=schema_version,
+            context={
+                "persona_count": len(persona_reviews),
+                "decision": decision.value,
+            },
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to validate DecisionAggregation against schema: {str(e)}",
+            extra={
+                "persona_count": len(persona_reviews),
+                "decision": decision.value,
+            },
+        )
+        # Don't fail aggregation, just log the validation issue
+        # This allows the system to continue operating even if validation fails
 
     logger.info(
         f"Aggregation completed: decision={decision.value}, confidence={weighted_confidence:.4f}",

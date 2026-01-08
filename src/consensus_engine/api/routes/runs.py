@@ -405,6 +405,15 @@ async def get_run_detail(
     # Build step progress summaries
     step_progress_summaries = _build_step_progress_summaries(run)
 
+    # Extract schema_version and prompt_set_version from parameters_json or use defaults
+    schema_version = "1.0.0"  # Default version
+    prompt_set_version = "1.0.0"  # Default version
+
+    # Try to extract from parameters_json if available
+    if run.parameters_json:
+        schema_version = run.parameters_json.get("schema_version", schema_version)
+        prompt_set_version = run.parameters_json.get("prompt_set_version", prompt_set_version)
+
     # Build response
     response = RunDetailResponse(
         run_id=str(run.id),
@@ -427,6 +436,8 @@ async def get_run_detail(
         if run.overall_weighted_confidence is not None
         else None,
         decision_label=run.decision_label,
+        schema_version=schema_version,
+        prompt_set_version=prompt_set_version,
         proposal=proposal_json,
         persona_reviews=persona_reviews,
         decision=decision_json,
@@ -442,6 +453,8 @@ async def get_run_detail(
             "persona_reviews_count": len(persona_reviews),
             "has_decision": decision_json is not None,
             "step_progress_count": len(step_progress_summaries),
+            "schema_version": schema_version,
+            "prompt_set_version": prompt_set_version,
         },
     )
 

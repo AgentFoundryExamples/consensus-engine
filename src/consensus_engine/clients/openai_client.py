@@ -34,6 +34,7 @@ from consensus_engine.exceptions import (
     LLMTimeoutError,
     SchemaValidationError,
 )
+from consensus_engine.schemas.validation import get_schema_version_info, validate_against_schema
 
 if TYPE_CHECKING:
     from consensus_engine.config.instruction_builder import InstructionPayload
@@ -76,6 +77,7 @@ class OpenAIClientWrapper:
         response_model: type[T],
         developer_instruction: str | None = None,
         step_name: str = "llm_call",
+        schema_name: str | None = None,
         model_override: str | None = None,
         temperature_override: float | None = None,
         max_retries: int | None = None,
@@ -85,6 +87,7 @@ class OpenAIClientWrapper:
         This method calls the OpenAI Responses API with structured outputs to ensure
         only validated JSON matching the response_model schema is returned.
         Implements retry logic with exponential backoff for retryable errors.
+        Records schema_version from registry and validates response before returning.
 
         Args:
             system_instruction: System-level instructions for the model
@@ -92,6 +95,7 @@ class OpenAIClientWrapper:
             response_model: Pydantic model defining the expected response structure
             developer_instruction: Optional developer instructions for additional guidance
             step_name: Name of the step for telemetry logging (default: "llm_call")
+            schema_name: Optional schema name for registry lookup and validation
             model_override: Override the default model for this call
             temperature_override: Override the default temperature for this call
             max_retries: Maximum retry attempts (default: from settings)
@@ -116,6 +120,31 @@ class OpenAIClientWrapper:
             max_retries if max_retries is not None else self.settings.max_retries_per_persona
         )
 
+        # Get schema version info if schema_name provided
+        schema_version_info: dict[str, Any] | None = None
+        if schema_name:
+            try:
+                schema_version_info = get_schema_version_info(schema_name)
+                logger.debug(
+                    f"Using schema {schema_name} v{schema_version_info['schema_version']}",
+                    extra={
+                        "request_id": request_id,
+                        "schema_name": schema_name,
+                        "schema_version": schema_version_info["schema_version"],
+                        "prompt_set_version": schema_version_info.get("prompt_set_version"),
+                    },
+                )
+            except SchemaValidationError as e:
+                logger.error(
+                    f"Failed to get schema version info for {schema_name}",
+                    extra={
+                        "request_id": request_id,
+                        "schema_name": schema_name,
+                        "error": str(e),
+                    },
+                )
+                raise
+
         logger.info(
             f"Starting OpenAI request for step={step_name}",
             extra={
@@ -124,6 +153,10 @@ class OpenAIClientWrapper:
                 "model": model,
                 "temperature": temperature,
                 "max_retries": max_retries_count,
+                "schema_name": schema_name,
+                "schema_version": (
+                    schema_version_info["schema_version"] if schema_version_info else None
+                ),
             },
         )
 
@@ -180,6 +213,32 @@ class OpenAIClientWrapper:
                 # Ensure it's the correct type
                 parsed_response = cast(T, parsed_response)
 
+                # Validate against schema registry if schema_name provided
+                if schema_name:
+                    try:
+                        validate_against_schema(
+                            instance=parsed_response,
+                            schema_name=schema_name,
+                            context={
+                                "request_id": request_id,
+                                "step_name": step_name,
+                                "attempt": attempt,
+                            },
+                        )
+                    except SchemaValidationError as e:
+                        # Log validation error and re-raise with enhanced details
+                        logger.error(
+                            f"Schema validation failed for {schema_name}",
+                            extra={
+                                "request_id": request_id,
+                                "step_name": step_name,
+                                "schema_name": schema_name,
+                                "attempt": attempt,
+                                "error_details": e.details,
+                            },
+                        )
+                        raise
+
                 # Build metadata
                 metadata = {
                     "request_id": request_id,
@@ -192,6 +251,13 @@ class OpenAIClientWrapper:
                     "attempt_elapsed": attempt_elapsed,
                     "status": "success",
                 }
+
+                # Add schema version info if available
+                if schema_version_info:
+                    metadata["schema_name"] = schema_name
+                    metadata["schema_version"] = schema_version_info["schema_version"]
+                    if schema_version_info.get("prompt_set_version"):
+                        metadata["prompt_set_version"] = schema_version_info["prompt_set_version"]
 
                 # Add usage info if available
                 if hasattr(response, "usage") and response.usage:
@@ -212,6 +278,10 @@ class OpenAIClientWrapper:
                         "elapsed_time": f"{elapsed_time:.2f}s",
                         "attempt_count": attempt,
                         "status": "success",
+                        "schema_name": schema_name,
+                        "schema_version": (
+                            schema_version_info["schema_version"] if schema_version_info else None
+                        ),
                     },
                 )
 
@@ -386,6 +456,7 @@ class OpenAIClientWrapper:
         instruction_payload: "InstructionPayload",
         response_model: type[T],
         step_name: str = "llm_call",
+        schema_name: str | None = None,
         model_override: str | None = None,
         temperature_override: float | None = None,
         max_retries: int | None = None,
@@ -399,6 +470,7 @@ class OpenAIClientWrapper:
             instruction_payload: InstructionPayload with system, developer, and user content
             response_model: Pydantic model defining the expected response structure
             step_name: Name of the step for telemetry logging (default: "llm_call")
+            schema_name: Optional schema name for registry lookup and validation
             model_override: Override the default model for this call
             temperature_override: Override the default temperature for this call
             max_retries: Maximum retry attempts (default: from settings)
@@ -423,13 +495,14 @@ class OpenAIClientWrapper:
             response_model=response_model,
             developer_instruction=instruction_payload.developer_instruction,
             step_name=step_name,
+            schema_name=schema_name,
             model_override=model_override,
             temperature_override=temperature_override,
             max_retries=max_retries,
         )
 
-        # Add prompt_set_version to metadata
-        if prompt_set_version:
+        # Add prompt_set_version to metadata if not already present
+        if prompt_set_version and "prompt_set_version" not in metadata:
             metadata["prompt_set_version"] = prompt_set_version
 
         # Add payload metadata to response metadata
