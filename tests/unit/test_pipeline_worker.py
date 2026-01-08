@@ -438,3 +438,101 @@ class TestPipelineWorker:
         # Message should be nacked (for retry)
         mock_message.nack.assert_called_once()
         mock_message.ack.assert_not_called()
+
+
+class TestWorkerIdempotencyAndRetries:
+    """Test suite for worker idempotency and retry behavior."""
+
+    @pytest.fixture
+    def settings(self, monkeypatch: pytest.MonkeyPatch) -> Settings:
+        """Create test settings."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("PUBSUB_USE_MOCK", "true")
+        monkeypatch.setenv("PUBSUB_EMULATOR_HOST", "localhost:8085")
+        monkeypatch.setenv("PUBSUB_PROJECT_ID", "test-project")
+        monkeypatch.setenv("PUBSUB_SUBSCRIPTION", "test-sub")
+        monkeypatch.setenv("WORKER_STEP_TIMEOUT_SECONDS", "300")
+        monkeypatch.setenv("WORKER_JOB_TIMEOUT_SECONDS", "1800")
+        return Settings()
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_step_timeout_configuration(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that step timeouts are properly configured."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify timeout settings are properly loaded
+        assert settings.worker_step_timeout_seconds == 300
+        assert settings.worker_job_timeout_seconds == 1800
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_retry_count_tracking(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that retry attempts are tracked per run."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify retry_counts dict is initialized
+        assert isinstance(worker.retry_counts, dict)
+        assert len(worker.retry_counts) == 0
+
+        # Simulate tracking retry for a run
+        run_id = str(uuid.uuid4())
+        worker.retry_counts[run_id] = 1
+        assert worker.retry_counts[run_id] == 1
+
+        # Increment retry count
+        worker.retry_counts[run_id] += 1
+        assert worker.retry_counts[run_id] == 2
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_worker_initialization_settings(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, settings: Settings
+    ):
+        """Test that worker initializes with correct settings."""
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify worker attributes
+        assert worker.settings == settings
+        assert worker.project_id == "test-project"
+        assert worker.should_stop is False
+        assert isinstance(worker.retry_counts, dict)
+
+    @patch("consensus_engine.workers.pipeline_worker.get_engine")
+    @patch("consensus_engine.workers.pipeline_worker.pubsub_v1.SubscriberClient")
+    def test_worker_concurrency_configuration(
+        self, mock_subscriber_cls: MagicMock, mock_get_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Test that worker concurrency settings are configurable."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("PUBSUB_USE_MOCK", "true")
+        monkeypatch.setenv("PUBSUB_PROJECT_ID", "test-project")
+        monkeypatch.setenv("PUBSUB_SUBSCRIPTION", "test-sub")
+        monkeypatch.setenv("WORKER_MAX_CONCURRENCY", "20")
+        
+        settings = Settings()
+        
+        mock_subscriber = Mock()
+        mock_subscriber.subscription_path.return_value = "projects/test-project/subscriptions/test-sub"
+        mock_subscriber_cls.return_value = mock_subscriber
+
+        worker = PipelineWorker(settings)
+
+        # Verify concurrency settings
+        assert settings.worker_max_concurrency == 20

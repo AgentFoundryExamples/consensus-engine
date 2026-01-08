@@ -298,3 +298,144 @@ class TestOpenAIClientWrapperStructuredResponse:
 
         assert "unexpected error" in str(exc_info.value).lower()
         assert "request_id" in exc_info.value.details
+
+
+class TestOpenAIClientAsyncBehavior:
+    """Test suite for async-specific OpenAI client behavior."""
+
+    @patch("consensus_engine.clients.openai_client.OpenAI")
+    def test_per_step_timeout_parameter(self, mock_openai: Mock, mock_settings: Settings) -> None:
+        """Test that per-step timeouts can be configured."""
+        # Setup mock response
+        mock_parsed = MockResponseModel(test_field="success", test_number=42)
+        
+        mock_response = MagicMock()
+        mock_response.output_parsed = mock_parsed
+        mock_response.usage = MagicMock()
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 20
+        mock_response.usage.total_tokens = 30
+
+        mock_client = MagicMock()
+        mock_client.responses.parse.return_value = mock_response
+        mock_openai.return_value = mock_client
+
+        wrapper = OpenAIClientWrapper(mock_settings)
+
+        # Call with step_name to test per-step configuration
+        result, metadata = wrapper.create_structured_response(
+            system_instruction="Test instruction",
+            user_prompt="Test prompt",
+            response_model=MockResponseModel,
+            step_name="expand",
+        )
+
+        # Verify metadata includes step_name for tracking
+        assert metadata["step_name"] == "expand"
+        assert "latency" in metadata
+        assert metadata["status"] == "success"
+
+    @patch("consensus_engine.clients.openai_client.time.sleep")
+    @patch("consensus_engine.clients.openai_client.OpenAI")
+    def test_retry_with_exponential_backoff(
+        self, mock_openai: Mock, mock_sleep: Mock, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that retries use exponential backoff delays."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("MAX_RETRIES_PER_PERSONA", "3")
+        monkeypatch.setenv("RETRY_INITIAL_BACKOFF_SECONDS", "1.0")
+        monkeypatch.setenv("RETRY_BACKOFF_MULTIPLIER", "2.0")
+        settings = Settings()
+
+        # First two calls fail with rate limit, third succeeds
+        mock_parsed = MockResponseModel(test_field="success", test_number=42)
+
+        mock_success_response = MagicMock()
+        mock_success_response.output_parsed = mock_parsed
+        mock_success_response.usage = MagicMock()
+        mock_success_response.usage.input_tokens = 10
+        mock_success_response.usage.output_tokens = 20
+        mock_success_response.usage.total_tokens = 30
+
+        mock_client = MagicMock()
+        mock_client.responses.parse.side_effect = [
+            RateLimitError("Rate limit", response=MagicMock(), body=None),
+            RateLimitError("Rate limit", response=MagicMock(), body=None),
+            mock_success_response,
+        ]
+        mock_openai.return_value = mock_client
+
+        wrapper = OpenAIClientWrapper(settings)
+
+        result, metadata = wrapper.create_structured_response(
+            system_instruction="Test",
+            user_prompt="Test",
+            response_model=MockResponseModel,
+            max_retries=3,
+        )
+
+        # Verify backoff delays: 1.0s, 2.0s (exponential)
+        assert mock_sleep.call_count == 2
+        calls = mock_sleep.call_args_list
+        assert calls[0][0][0] == 1.0  # First backoff: 1.0s
+        assert calls[1][0][0] == 2.0  # Second backoff: 2.0s
+        assert metadata["attempt_count"] == 3
+
+    @patch("consensus_engine.clients.openai_client.OpenAI")
+    def test_retry_exhaustion_raises_error(self, mock_openai: Mock, mock_settings: Settings) -> None:
+        """Test that exhausting retries raises appropriate error."""
+        mock_client = MagicMock()
+        # All attempts fail with rate limit
+        mock_client.responses.parse.side_effect = RateLimitError(
+            "Rate limit exceeded", response=MagicMock(), body=None
+        )
+        mock_openai.return_value = mock_client
+
+        wrapper = OpenAIClientWrapper(mock_settings)
+
+        with pytest.raises(LLMRateLimitError) as exc_info:
+            wrapper.create_structured_response(
+                system_instruction="Test",
+                user_prompt="Test",
+                response_model=MockResponseModel,
+                max_retries=2,
+            )
+
+        assert "rate limit" in str(exc_info.value).lower()
+        assert "attempt" in exc_info.value.details
+
+    @patch("consensus_engine.clients.openai_client.OpenAI")
+    def test_step_specific_model_override(self, mock_openai: Mock, mock_settings: Settings) -> None:
+        """Test that model can be overridden per step."""
+        # Setup mock response
+        mock_parsed = MockResponseModel(test_field="success", test_number=42)
+
+        mock_response = MagicMock()
+        mock_response.output_parsed = mock_parsed
+        mock_response.usage = MagicMock()
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 20
+        mock_response.usage.total_tokens = 30
+
+        mock_client = MagicMock()
+        mock_client.responses.parse.return_value = mock_response
+        mock_openai.return_value = mock_client
+
+        wrapper = OpenAIClientWrapper(mock_settings)
+
+        result, metadata = wrapper.create_structured_response(
+            system_instruction="Test",
+            user_prompt="Test",
+            response_model=MockResponseModel,
+            model_override="gpt-4.0",
+            temperature_override=0.2,
+            step_name="review_architect",
+        )
+
+        # Verify call used overridden model and temperature
+        call_kwargs = mock_client.responses.parse.call_args[1]
+        assert call_kwargs["model"] == "gpt-4.0"
+        assert call_kwargs["temperature"] == 0.2
+        assert metadata["model"] == "gpt-4.0"
+        assert metadata["temperature"] == 0.2
+        assert metadata["step_name"] == "review_architect"

@@ -41,6 +41,77 @@ The multi-persona system consists of two main components:
 1. **Orchestrator** (`orchestrator.py`): Manages sequential review process
 2. **Aggregator** (`aggregator.py`): Computes final decision with weighted confidence
 
+### Asynchronous Pipeline Architecture
+
+The Consensus Engine uses an asynchronous architecture where the API server enqueues jobs and a separate worker process executes the pipeline:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant PubSub as Pub/Sub Queue
+    participant Worker as Pipeline Worker
+    participant DB as PostgreSQL
+    participant LLM as OpenAI API
+
+    Client->>API: POST /v1/full-review
+    API->>DB: Create Run (status=queued)
+    API->>DB: Initialize StepProgress (all pending)
+    API->>PubSub: Publish job message
+    API-->>Client: 202 Accepted (run_id, status=queued)
+    
+    Note over Client: Client polls GET /v1/runs/{run_id}
+    
+    Worker->>PubSub: Pull message
+    Worker->>DB: Check run status (idempotency)
+    alt Run already completed
+        Worker->>PubSub: Ack (no-op)
+    else Run queued/failed
+        Worker->>DB: Update run (status=running, started_at)
+        
+        loop For each pipeline step
+            Worker->>DB: Update step (status=running, started_at)
+            Worker->>LLM: Execute step (with timeout/retry)
+            alt Step succeeds
+                Worker->>DB: Update step (status=completed, completed_at)
+            else Step fails
+                Worker->>DB: Update step (status=failed, error_message)
+                Worker->>DB: Update run (status=failed)
+                Worker->>PubSub: Nack (for retry)
+            end
+        end
+        
+        Worker->>DB: Update run (status=completed, completed_at)
+        Worker->>PubSub: Ack
+    end
+    
+    Client->>API: GET /v1/runs/{run_id}
+    API->>DB: Fetch run with results
+    API-->>Client: 200 OK (completed results)
+```
+
+**Key Architectural Features:**
+
+1. **Job Enqueueing**: API immediately returns 202 Accepted with run_id after enqueueing
+2. **Status Tracking**: Run status transitions: `queued` → `running` → `completed`/`failed`
+3. **Step Progress**: Fine-grained progress tracking for all 7 pipeline steps
+4. **Idempotency**: Worker safely handles duplicate Pub/Sub deliveries
+5. **Retry Logic**: Failed jobs are automatically retried via Pub/Sub redelivery
+6. **Timeout Enforcement**: Per-step and overall job timeouts prevent stuck runs
+7. **Polling Interface**: Clients poll GET /v1/runs/{run_id} for status and results
+
+**Pipeline Steps (Ordered):**
+
+1. `expand` - Expand brief idea into detailed proposal
+2. `review_architect` - Architect persona review
+3. `review_critic` - Critic persona review  
+4. `review_optimist` - Optimist persona review
+5. `review_security` - SecurityGuardian persona review
+6. `review_user_advocate` - UserAdvocate persona review
+7. `aggregate_decision` - Aggregate reviews into final decision
+
+Each step updates its StepProgress record with status, timestamps, and error details.
+
 ## Personas
 
 ### 1. Architect (Weight: 0.25)

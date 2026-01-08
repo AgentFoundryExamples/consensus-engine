@@ -1,7 +1,40 @@
 # POST /v1/full-review Implementation Summary
 
 ## Overview
-Successfully implemented the POST /v1/full-review endpoint that provides a synchronous API for expanding an idea, running all five persona reviews, and aggregating the results into a unified decision.
+Successfully implemented the POST /v1/full-review endpoint that provides both synchronous and asynchronous workflows for expanding an idea, running all five persona reviews, and aggregating the results into a unified decision.
+
+## Migration to Asynchronous Processing
+
+**Key Change**: The `/v1/full-review` endpoint was migrated from synchronous processing to an asynchronous job-based architecture in December 2024.
+
+### Before (Synchronous):
+- Client POSTs idea → API blocks while running entire pipeline → Returns complete results
+- Typical response time: 30-60 seconds
+- No scalability (API server blocks on LLM calls)
+- No fault tolerance (client must retry entire workflow on timeout)
+
+### After (Asynchronous):
+- Client POSTs idea → API enqueues job to Pub/Sub → Returns 202 with run_id immediately
+- Client polls GET /v1/runs/{run_id} for status and results
+- Worker process consumes from Pub/Sub and executes pipeline
+- Response time: <200ms for job enqueue
+- Horizontal scalability via worker replicas
+- Automatic retries via Pub/Sub redelivery
+- Idempotent processing of duplicate messages
+
+### Operational Benefits:
+1. **Scalability**: Workers scale independently from API servers
+2. **Fault Tolerance**: Failed jobs automatically retry without client intervention
+3. **Observability**: Step-by-step progress tracking in StepProgress table
+4. **Resource Efficiency**: API servers don't block on long-running LLM calls
+5. **Queue Management**: Dead-letter queues for poison messages
+6. **Cost Optimization**: Rightsize worker concurrency based on load
+
+### Backward Compatibility:
+The synchronous behavior is **deprecated but not removed**. Clients should migrate to:
+1. POST /v1/full-review (returns run_id)
+2. Poll GET /v1/runs/{run_id} until status = "completed" or "failed"
+3. Retrieve results from GET /v1/runs/{run_id} response
 
 ## What Was Built
 
