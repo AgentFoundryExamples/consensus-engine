@@ -1,0 +1,2175 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Consensus Engine API",
+    "description": "FastAPI backend with LLM integration for consensus building",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v1/expand-idea": {
+      "post": {
+        "tags": ["expand"],
+        "summary": "Expand an idea into a detailed proposal",
+        "description": "Accepts a brief idea (1-10 sentences) with optional extra context and expands it into a comprehensive, structured proposal using LLM. Returns problem statement, proposed solution, assumptions, and scope boundaries. \n\n**Validation Rules:**\n- Idea: 1-10 sentences, max 10,000 characters\n- Extra context: max 50,000 characters (string or JSON)\n\n\n**Version Headers (Optional):**\n- X-Schema-Version: Schema version (current: 1.0.0)\n- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\nIf not provided, defaults to current deployment versions with a warning.",
+        "operationId": "expand_idea_endpoint_v1_expand_idea_post",
+        "parameters": [
+          {
+            "name": "X-Schema-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Schema-Version"
+            }
+          },
+          {
+            "name": "X-Prompt-Set-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Prompt-Set-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpandIdeaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully expanded idea into structured proposal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpandIdeaResponse"
+                },
+                "example": {
+                  "problem_statement": "Users need an efficient way to manage their accounts...",
+                  "proposed_solution": "Build a REST API with authentication...",
+                  "assumptions": ["Python 3.11+ is available", "Users have API keys"],
+                  "scope_non_goals": ["Mobile app development", "UI design"],
+                  "raw_expanded_proposal": "Complete proposal text...",
+                  "metadata": {
+                    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "model": "gpt-5.1",
+                    "temperature": 0.7,
+                    "elapsed_time": 2.5
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - unsupported version",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "UNSUPPORTED_VERSION",
+                  "message": "Schema version '0.9.0' is not supported. Current supported version: '1.0.0'. Please upgrade your client to use the supported API version.",
+                  "details": {
+                    "requested_schema_version": "0.9.0",
+                    "supported_schema_version": "1.0.0",
+                    "api_version": "v1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error - invalid request format or sentence count",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "type": "value_error",
+                      "loc": ["body", "idea"],
+                      "msg": "Idea must contain at most 10 sentences (found 15)"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - service or LLM error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "LLM_SERVICE_ERROR",
+                  "message": "Failed to process request",
+                  "details": {
+                    "request_id": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable - rate limit or timeout",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "LLM_RATE_LIMIT",
+                  "message": "Rate limit exceeded, please retry later",
+                  "details": {
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/full-review": {
+      "post": {
+        "tags": ["full-review"],
+        "summary": "Enqueue a full review job for an idea",
+        "description": "Accepts a brief idea (1-10 sentences) with optional extra context, creates a Run with status='queued', initializes StepProgress entries, publishes a job message to Pub/Sub, and returns run metadata immediately. Clients should poll GET /v1/runs/{run_id} to check status and retrieve results once processing completes.\n\n**Validation Rules:**\n- Idea: 1-10 sentences, max 10,000 characters\n- Extra context: max 50,000 characters (string or JSON)\n\n\n**Version Headers (Optional):**\n- X-Schema-Version: Schema version (current: 1.0.0)\n- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\nIf not provided, defaults to current deployment versions with a warning.",
+        "operationId": "full_review_endpoint_v1_full_review_post",
+        "parameters": [
+          {
+            "name": "X-Schema-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Schema-Version"
+            }
+          },
+          {
+            "name": "X-Prompt-Set-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Prompt-Set-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FullReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobEnqueuedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health check endpoint",
+        "description": "Returns service health status, configuration metadata, and uptime. Performs configuration sanity checks without exposing secrets. Status can be 'healthy', 'degraded', or 'unhealthy'.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Service is healthy or degraded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "environment": "production",
+                  "debug": false,
+                  "model": "gpt-5.1",
+                  "temperature": 0.7,
+                  "uptime_seconds": 3600.5,
+                  "config_status": "ok"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-idea": {
+      "post": {
+        "tags": ["review"],
+        "summary": "Review an idea through expand, review, and decision aggregation",
+        "description": "Accepts a brief idea (1-10 sentences) with optional extra context, expands it into a comprehensive proposal, reviews it with a single persona (GenericReviewer), and aggregates a draft decision. Returns the expanded proposal, review, and decision with telemetry. Errors include failed_step and any partial results.\n\n**Validation Rules:**\n- Idea: 1-10 sentences, max 10,000 characters\n- Extra context: max 50,000 characters (string or JSON)\n\n\n**Version Headers (Optional):**\n- X-Schema-Version: Schema version (current: 1.0.0)\n- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\nIf not provided, defaults to current deployment versions with a warning.",
+        "operationId": "review_idea_endpoint_v1_review_idea_post",
+        "parameters": [
+          {
+            "name": "X-Schema-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Schema-Version"
+            }
+          },
+          {
+            "name": "X-Prompt-Set-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Prompt-Set-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewIdeaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully expanded and reviewed idea",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewIdeaResponse"
+                },
+                "example": {
+                  "expanded_proposal": {
+                    "problem_statement": "Clear problem statement",
+                    "proposed_solution": "Detailed solution approach",
+                    "assumptions": ["Assumption 1", "Assumption 2"],
+                    "scope_non_goals": ["Out of scope 1"],
+                    "metadata": {
+                      "request_id": "expand-123",
+                      "model": "gpt-5.1",
+                      "temperature": 0.7,
+                      "elapsed_time": 2.5
+                    }
+                  },
+                  "reviews": [
+                    {
+                      "persona_name": "GenericReviewer",
+                      "confidence_score": 0.85,
+                      "strengths": ["Good architecture", "Clear scope"],
+                      "concerns": [
+                        {
+                          "text": "Missing error handling",
+                          "is_blocking": false
+                        }
+                      ],
+                      "recommendations": ["Add error handling"],
+                      "blocking_issues": [],
+                      "estimated_effort": "2-3 weeks",
+                      "dependency_risks": []
+                    }
+                  ],
+                  "draft_decision": {
+                    "overall_weighted_confidence": 0.85,
+                    "decision": "approve",
+                    "score_breakdown": {
+                      "GenericReviewer": {
+                        "weight": 1.0,
+                        "notes": "Single persona review"
+                      }
+                    }
+                  },
+                  "run_id": "run-123",
+                  "elapsed_time": 5.2
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error - invalid request format or sentence count",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "VALIDATION_ERROR",
+                  "message": "Request validation failed",
+                  "failed_step": "validation",
+                  "run_id": "run-123",
+                  "details": [
+                    {
+                      "type": "value_error",
+                      "loc": ["body", "idea"],
+                      "msg": "Idea must contain at most 10 sentences (found 15)"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - expansion or review failure",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "LLM_SERVICE_ERROR",
+                  "message": "Failed to process request",
+                  "failed_step": "expand",
+                  "run_id": "run-123",
+                  "details": {
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs": {
+      "get": {
+        "tags": ["runs"],
+        "summary": "List runs with filtering and pagination",
+        "description": "Returns a paginated list of runs sorted by created_at descending. Supports filtering by status, run_type, parent_run_id, decision, min_confidence, and date ranges. Returns empty list (200) for no matches.",
+        "operationId": "list_runs_v1_runs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Number of items per page (1-100)",
+              "default": 30,
+              "title": "Limit"
+            },
+            "description": "Number of items per page (1-100)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Offset for pagination",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Offset for pagination"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status: running, completed, or failed",
+              "title": "Status"
+            },
+            "description": "Filter by status: running, completed, or failed"
+          },
+          {
+            "name": "run_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by run_type: initial or revision",
+              "title": "Run Type"
+            },
+            "description": "Filter by run_type: initial or revision"
+          },
+          {
+            "name": "parent_run_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by parent_run_id (UUID)",
+              "title": "Parent Run Id"
+            },
+            "description": "Filter by parent_run_id (UUID)"
+          },
+          {
+            "name": "decision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by decision_label (e.g., approve, revise, reject)",
+              "title": "Decision"
+            },
+            "description": "Filter by decision_label (e.g., approve, revise, reject)"
+          },
+          {
+            "name": "min_confidence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by minimum overall_weighted_confidence (0.0-1.0)",
+              "title": "Min Confidence"
+            },
+            "description": "Filter by minimum overall_weighted_confidence (0.0-1.0)"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by created_at >= start_date (ISO 8601 format)",
+              "title": "Start Date"
+            },
+            "description": "Filter by created_at >= start_date (ISO 8601 format)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by created_at <= end_date (ISO 8601 format)",
+              "title": "End Date"
+            },
+            "description": "Filter by created_at <= end_date (ISO 8601 format)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}": {
+      "get": {
+        "tags": ["runs"],
+        "summary": "Get full run details by ID",
+        "description": "Returns the full run detail including metadata, proposal JSON, persona reviews, and decision JSON. Returns 404 for missing run_id.",
+        "operationId": "get_run_detail_v1_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/diff/{other_run_id}": {
+      "get": {
+        "tags": ["runs"],
+        "summary": "Compare two runs and compute diff",
+        "description": "Computes structured diff between two runs including proposal changes, persona score deltas, and decision changes. Returns 400 for identical runs, 404 for missing runs. All diffs are computed from stored JSONB without re-running models.",
+        "operationId": "get_run_diff_v1_runs__run_id__diff__other_run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "other_run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Other Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDiffResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/revisions": {
+      "post": {
+        "tags": ["runs"],
+        "summary": "Enqueue a revision job from an existing run",
+        "description": "Creates a revision run with status='queued', initializes StepProgress entries, publishes a job message to Pub/Sub, and returns run metadata immediately. Clients should poll GET /v1/runs/{run_id} to check status and retrieve results once processing completes.\n\n**Validation Rules:**\n- edited_proposal: max 100,000 characters (string or JSON)\n- edit_notes: max 10,000 characters\n- input_idea: max 10,000 characters\n- extra_context: max 50,000 characters (string or JSON)\n- At least one of edited_proposal or edit_notes must be provided\n\n\n**Version Headers (Optional):**\n- X-Schema-Version: Schema version (current: 1.0.0)\n- X-Prompt-Set-Version: Prompt set version (current: 1.0.0)\nIf not provided, defaults to current deployment versions with a warning.",
+        "operationId": "create_revision_v1_runs__run_id__revisions_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "X-Schema-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Schema-Version"
+            }
+          },
+          {
+            "name": "X-Prompt-Set-Version",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Prompt-Set-Version"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobEnqueuedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": ["root"],
+        "summary": "Root",
+        "description": "Root endpoint with API information.\n\nReturns:\n    API welcome message and version",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BlockingIssue": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text",
+            "description": "The blocking issue description"
+          },
+          "security_critical": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Security Critical",
+            "description": "Whether this is a security-critical issue (SecurityGuardian veto power)"
+          }
+        },
+        "type": "object",
+        "required": ["text"],
+        "title": "BlockingIssue",
+        "description": "A blocking issue identified during persona review.\n\nAttributes:\n    text: The blocking issue description\n    security_critical: Optional flag indicating if this is a security-critical issue\n        that gives SecurityGuardian veto power"
+      },
+      "Concern": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text",
+            "description": "The concern description"
+          },
+          "is_blocking": {
+            "type": "boolean",
+            "title": "Is Blocking",
+            "description": "Whether this concern is a blocking issue"
+          }
+        },
+        "type": "object",
+        "required": ["text", "is_blocking"],
+        "title": "Concern",
+        "description": "A concern raised during a persona review.\n\nAttributes:\n    text: The concern description\n    is_blocking: Whether this concern is a blocking issue"
+      },
+      "CreateRevisionRequest": {
+        "properties": {
+          "edited_proposal": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Proposal",
+            "description": "Edited proposal as structured JSON object or free-form text to merge with parent. If omitted, edit_notes is used to guide re-expansion.",
+            "examples": [
+              {
+                "problem_statement": "Updated problem",
+                "proposed_solution": "New approach"
+              },
+              "Revise the security section to use OAuth 2.0 instead of basic auth"
+            ]
+          },
+          "edit_notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edit Notes",
+            "description": "Optional notes about edits or guidance for re-expansion",
+            "examples": ["Added security requirements based on SecurityGuardian feedback"]
+          },
+          "input_idea": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Idea",
+            "description": "Optional new input idea text (overrides parent)"
+          },
+          "extra_context": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Context",
+            "description": "Optional new additional context (overrides parent)"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "Optional new LLM model identifier (overrides parent)"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature",
+            "description": "Optional new temperature parameter (overrides parent)"
+          },
+          "parameters_json": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameters Json",
+            "description": "Optional new LLM parameters (overrides parent)"
+          }
+        },
+        "type": "object",
+        "title": "CreateRevisionRequest",
+        "description": "Request model for POST /v1/runs/{run_id}/revisions endpoint.\n\nAttributes:\n    edited_proposal: Full structured proposal object or text edits to apply\n    edit_notes: Optional notes about what was edited and why\n    input_idea: Optional new input idea text (overrides parent if provided)\n    extra_context: Optional new additional context (overrides parent if provided)\n    model: Optional new LLM model identifier (overrides parent if provided)\n    temperature: Optional new temperature parameter (overrides parent if provided)\n    parameters_json: Optional new LLM parameters (overrides parent if provided)"
+      },
+      "DecisionAggregation": {
+        "properties": {
+          "overall_weighted_confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Overall Weighted Confidence",
+            "description": "Weighted confidence score across all personas (legacy field)"
+          },
+          "weighted_confidence": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weighted Confidence",
+            "description": "Weighted confidence score across all personas (new field, mirrors overall_weighted_confidence)"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/DecisionEnum",
+            "description": "Final decision outcome (approve/revise/reject)"
+          },
+          "score_breakdown": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PersonaScoreBreakdown"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Breakdown",
+            "description": "Per-persona scoring details with weights and notes (legacy format)"
+          },
+          "detailed_score_breakdown": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DetailedScoreBreakdown"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Detailed score breakdown with weights, individual scores, contributions, and formula"
+          },
+          "minority_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MinorityReport"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional dissenting opinion from minority persona (single dissenter, legacy field)"
+          },
+          "minority_reports": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MinorityReport"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minority Reports",
+            "description": "Optional list of dissenting opinions from multiple personas (new field)"
+          }
+        },
+        "type": "object",
+        "required": ["overall_weighted_confidence", "decision"],
+        "title": "DecisionAggregation",
+        "description": "Aggregated decision from multiple persona reviews.\n\nThis model encapsulates the consensus decision built from one or more\npersona reviews, including weighted confidence scoring and optional\nminority opinions.\n\nAttributes:\n    overall_weighted_confidence: Weighted confidence score across all personas (legacy field)\n    weighted_confidence: Weighted confidence score across all personas (new field)\n    decision: Final decision outcome (approve/revise/reject)\n    score_breakdown: Per-persona scoring details with weights and notes (legacy, optional)\n    detailed_score_breakdown: Detailed scoring breakdown with formula (new field, optional)\n    minority_report: Optional dissenting opinion from minority persona\n        (supports multiple dissenters)\n    minority_reports: Optional list of dissenting opinions from multiple personas (new field)"
+      },
+      "DecisionEnum": {
+        "type": "string",
+        "enum": ["approve", "revise", "reject"],
+        "title": "DecisionEnum",
+        "description": "Enumeration of possible decision outcomes."
+      },
+      "DetailedScoreBreakdown": {
+        "properties": {
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights",
+            "description": "Dictionary mapping persona IDs to their weights"
+          },
+          "individual_scores": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Individual Scores",
+            "description": "Dictionary mapping persona IDs to their confidence scores"
+          },
+          "weighted_contributions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weighted Contributions",
+            "description": "Dictionary mapping persona IDs to their weighted contribution (weight * score)"
+          },
+          "formula": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Formula",
+            "description": "Description of the aggregation formula used"
+          }
+        },
+        "type": "object",
+        "required": ["weights", "individual_scores", "weighted_contributions", "formula"],
+        "title": "DetailedScoreBreakdown",
+        "description": "Detailed score breakdown for decision aggregation.\n\nProvides comprehensive scoring information including weights,\nindividual scores, weighted contributions, and formula used.\n\nAttributes:\n    weights: Dictionary mapping persona IDs to their weights\n    individual_scores: Dictionary mapping persona IDs to their confidence scores\n    weighted_contributions: Dictionary mapping persona IDs to their weighted contribution\n    formula: Description of the aggregation formula used"
+      },
+      "ExpandIdeaRequest": {
+        "properties": {
+          "idea": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Idea",
+            "description": "The core idea or problem to expand (1-10 sentences)",
+            "examples": ["Build a REST API for user management with authentication support."]
+          },
+          "extra_context": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Context",
+            "description": "Optional additional context or constraints (dict or string)",
+            "examples": [
+              "Must support Python 3.11+",
+              {
+                "features": ["auth", "CRUD"],
+                "language": "Python",
+                "version": "3.11+"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["idea"],
+        "title": "ExpandIdeaRequest",
+        "description": "Request model for POST /v1/expand-idea endpoint.\n\nAttributes:\n    idea: The core idea to expand (1-10 sentences)\n    extra_context: Optional additional context as dict or string"
+      },
+      "ExpandIdeaResponse": {
+        "properties": {
+          "problem_statement": {
+            "type": "string",
+            "title": "Problem Statement",
+            "description": "Clear articulation of the problem to be solved"
+          },
+          "proposed_solution": {
+            "type": "string",
+            "title": "Proposed Solution",
+            "description": "Detailed description of the proposed solution approach"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Assumptions",
+            "description": "List of underlying assumptions made in the proposal"
+          },
+          "scope_non_goals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope Non Goals",
+            "description": "List of what is explicitly out of scope or non-goals"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Optional short title for the proposal"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Optional brief summary of the proposal"
+          },
+          "raw_idea": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Idea",
+            "description": "Optional original idea text before expansion"
+          },
+          "raw_expanded_proposal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Expanded Proposal",
+            "description": "Optional complete expanded proposal text or additional notes"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "description": "Schema version used for this response (e.g., '1.0.0')"
+          },
+          "prompt_set_version": {
+            "type": "string",
+            "title": "Prompt Set Version",
+            "description": "Prompt set version used for this response (e.g., '1.0.0')"
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata",
+            "description": "Request metadata including request_id, model, temperature, timing, etc."
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem_statement",
+          "proposed_solution",
+          "assumptions",
+          "scope_non_goals",
+          "schema_version",
+          "prompt_set_version",
+          "metadata"
+        ],
+        "title": "ExpandIdeaResponse",
+        "description": "Response model for POST /v1/expand-idea endpoint.\n\nAttributes:\n    problem_statement: Clear articulation of the problem\n    proposed_solution: Detailed solution approach\n    assumptions: List of underlying assumptions\n    scope_non_goals: List of what is out of scope\n    title: Optional short title for the proposal\n    summary: Optional brief summary of the proposal\n    raw_idea: Optional original idea text before expansion\n    raw_expanded_proposal: Optional complete proposal text\n    schema_version: Schema version used for this response\n    prompt_set_version: Prompt set version used for this response\n    metadata: Request metadata (request_id, model, timing, etc.)"
+      },
+      "FullReviewRequest": {
+        "properties": {
+          "idea": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Idea",
+            "description": "The core idea or problem to expand and review with all personas (1-10 sentences)",
+            "examples": ["Build a REST API for user management with authentication support."]
+          },
+          "extra_context": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Context",
+            "description": "Optional additional context or constraints (dict or string)",
+            "examples": [
+              "Must support Python 3.11+",
+              {
+                "features": ["auth", "CRUD"],
+                "language": "Python",
+                "version": "3.11+"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["idea"],
+        "title": "FullReviewRequest",
+        "description": "Request model for POST /v1/full-review endpoint.\n\nAttributes:\n    idea: The core idea to expand and review (1-10 sentences)\n    extra_context: Optional additional context as dict or string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Service health status (healthy, degraded, unhealthy)"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "Application environment (development, production, testing)"
+          },
+          "debug": {
+            "type": "boolean",
+            "title": "Debug",
+            "description": "Debug mode flag"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "description": "OpenAI model name"
+          },
+          "temperature": {
+            "type": "number",
+            "title": "Temperature",
+            "description": "Model temperature setting"
+          },
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds",
+            "description": "Service uptime in seconds"
+          },
+          "config_status": {
+            "type": "string",
+            "title": "Config Status",
+            "description": "Configuration sanity status (ok, warning, error)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "environment",
+          "debug",
+          "model",
+          "temperature",
+          "uptime_seconds",
+          "config_status"
+        ],
+        "title": "HealthResponse",
+        "description": "Response model for GET /health endpoint.\n\nAttributes:\n    status: Service health status\n    environment: Application environment\n    debug: Debug mode flag\n    model: OpenAI model name\n    temperature: Model temperature setting\n    uptime_seconds: Service uptime in seconds\n    config_status: Configuration sanity check status"
+      },
+      "JobEnqueuedResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "UUID of the created run"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status: 'queued'"
+          },
+          "run_type": {
+            "type": "string",
+            "title": "Run Type",
+            "description": "Type of run: 'initial' or 'revision'"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority",
+            "description": "Priority level: 'normal' or 'high'"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO timestamp when run was created"
+          },
+          "queued_at": {
+            "type": "string",
+            "title": "Queued At",
+            "description": "ISO timestamp when run was enqueued"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable message about the enqueued job"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "status",
+          "run_type",
+          "priority",
+          "created_at",
+          "queued_at",
+          "message"
+        ],
+        "title": "JobEnqueuedResponse",
+        "description": "Response model for job enqueueing endpoints (POST /v1/full-review, POST /v1/runs/{run_id}/revisions).\n\nThis response is returned immediately after a run is created and a job is enqueued\nto Pub/Sub. Clients can poll GET /v1/runs/{run_id} to check status and retrieve\nresults once processing completes.\n\nAttributes:\n    run_id: UUID of the created run\n    status: Current status of the run ('queued')\n    run_type: Type of run ('initial' or 'revision')\n    priority: Priority level ('normal' or 'high')\n    created_at: ISO timestamp when run was created\n    queued_at: ISO timestamp when run was enqueued\n    message: Human-readable message about the enqueued job"
+      },
+      "MinorityReport": {
+        "properties": {
+          "persona_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Persona Id",
+            "description": "Stable identifier of the dissenting persona"
+          },
+          "persona_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Persona Name",
+            "description": "Name of the dissenting persona"
+          },
+          "confidence_score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence Score",
+            "description": "The confidence score of the dissenting persona"
+          },
+          "blocking_summary": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Blocking Summary",
+            "description": "Summary of blocking issues from dissenting persona"
+          },
+          "mitigation_recommendation": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Mitigation Recommendation",
+            "description": "Recommended mitigation for blocking issues"
+          },
+          "strengths": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strengths",
+            "description": "Identified strengths from minority view (optional for backward compatibility)"
+          },
+          "concerns": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concerns",
+            "description": "Concerns from minority view (optional for backward compatibility)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "persona_id",
+          "persona_name",
+          "confidence_score",
+          "blocking_summary",
+          "mitigation_recommendation"
+        ],
+        "title": "MinorityReport",
+        "description": "Minority opinion in a decision aggregation.\n\nAttributes:\n    persona_id: Stable identifier of the dissenting persona\n    persona_name: Name of the dissenting persona\n    confidence_score: The confidence score of the dissenting persona\n    blocking_summary: Summary of blocking issues from dissenting persona\n    mitigation_recommendation: Recommended mitigation for blocking issues\n    strengths: Identified strengths from minority view (optional for backward compatibility)\n    concerns: Concerns from minority view (optional for backward compatibility)"
+      },
+      "PersonaReview": {
+        "properties": {
+          "persona_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Persona Name",
+            "description": "Name of the reviewing persona"
+          },
+          "persona_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Persona Id",
+            "description": "Stable identifier for the persona (e.g., 'architect', 'security_guardian')"
+          },
+          "confidence_score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence Score",
+            "description": "Confidence in the proposal, range [0.0, 1.0]"
+          },
+          "strengths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strengths",
+            "description": "List of identified strengths in the proposal"
+          },
+          "concerns": {
+            "items": {
+              "$ref": "#/components/schemas/Concern"
+            },
+            "type": "array",
+            "title": "Concerns",
+            "description": "List of concerns with blocking flags"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "List of actionable recommendations"
+          },
+          "blocking_issues": {
+            "items": {
+              "$ref": "#/components/schemas/BlockingIssue"
+            },
+            "type": "array",
+            "title": "Blocking Issues",
+            "description": "List of critical blocking issues with optional security_critical flags (can be empty)"
+          },
+          "estimated_effort": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "title": "Estimated Effort",
+            "description": "Effort estimation as string or structured data"
+          },
+          "dependency_risks": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Dependency Risks",
+            "description": "List of identified dependency risks (can be empty)"
+          },
+          "internal_metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internal Metadata",
+            "description": "Optional internal metadata (e.g., model, duration, timestamps)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "persona_name",
+          "persona_id",
+          "confidence_score",
+          "strengths",
+          "concerns",
+          "recommendations",
+          "blocking_issues",
+          "estimated_effort",
+          "dependency_risks"
+        ],
+        "title": "PersonaReview",
+        "description": "Review from a specific persona evaluating a proposal.\n\nThis model captures a single persona's evaluation including strengths,\nconcerns, recommendations, and risk assessments.\n\nAttributes:\n    persona_name: Name of the reviewing persona (required)\n    persona_id: Stable identifier for the persona (required, e.g., 'architect')\n    confidence_score: Confidence in the proposal, range [0.0, 1.0] (required)\n    strengths: List of identified strengths in the proposal (required)\n    concerns: List of concerns with blocking flags (required)\n    recommendations: List of actionable recommendations (required)\n    blocking_issues: List of critical blocking issues with optional security flags\n        (required, can be empty)\n    estimated_effort: Effort estimation as string or structured data (required)\n    dependency_risks: List of identified dependency risks (required, can be empty)\n    internal_metadata: Optional metadata for tracking (e.g., model, duration)"
+      },
+      "PersonaReviewSummary": {
+        "properties": {
+          "persona_id": {
+            "type": "string",
+            "title": "Persona Id",
+            "description": "Stable identifier for the persona"
+          },
+          "persona_name": {
+            "type": "string",
+            "title": "Persona Name",
+            "description": "Display name for the persona"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score",
+            "description": "Numeric confidence score [0.0, 1.0]"
+          },
+          "blocking_issues_present": {
+            "type": "boolean",
+            "title": "Blocking Issues Present",
+            "description": "Boolean flag indicating presence of blocking issues"
+          },
+          "prompt_parameters_json": {
+            "type": "object",
+            "title": "Prompt Parameters Json",
+            "description": "Prompt parameters (model, temperature, persona version, retries)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "persona_id",
+          "persona_name",
+          "confidence_score",
+          "blocking_issues_present",
+          "prompt_parameters_json"
+        ],
+        "title": "PersonaReviewSummary",
+        "description": "Summary of a persona review for run list/detail responses.\n\nAttributes:\n    persona_id: Stable identifier for the persona\n    persona_name: Display name for the persona\n    confidence_score: Numeric confidence score [0.0, 1.0]\n    blocking_issues_present: Boolean flag indicating presence of blocking issues\n    prompt_parameters_json: Prompt parameters used for this review"
+      },
+      "PersonaScoreBreakdown": {
+        "properties": {
+          "weight": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Weight",
+            "description": "Weight assigned to this persona's review"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Optional notes about this persona's contribution"
+          }
+        },
+        "type": "object",
+        "required": ["weight"],
+        "title": "PersonaScoreBreakdown",
+        "description": "Score breakdown for a single persona in decision aggregation.\n\nThis is the legacy schema maintained for backward compatibility.\nNew implementations should use DetailedScoreBreakdown.\n\nAttributes:\n    weight: Weight assigned to this persona's review\n    notes: Optional notes about this persona's contribution"
+      },
+      "ReviewIdeaRequest": {
+        "properties": {
+          "idea": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Idea",
+            "description": "The core idea or problem to expand and review (1-10 sentences)",
+            "examples": ["Build a REST API for user management with authentication support."]
+          },
+          "extra_context": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Context",
+            "description": "Optional additional context or constraints (dict or string)",
+            "examples": [
+              "Must support Python 3.11+",
+              {
+                "features": ["auth", "CRUD"],
+                "language": "Python",
+                "version": "3.11+"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["idea"],
+        "title": "ReviewIdeaRequest",
+        "description": "Request model for POST /v1/review-idea endpoint.\n\nAttributes:\n    idea: The core idea to expand and review (1-10 sentences)\n    extra_context: Optional additional context as dict or string"
+      },
+      "ReviewIdeaResponse": {
+        "properties": {
+          "expanded_proposal": {
+            "$ref": "#/components/schemas/ExpandIdeaResponse",
+            "description": "The expanded proposal with problem statement, solution, etc."
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/PersonaReview"
+            },
+            "type": "array",
+            "title": "Reviews",
+            "description": "List of persona reviews (exactly one for GenericReviewer)"
+          },
+          "draft_decision": {
+            "$ref": "#/components/schemas/DecisionAggregation",
+            "description": "Aggregated decision with weighted confidence and score breakdown"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "Unique identifier for this orchestration run"
+          },
+          "elapsed_time": {
+            "type": "number",
+            "title": "Elapsed Time",
+            "description": "Total wall time for the entire orchestration in seconds"
+          }
+        },
+        "type": "object",
+        "required": ["expanded_proposal", "reviews", "draft_decision", "run_id", "elapsed_time"],
+        "title": "ReviewIdeaResponse",
+        "description": "Response model for POST /v1/review-idea endpoint.\n\nAttributes:\n    expanded_proposal: The expanded proposal data\n    reviews: List of PersonaReview objects (exactly one for single-persona review)\n    draft_decision: Aggregated decision with weighted confidence and breakdown\n    run_id: Unique identifier for this orchestration run\n    elapsed_time: Total wall time for the entire orchestration in seconds"
+      },
+      "RunDetailResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "UUID of the run"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO timestamp when run was created"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO timestamp when run was last updated"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status: queued, running, completed, or failed"
+          },
+          "queued_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queued At",
+            "description": "ISO timestamp when run was queued"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "ISO timestamp when run processing started"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "ISO timestamp when run finished"
+          },
+          "retry_count": {
+            "type": "integer",
+            "title": "Retry Count",
+            "description": "Number of retry attempts for this run",
+            "default": 0
+          },
+          "run_type": {
+            "type": "string",
+            "title": "Run Type",
+            "description": "Whether this is an initial run or revision"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority",
+            "description": "Priority level: normal or high"
+          },
+          "parent_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Run Id",
+            "description": "Optional UUID of parent run for revisions"
+          },
+          "input_idea": {
+            "type": "string",
+            "title": "Input Idea",
+            "description": "The original idea text"
+          },
+          "extra_context": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Context",
+            "description": "Optional additional context as JSON"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "description": "LLM model identifier used for this run"
+          },
+          "temperature": {
+            "type": "number",
+            "title": "Temperature",
+            "description": "Temperature parameter used for LLM calls"
+          },
+          "parameters_json": {
+            "type": "object",
+            "title": "Parameters Json",
+            "description": "Additional LLM parameters as JSON"
+          },
+          "overall_weighted_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Weighted Confidence",
+            "description": "Final weighted confidence score (null until decision)"
+          },
+          "decision_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Label",
+            "description": "Final decision label (null until decision)"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "description": "Schema version used for this run's outputs (e.g., '1.0.0')"
+          },
+          "prompt_set_version": {
+            "type": "string",
+            "title": "Prompt Set Version",
+            "description": "Prompt set version used for this run (e.g., '1.0.0')"
+          },
+          "proposal": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal",
+            "description": "Structured proposal JSON (null if run failed early)"
+          },
+          "persona_reviews": {
+            "items": {
+              "$ref": "#/components/schemas/PersonaReviewSummary"
+            },
+            "type": "array",
+            "title": "Persona Reviews",
+            "description": "Array of persona reviews with scores and blocking flags"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision",
+            "description": "Decision JSON (null if run failed or incomplete)"
+          },
+          "step_progress": {
+            "items": {
+              "$ref": "#/components/schemas/StepProgressSummary"
+            },
+            "type": "array",
+            "title": "Step Progress",
+            "description": "Array of step progress records showing pipeline execution ordered by step_order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "created_at",
+          "updated_at",
+          "status",
+          "run_type",
+          "priority",
+          "input_idea",
+          "model",
+          "temperature",
+          "parameters_json",
+          "schema_version",
+          "prompt_set_version"
+        ],
+        "title": "RunDetailResponse",
+        "description": "Response model for GET /v1/runs/{run_id} endpoint.\n\nAttributes:\n    run_id: UUID of the run\n    created_at: Timestamp when run was created\n    updated_at: Timestamp when run was last updated\n    status: Current status of the run\n    queued_at: Timestamp when run was queued\n    started_at: Timestamp when run processing started\n    completed_at: Timestamp when run finished\n    retry_count: Number of retry attempts for this run\n    run_type: Whether this is an initial run or revision\n    priority: Priority level for run execution\n    parent_run_id: Optional UUID of parent run for revisions\n    input_idea: The original idea text\n    extra_context: Optional additional context as JSON\n    model: LLM model identifier used for this run\n    temperature: Temperature parameter used for LLM calls\n    parameters_json: Additional LLM parameters as JSON\n    overall_weighted_confidence: Final weighted confidence score\n    decision_label: Final decision label\n    schema_version: Schema version used for this run's outputs\n    prompt_set_version: Prompt set version used for this run\n    proposal: Structured proposal JSON (nullable if run failed early)\n    persona_reviews: Array of persona reviews with scores and blocking flags\n    decision: Decision JSON (nullable if run failed or incomplete)\n    step_progress: Array of step progress records showing pipeline execution"
+      },
+      "RunDiffResponse": {
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "title": "Metadata",
+            "description": "Metadata including run IDs, timestamps, and parent/child relationship status"
+          },
+          "proposal_changes": {
+            "type": "object",
+            "title": "Proposal Changes",
+            "description": "Per-section proposal diffs with status (unchanged/modified/added/removed) and unified diff output for modified sections"
+          },
+          "persona_deltas": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Persona Deltas",
+            "description": "List of persona score deltas with old/new confidence, blocking issues changes, and security concerns changes"
+          },
+          "decision_delta": {
+            "type": "object",
+            "title": "Decision Delta",
+            "description": "Overall decision comparison including confidence delta and decision label changes"
+          }
+        },
+        "type": "object",
+        "required": ["metadata", "proposal_changes", "decision_delta"],
+        "title": "RunDiffResponse",
+        "description": "Response model for GET /v1/runs/{run_id}/diff/{other_run_id} endpoint.\n\nAttributes:\n    metadata: Metadata about the two runs and their relationship\n    proposal_changes: Per-section diffs of proposal text\n    persona_deltas: Changes in persona confidence scores and blocking flags\n    decision_delta: Changes in overall weighted confidence and decision label"
+      },
+      "RunListItemResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "UUID of the run"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO timestamp when run was created"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status: queued, running, completed, or failed"
+          },
+          "queued_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queued At",
+            "description": "ISO timestamp when run was queued"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "ISO timestamp when run processing started"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "ISO timestamp when run finished"
+          },
+          "retry_count": {
+            "type": "integer",
+            "title": "Retry Count",
+            "description": "Number of retry attempts for this run",
+            "default": 0
+          },
+          "run_type": {
+            "type": "string",
+            "title": "Run Type",
+            "description": "Whether this is an initial run or revision"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority",
+            "description": "Priority level: normal or high"
+          },
+          "parent_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Run Id",
+            "description": "Optional UUID of parent run for revisions"
+          },
+          "overall_weighted_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Weighted Confidence",
+            "description": "Final weighted confidence score (null until decision)"
+          },
+          "decision_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Label",
+            "description": "Final decision label (null until decision)"
+          },
+          "proposal_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Title",
+            "description": "Title from the proposal (truncated)"
+          },
+          "proposal_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Summary",
+            "description": "Summary from the proposal (truncated)"
+          }
+        },
+        "type": "object",
+        "required": ["run_id", "created_at", "status", "run_type", "priority"],
+        "title": "RunListItemResponse",
+        "description": "Response model for individual items in GET /v1/runs list.\n\nAttributes:\n    run_id: UUID of the run\n    created_at: Timestamp when run was created\n    status: Current status of the run\n    queued_at: Timestamp when run was queued\n    started_at: Timestamp when run processing started\n    completed_at: Timestamp when run finished\n    retry_count: Number of retry attempts for this run\n    run_type: Whether this is an initial run or revision\n    priority: Priority level for run execution\n    parent_run_id: Optional UUID of parent run for revisions\n    overall_weighted_confidence: Final weighted confidence score\n    decision_label: Final decision label\n    proposal_title: Title from the proposal (truncated metadata)\n    proposal_summary: Summary from the proposal (truncated metadata)"
+      },
+      "RunListResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunListItemResponse"
+            },
+            "type": "array",
+            "title": "Runs",
+            "description": "List of run items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of runs matching filters"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Number of items per page"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Current offset"
+          }
+        },
+        "type": "object",
+        "required": ["runs", "total", "limit", "offset"],
+        "title": "RunListResponse",
+        "description": "Response model for GET /v1/runs endpoint.\n\nAttributes:\n    runs: List of run items\n    total: Total number of runs matching filters\n    limit: Number of items per page\n    offset: Current offset"
+      },
+      "StepProgressSummary": {
+        "properties": {
+          "step_name": {
+            "type": "string",
+            "title": "Step Name",
+            "description": "Canonical step name"
+          },
+          "step_order": {
+            "type": "integer",
+            "title": "Step Order",
+            "description": "Integer ordering for deterministic step sequence"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current status: pending, running, completed, or failed"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "ISO timestamp when step processing started"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "ISO timestamp when step finished"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "description": "Optional error message if step failed"
+          }
+        },
+        "type": "object",
+        "required": ["step_name", "step_order", "status"],
+        "title": "StepProgressSummary",
+        "description": "Summary of a step progress for run detail responses.\n\nAttributes:\n    step_name: Canonical step name (e.g., 'expand', 'review_architect')\n    step_order: Integer ordering for deterministic step sequence\n    status: Current status of the step (pending, running, completed, failed)\n    started_at: ISO timestamp when step processing started (null until started)\n    completed_at: ISO timestamp when step finished (null until completed/failed)\n    error_message: Optional error message if step failed"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

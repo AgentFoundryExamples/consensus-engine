@@ -24,6 +24,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
@@ -88,12 +89,24 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI application instance
     """
+    settings = get_settings()
+    
     app = FastAPI(
         title="Consensus Engine API",
         description="FastAPI backend with LLM integration for consensus building",
         version="0.1.0",
         lifespan=lifespan,
     )
+
+    # Configure CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    logger.info(f"CORS configured with origins: {settings.cors_origins_list}")
 
     # Register middleware
     @app.middleware("http")
