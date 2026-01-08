@@ -7,11 +7,12 @@ is registered with semantic version identifiers to enable deterministic
 contracts and safe prompt evolution.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Type
+from dataclasses import dataclass
+from typing import Any
 
 from pydantic import BaseModel
 
+from consensus_engine.db.models import RunStatus as DBRunStatus
 from consensus_engine.schemas.proposal import ExpandedProposal
 from consensus_engine.schemas.review import DecisionAggregation, PersonaReview
 
@@ -42,7 +43,7 @@ class SchemaVersion:
     """
 
     version: str
-    schema_class: Type[BaseModel]
+    schema_class: type[BaseModel]
     description: str
     prompt_set_version: str | None = None
     deprecated: bool = False
@@ -108,7 +109,7 @@ class SchemaRegistry:
         self,
         schema_name: str,
         version: str,
-        schema_class: Type[BaseModel],
+        schema_class: type[BaseModel],
         description: str,
         is_current: bool = False,
         prompt_set_version: str | None = None,
@@ -312,7 +313,6 @@ _registry.register(
 
 # Note: RunStatus is an enum in the database models, not a Pydantic schema
 # For compatibility, we'll add a simple wrapper
-from consensus_engine.db.models import RunStatus as DBRunStatus
 
 
 @dataclass
@@ -324,7 +324,7 @@ class RunStatusSchema:
     """
 
     status: str
-    
+
     @classmethod
     def from_enum(cls, status: DBRunStatus) -> "RunStatusSchema":
         """Create from database enum.
@@ -336,7 +336,7 @@ class RunStatusSchema:
             RunStatusSchema instance
         """
         return cls(status=status.value)
-    
+
     def to_enum(self) -> DBRunStatus:
         """Convert to database enum.
 

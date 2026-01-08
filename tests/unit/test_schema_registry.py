@@ -236,7 +236,7 @@ class TestSchemaVersion:
 
         json_str = schema_version.to_json(proposal)
         data = json.loads(json_str)
-        
+
         assert data["problem_statement"] == "Test problem"
         assert data["_schema_version"] == "1.0.0"
         assert data["_prompt_set_version"] == "1.0.0"
@@ -334,7 +334,7 @@ class TestSerializationHelpers:
     def test_serialize_expanded_proposal_with_metadata(self) -> None:
         """Test serializing ExpandedProposal with version metadata."""
         schema_version = get_current_schema("ExpandedProposal")
-        
+
         proposal = ExpandedProposal(
             problem_statement="Build a REST API",
             proposed_solution="Use FastAPI framework",
@@ -359,9 +359,9 @@ class TestSerializationHelpers:
     def test_serialize_persona_review_with_metadata(self) -> None:
         """Test serializing PersonaReview with version metadata."""
         schema_version = get_current_schema("PersonaReview")
-        
+
         from consensus_engine.schemas.review import Concern
-        
+
         review = PersonaReview(
             persona_name="Test Persona",
             persona_id="test_persona",
@@ -393,10 +393,10 @@ class TestSerializationHelpers:
             if schema_name == "RunStatus":
                 # Skip RunStatus as it's an enum wrapper
                 continue
-            
+
             schema_version = get_current_schema(schema_name)
             json_schema = schema_version.get_json_schema()
-            
+
             assert "$version" in json_schema
             assert json_schema["$version"] == "1.0.0"
             assert "$prompt_set_version" in json_schema
@@ -411,7 +411,7 @@ class TestEdgeCases:
         """Test that requesting unsupported version raises logged error."""
         with pytest.raises(SchemaVersionNotFoundError) as exc_info:
             get_schema_version("ExpandedProposal", "0.5.0")
-        
+
         # Verify error message includes available versions
         assert "Available versions" in str(exc_info.value)
 
@@ -442,7 +442,7 @@ class TestEdgeCases:
     def test_multiple_versions_maintains_order(self) -> None:
         """Test that multiple versions are properly maintained."""
         registry = SchemaRegistry()
-        
+
         # Register multiple versions
         for i in range(1, 4):
             registry.register(
@@ -467,7 +467,7 @@ class TestEdgeCases:
     def test_schema_class_validation(self) -> None:
         """Test that schema class validates correctly."""
         schema_version = get_current_schema("ExpandedProposal")
-        
+
         # Valid instance should work
         valid_proposal = ExpandedProposal(
             problem_statement="Valid",
