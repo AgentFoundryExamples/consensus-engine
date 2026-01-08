@@ -405,14 +405,9 @@ async def get_run_detail(
     # Build step progress summaries
     step_progress_summaries = _build_step_progress_summaries(run)
 
-    # Extract schema_version and prompt_set_version from parameters_json or use defaults
-    schema_version = "1.0.0"  # Default version
-    prompt_set_version = "1.0.0"  # Default version
-
-    # Try to extract from parameters_json if available
-    if run.parameters_json:
-        schema_version = run.parameters_json.get("schema_version", schema_version)
-        prompt_set_version = run.parameters_json.get("prompt_set_version", prompt_set_version)
+    # Extract schema_version and prompt_set_version from Run model with safe defaults
+    schema_version = run.schema_version if run.schema_version else "unknown"
+    prompt_set_version = run.prompt_set_version if run.prompt_set_version else "unknown"
 
     # Build response
     response = RunDetailResponse(
@@ -731,6 +726,11 @@ async def create_revision(
         # Determine priority (inherit from parent or default to normal)
         priority = parent_run.priority if parent_run.priority else RunPriority.NORMAL
 
+        # Get schema and prompt versions from settings
+        llm_config = settings.get_llm_steps_config()
+        schema_version = llm_config.schema_version  # Get from config
+        prompt_set_version = llm_config.prompt_set_version
+
         # Step 1: Create new Run with status='queued'
         new_run = RunRepository.create_run(
             session=db_session,
@@ -744,6 +744,8 @@ async def create_revision(
             parent_run_id=parent_run_uuid,
             priority=priority,
             status=RunStatus.QUEUED,
+            schema_version=schema_version,
+            prompt_set_version=prompt_set_version,
         )
 
         logger.info(

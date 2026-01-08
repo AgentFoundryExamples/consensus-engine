@@ -100,6 +100,8 @@ class Run(Base):
         parameters_json: Additional LLM parameters as JSONB
         overall_weighted_confidence: Final weighted confidence score (nullable until decision)
         decision_label: Final decision label (nullable until decision)
+        schema_version: Schema version used for this run (nullable for historical data)
+        prompt_set_version: Prompt set version used for this run (nullable for historical data)
     """
 
     __tablename__ = "runs"
@@ -150,6 +152,8 @@ class Run(Base):
         Numeric(precision=5, scale=4), nullable=True
     )
     decision_label: Mapped[str | None] = mapped_column(Text, nullable=True)
+    schema_version: Mapped[str | None] = mapped_column(Text, nullable=True)
+    prompt_set_version: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     parent_run: Mapped["Run | None"] = relationship(
@@ -364,6 +368,7 @@ class StepProgress(Base):
         started_at: Timestamp when step processing started (nullable until started)
         completed_at: Timestamp when step finished (nullable until completed/failed)
         error_message: Optional error message if step failed
+        step_metadata: Optional JSONB metadata for step (model, temperature, versions, etc.)
     """
 
     __tablename__ = "step_progress"
@@ -386,6 +391,7 @@ class StepProgress(Base):
         DateTime(timezone=True), nullable=True
     )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    step_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # Relationships
     run: Mapped["Run"] = relationship("Run", back_populates="step_progress")

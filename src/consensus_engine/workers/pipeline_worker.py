@@ -329,8 +329,45 @@ class PipelineWorker:
             },
         )
 
+    def _get_step_metadata(self, step_name: str, run: Run) -> dict[str, Any]:
+        """Generate step metadata with version information.
+        
+        Args:
+            step_name: Step name
+            run: Run instance to extract versions from
+            
+        Returns:
+            Dictionary with step metadata including versions
+        """
+        # Get centralized config
+        llm_config = self.settings.get_llm_steps_config()
+        
+        # Determine which step config to use
+        step_config = None
+        if step_name == STEP_EXPAND:
+            step_config = llm_config.expand
+        elif step_name.startswith("review_"):
+            step_config = llm_config.review
+        elif step_name == STEP_AGGREGATE:
+            step_config = llm_config.aggregate
+        
+        metadata = {
+            "schema_version": run.schema_version or llm_config.schema_version,
+            "prompt_set_version": run.prompt_set_version or llm_config.prompt_set_version,
+        }
+        
+        # Add step-specific config if available
+        if step_config:
+            metadata.update({
+                "model": step_config.model,
+                "temperature": step_config.temperature,
+                "max_retries": step_config.max_retries,
+            })
+        
+        return metadata
+
     def _mark_step_started(
-        self, session: Session, run_id: uuid.UUID, step_name: str
+        self, session: Session, run_id: uuid.UUID, step_name: str, run: Run
     ) -> None:
         """Mark a step as started.
         
@@ -338,13 +375,17 @@ class PipelineWorker:
             session: Database session
             run_id: Run ID
             step_name: Step name
+            run: Run instance to extract version info from
         """
+        step_metadata = self._get_step_metadata(step_name, run)
+        
         StepProgressRepository.upsert_step_progress(
             session=session,
             run_id=run_id,
             step_name=step_name,
             status=StepStatus.RUNNING,
             started_at=datetime.now(UTC),
+            step_metadata=step_metadata,
         )
         session.commit()
 
@@ -354,6 +395,8 @@ class PipelineWorker:
                 "run_id": str(run_id),
                 "step_name": step_name,
                 "lifecycle_event": "step_started",
+                "schema_version": step_metadata.get("schema_version", "unknown"),
+                "prompt_set_version": step_metadata.get("prompt_set_version", "unknown"),
             },
         )
 
@@ -442,7 +485,7 @@ class PipelineWorker:
             TimeoutError: If step exceeds timeout
         """
         step_start = time.time()
-        self._mark_step_started(session, run.id, STEP_EXPAND)
+        self._mark_step_started(session, run.id, STEP_EXPAND, run)
 
         try:
             # Build IdeaInput from run
@@ -501,7 +544,8 @@ class PipelineWorker:
         """
         step_start = time.time()
 
-        # Mark all review steps as started
+        # Mark all review steps as started with metadata
+        step_metadata = self._get_step_metadata("review_", run)
         for step_name in [
             STEP_REVIEW_ARCHITECT,
             STEP_REVIEW_CRITIC,
@@ -515,6 +559,7 @@ class PipelineWorker:
                 step_name=step_name,
                 status=StepStatus.RUNNING,
                 started_at=datetime.now(UTC),
+                step_metadata=step_metadata,
             )
         session.commit()
 
@@ -524,6 +569,8 @@ class PipelineWorker:
                 "run_id": str(run.id),
                 "run_type": run.run_type.value,
                 "lifecycle_event": "reviews_started",
+                "schema_version": step_metadata.get("schema_version", "unknown"),
+                "prompt_set_version": step_metadata.get("prompt_set_version", "unknown"),
             },
         )
 
@@ -688,7 +735,7 @@ class PipelineWorker:
             Exception: If aggregation fails
         """
         step_start = time.time()
-        self._mark_step_started(session, run.id, STEP_AGGREGATE)
+        self._mark_step_started(session, run.id, STEP_AGGREGATE, run)
 
         try:
             # Aggregate reviews
@@ -749,15 +796,22 @@ class PipelineWorker:
                 schema_versions.append({
                     "schema_name": "ExpandedProposal",
                     "schema_version": proposal_json["_schema_version"],
+                    "prompt_set_version": run.prompt_set_version,
                     "source": "proposal",
                 })
 
         # Collect schema versions from persona reviews
         for review in run.persona_reviews:
             if review.review_json and "_schema_version" in review.review_json:
+                # Extract prompt_set_version from review's prompt_parameters_json if available
+                prompt_set_version = None
+                if review.prompt_parameters_json:
+                    prompt_set_version = review.prompt_parameters_json.get("prompt_set_version")
+                
                 schema_versions.append({
                     "schema_name": "PersonaReview",
                     "schema_version": review.review_json["_schema_version"],
+                    "prompt_set_version": prompt_set_version or run.prompt_set_version,
                     "source": f"review_{review.persona_id}",
                 })
 
@@ -767,6 +821,7 @@ class PipelineWorker:
                 schema_versions.append({
                     "schema_name": "DecisionAggregation",
                     "schema_version": run.decision.decision_json["_schema_version"],
+                    "prompt_set_version": run.prompt_set_version,
                     "source": "decision",
                 })
 
@@ -782,6 +837,8 @@ class PipelineWorker:
                     extra={
                         "run_id": str(run.id),
                         "schema_count": len(schema_versions),
+                        "schema_version": run.schema_version or "unknown",
+                        "prompt_set_version": run.prompt_set_version or "unknown",
                     },
                 )
             except SchemaValidationError:
@@ -828,6 +885,17 @@ class PipelineWorker:
 
         if not run:
             raise ValueError(f"Run {run_id} not found in database")
+
+        # Log version information for audit
+        logger.info(
+            "Job version metadata",
+            extra={
+                "run_id": run_id_str,
+                "schema_version": run.schema_version or "unknown",
+                "prompt_set_version": run.prompt_set_version or "unknown",
+                "lifecycle_event": "version_audit",
+            },
+        )
 
         # Transition to RUNNING
         self._transition_to_running(session, run)

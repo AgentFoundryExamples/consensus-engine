@@ -26,6 +26,9 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 # Prompt set version constant for tracking active prompt templates
 PROMPT_SET_VERSION = "1.0.0"
 
+# Schema version constant for tracking active schema version
+SCHEMA_VERSION = "1.0.0"
+
 
 class StepName(str, Enum):
     """Enumeration of pipeline step names."""
@@ -129,6 +132,11 @@ class LLMStepsConfig(BaseModel):
         min_length=1,
         description="Version identifier for prompt templates",
     )
+    schema_version: str = Field(
+        default=SCHEMA_VERSION,
+        min_length=1,
+        description="Version identifier for schema structures",
+    )
 
     @model_validator(mode="after")
     def validate_step_configs(self) -> "LLMStepsConfig":
@@ -216,11 +224,13 @@ def create_default_llm_steps_config() -> LLMStepsConfig:
             timeout_seconds=300,
         ),
         prompt_set_version=PROMPT_SET_VERSION,
+        schema_version=SCHEMA_VERSION,
     )
 
 
 __all__ = [
     "PROMPT_SET_VERSION",
+    "SCHEMA_VERSION",
     "StepName",
     "StepConfig",
     "LLMStepsConfig",

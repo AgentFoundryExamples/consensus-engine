@@ -170,8 +170,10 @@ def check_version_consistency(
     if not schema_versions:
         return
 
-    # Group by schema name
+    # Group by schema name and track prompt_set_version
     versions_by_schema: dict[str, set[str]] = {}
+    prompt_set_versions: set[str] = set()
+    
     for info in schema_versions:
         schema_name = info.get("schema_name")
         schema_version = info.get("schema_version")
@@ -182,6 +184,11 @@ def check_version_consistency(
         if schema_name not in versions_by_schema:
             versions_by_schema[schema_name] = set()
         versions_by_schema[schema_name].add(schema_version)
+        
+        # Track prompt_set_version if present
+        prompt_set_version = info.get("prompt_set_version")
+        if prompt_set_version:
+            prompt_set_versions.add(prompt_set_version)
 
     # Check for multiple versions of the same schema
     inconsistent_schemas = {
@@ -190,18 +197,45 @@ def check_version_consistency(
         if len(versions) > 1
     }
 
-    if inconsistent_schemas:
+    # Check for multiple prompt_set_versions
+    has_mixed_prompts = len(prompt_set_versions) > 1
+    
+    if inconsistent_schemas or has_mixed_prompts:
         error_details = {
-            "inconsistent_schemas": {
-                name: list(versions)
-                for name, versions in inconsistent_schemas.items()
-            },
             **context,
         }
+        message = []
 
+        if inconsistent_schemas:
+            error_details["inconsistent_schemas"] = {
+                name: list(versions)
+                for name, versions in inconsistent_schemas.items()
+            }
+            message.append("Mixed schema versions detected")
+        
+        if has_mixed_prompts:
+            error_details["mixed_prompt_versions"] = list(prompt_set_versions)
+            message.append("Mixed prompt versions detected")
+            # Provide detailed context for debugging mixed prompt versions
+            affected_sources = [
+                info.get("source", "unknown") 
+                for info in schema_versions 
+                if info.get("prompt_set_version") in prompt_set_versions
+            ]
+            logger.warning(
+                "Mixed prompt_set_versions detected within run - this may indicate "
+                "a deployment issue or concurrent version rollout. Review the affected "
+                "pipeline steps and ensure all workers are running the same version.",
+                extra={
+                    "prompt_versions": list(prompt_set_versions),
+                    "affected_sources": affected_sources,
+                    "version_count": len(prompt_set_versions),
+                    **context,
+                },
+            )
+        
         raise SchemaValidationError(
-            "Mixed schema versions detected within deployment. "
-            "All schemas must use the same version within a single run/deployment.",
+            f"{' and '.join(message)} within deployment.",
             details=error_details,
         )
 
@@ -210,6 +244,7 @@ def check_version_consistency(
         extra={
             "schema_count": len(versions_by_schema),
             "schemas": list(versions_by_schema.keys()),
+            "prompt_set_versions": list(prompt_set_versions) if prompt_set_versions else ["none"],
             **context,
         },
     )
