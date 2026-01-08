@@ -31,15 +31,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`
-        rounded-md font-medium
-        focus:outline-none focus:ring-2 focus:ring-offset-2
-        disabled:cursor-not-allowed disabled:opacity-50
-        transition-colors duration-200
-        ${variantClasses[variant]}
-        ${sizeClasses[size]}
-        ${className}
-      `}
+      className={`rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${className} `}
       disabled={disabled}
       {...props}
     >

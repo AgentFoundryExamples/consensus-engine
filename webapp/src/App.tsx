@@ -10,6 +10,8 @@ function App() {
 
   useEffect(() => {
     // Validate and configure API client on mount
+    // This is initial configuration, not a cascading effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     try {
       validateConfig();
       configureApiClient();
@@ -53,9 +55,7 @@ function App() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">API Status:</span>
-                <StatusBadge
-                  status={healthStatus === 'healthy' ? 'completed' : 'failed'}
-                />
+                <StatusBadge status={healthStatus === 'healthy' ? 'completed' : 'failed'} />
                 <span className="text-sm text-gray-600">{healthStatus}</span>
               </div>
               <div className="flex items-center gap-2">
