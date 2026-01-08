@@ -711,7 +711,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
@@ -896,26 +896,32 @@ export function configureApiClient() {
   
   // Add token interceptor for authenticated requests
   OpenAPI.TOKEN = async () => {
-    // In production with IAP, get identity token from IAP headers
-    // Note: This requires backend to forward X-Goog-IAP-JWT-Assertion header
-    // or frontend to obtain token from metadata service
+    // In production with IAP, get service account identity token for backend
+    // Note: This uses the Cloud Run service account's identity, not the user's IAP token.
+    // The service account must have roles/run.invoker on the backend service.
+    // For user context, consider alternative approaches like forwarding IAP headers.
     
     if (import.meta.env.VITE_ENVIRONMENT === 'production') {
       try {
-        // Get identity token for backend audience
+        // Get identity token for backend audience from metadata service
         const metadata = await fetch(
-          'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=' + 
-          encodeURIComponent(import.meta.env.VITE_API_BASE_URL),
+          'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=' +
+            encodeURIComponent(import.meta.env.VITE_API_BASE_URL),
           {
-            headers: { 'Metadata-Flavor': 'Google' }
+            headers: { 'Metadata-Flavor': 'Google' },
           }
         );
-        
+
         if (metadata.ok) {
           return await metadata.text();
         }
+        
+        // Throw an error if token could not be fetched
+        throw new Error(`Failed to fetch identity token: ${metadata.status} ${metadata.statusText}`);
       } catch (error) {
         console.error('Failed to get identity token:', error);
+        // Re-throw the error to be handled by the caller
+        throw error;
       }
     }
     
@@ -924,6 +930,21 @@ export function configureApiClient() {
   };
 }
 ```
+
+**Important Notes on Token Flow:**
+
+The code above uses the Cloud Run **service account identity token** from the metadata service. This means:
+- Backend receives requests authenticated as the frontend service account (not the end user)
+- Backend cannot identify individual users unless additional mechanisms are used
+- This is suitable for service-to-service authentication where user identity is not required
+
+**Alternative Approaches for User Context:**
+If the backend needs to know the actual user identity, consider:
+1. **IAP Header Forwarding**: Configure the backend to validate the `X-Goog-IAP-JWT-Assertion` header forwarded from IAP
+2. **Custom Token Exchange**: Frontend extracts IAP assertion and exchanges it for a backend-compatible token
+3. **Session-based Auth**: Frontend establishes sessions with backend using IAP-verified user identity
+
+For most service-to-service scenarios, the metadata service approach is sufficient and recommended.
 
 ### Step 7: Verify CORS and Authentication
 

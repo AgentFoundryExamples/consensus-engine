@@ -1,5 +1,10 @@
 # Example Terraform configuration for Consensus Engine
 # This is a starting point - customize for your needs
+#
+# NOTE: This configuration deploys both frontend and backend services.
+# The backend CORS_ORIGINS uses the frontend service URL dynamically,
+# which resolves the circular dependency by referencing the frontend
+# resource directly rather than constructing the URL manually.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -163,7 +168,7 @@ resource "google_cloud_run_service" "backend" {
         
         env {
           name  = "CORS_ORIGINS"
-          value = "https://${var.frontend_service_name}-${data.google_project.project.number}.${var.region}.run.app"
+          value = google_cloud_run_service.frontend.status[0].url
         }
         
         env {
