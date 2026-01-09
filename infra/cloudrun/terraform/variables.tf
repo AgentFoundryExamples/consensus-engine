@@ -217,9 +217,9 @@ variable "anthropic_secret_name" {
 # ==============================================================================
 
 variable "openai_model" {
-  description = "Default OpenAI model to use (e.g., gpt-4, gpt-4-turbo, gpt-5.1). Note: gpt-5.1 is a target model; use gpt-4 or gpt-4-turbo for current deployments."
+  description = "Default OpenAI model to use (e.g., gpt-4, gpt-4-turbo, gpt-4o). Note: gpt-5.1 is a target model for future use; gpt-4 is used as the default."
   type        = string
-  default     = "gpt-5.1"
+  default     = "gpt-4"
 }
 
 variable "temperature" {
@@ -231,7 +231,7 @@ variable "temperature" {
 variable "expand_model" {
   description = "Model for expansion step (defaults to openai_model if not specified)"
   type        = string
-  default     = "gpt-5.1"
+  default     = "gpt-4"
 }
 
 variable "expand_temperature" {
@@ -243,7 +243,7 @@ variable "expand_temperature" {
 variable "review_model" {
   description = "Model for review step (defaults to openai_model if not specified)"
   type        = string
-  default     = "gpt-5.1"
+  default     = "gpt-4"
 }
 
 variable "review_temperature" {

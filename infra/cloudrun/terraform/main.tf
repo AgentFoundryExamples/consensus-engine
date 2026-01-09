@@ -396,6 +396,8 @@ resource "google_cloud_run_service" "backend" {
   depends_on = [
     google_project_iam_member.backend_cloudsql,
     google_pubsub_topic_iam_member.backend_publisher,
+    google_secret_manager_secret_iam_member.backend_secret_accessor,
+    google_secret_manager_secret_iam_member.backend_anthropic_secret_accessor,
   ]
 }
 
@@ -636,6 +638,8 @@ resource "google_cloud_run_service" "worker" {
   depends_on = [
     google_project_iam_member.worker_cloudsql,
     google_pubsub_subscription_iam_member.worker_subscriber,
+    google_secret_manager_secret_iam_member.worker_secret_accessor,
+    google_secret_manager_secret_iam_member.worker_anthropic_secret_accessor,
   ]
 }
 

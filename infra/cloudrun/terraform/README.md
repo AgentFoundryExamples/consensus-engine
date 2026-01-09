@@ -549,6 +549,19 @@ openai_secret_name = "my-existing-openai-secret"
 1. Resources exist in the same project and region
 2. Terraform has permissions to read/modify resources
 3. Resource names match exactly (case-sensitive)
+4. **For existing secrets**: You must manually grant service accounts access to existing secrets using IAM bindings:
+   ```bash
+   # Grant backend access to existing secret
+   gcloud secrets add-iam-policy-binding my-existing-openai-secret \
+     --member="serviceAccount:consensus-api-sa@PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/secretmanager.secretAccessor"
+   
+   # Grant worker access to existing secret
+   gcloud secrets add-iam-policy-binding my-existing-openai-secret \
+     --member="serviceAccount:consensus-worker-sa@PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/secretmanager.secretAccessor"
+   ```
+   When `create_secrets=false`, Terraform does not create IAM bindings for secrets automatically.
 
 ## Zero-Downtime Deployments
 

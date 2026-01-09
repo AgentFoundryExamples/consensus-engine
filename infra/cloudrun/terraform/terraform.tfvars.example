@@ -140,22 +140,21 @@ anthropic_secret_name   = "anthropic-api-key"
 # ==============================================================================
 
 # Default model for all operations
-# NOTE: gpt-5.1 is a target model. For current deployments, use:
-#   - gpt-4
-#   - gpt-4-turbo
-#   - gpt-4o
-# Override OPENAI_MODEL environment variable after deployment if needed
-openai_model = "gpt-5.1"
+# Using gpt-4 as the default. Other options:
+#   - gpt-4-turbo (faster, cost-effective)
+#   - gpt-4o (latest model)
+#   - gpt-5.1 (target model for future use, not yet available)
+openai_model = "gpt-4"
 
 # Default temperature (0.0-1.0, lower = more deterministic)
 temperature = "0.7"
 
 # Model for expansion step (generating detailed proposals from brief ideas)
-expand_model       = "gpt-5.1"
+expand_model       = "gpt-4"
 expand_temperature = "0.7"
 
 # Model for review step (persona-based evaluation of proposals)
-review_model       = "gpt-5.1"
+review_model       = "gpt-4"
 review_temperature = "0.2"  # Lower for more consistent, deterministic reviews
 
 # ==============================================================================
@@ -247,6 +246,14 @@ worker_job_timeout_seconds   = "1800" # Overall job timeout (30 minutes)
 # Example 3: Use existing secrets
 # create_secrets      = false
 # openai_secret_name  = "my-existing-openai-secret"
+# 
+# NOTE: When using existing secrets, you must manually grant IAM access:
+#   gcloud secrets add-iam-policy-binding my-existing-openai-secret \
+#     --member="serviceAccount:consensus-api-sa@PROJECT_ID.iam.gserviceaccount.com" \
+#     --role="roles/secretmanager.secretAccessor"
+#   gcloud secrets add-iam-policy-binding my-existing-openai-secret \
+#     --member="serviceAccount:consensus-worker-sa@PROJECT_ID.iam.gserviceaccount.com" \
+#     --role="roles/secretmanager.secretAccessor"
 
 # ==============================================================================
 # COST OPTIMIZATION TIPS
