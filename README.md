@@ -1927,6 +1927,43 @@ The API key is never logged or exposed in error messages for security.
 
 ## Production Deployment
 
+### Deployment Options
+
+You can deploy the Consensus Engine to Google Cloud Platform using either Terraform (recommended for production) or manual gcloud commands.
+
+#### Option 1: Terraform (Infrastructure as Code) - **Recommended**
+
+Terraform provides automated, repeatable deployments with version control and state management.
+
+**Benefits:**
+- ✅ Infrastructure versioned in Git
+- ✅ Repeatable deployments across environments
+- ✅ Automatic drift detection
+- ✅ Built-in rollback capabilities
+- ✅ Team collaboration with state locking
+
+**Quick Start with Terraform:**
+```bash
+cd infra/cloudrun/terraform
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your project ID and image paths
+terraform init
+terraform plan    # Review changes
+terraform apply   # Deploy infrastructure
+```
+
+**📖 Complete Terraform documentation:** [infra/cloudrun/terraform/README.md](infra/cloudrun/terraform/README.md)
+
+#### Option 2: Manual Deployment (gcloud CLI)
+
+Use gcloud commands for learning, prototyping, or one-off deployments.
+
+**Quick Start with gcloud:** See [Quick Start: Cloud Run Deployment](#quick-start-cloud-run-deployment) below.
+
+**📖 Complete manual deployment guide:** [infra/cloudrun/README.md](infra/cloudrun/README.md)
+
+---
+
 ### Overview
 
 The Consensus Engine can be deployed to Google Cloud Platform (GCP) with the following architecture:

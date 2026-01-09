@@ -1,26 +1,295 @@
-# Example terraform.tfvars file
+# ==============================================================================
+# Terraform Variables Example File
+# ==============================================================================
 # Copy this file to terraform.tfvars and fill in your values
 # DO NOT commit terraform.tfvars to version control!
+#
+# Usage:
+#   cp terraform.tfvars.example terraform.tfvars
+#   # Edit terraform.tfvars with your actual values
+#   terraform init
+#   terraform plan
+#   terraform apply
+# ==============================================================================
 
+# ==============================================================================
+# REQUIRED VARIABLES (must be set)
+# ==============================================================================
+
+# GCP Project ID where all resources will be created
 project_id = "your-gcp-project-id"
-region     = "us-central1"
+
+# Container images built from this repository
+# Build and push these images before running terraform apply:
+#   gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/consensus-engine/consensus-api:latest
+#   gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/consensus-engine/consensus-web:latest --file webapp/Dockerfile webapp/
+#   gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/consensus-engine/consensus-worker:latest --file Dockerfile.worker
+backend_image  = "us-central1-docker.pkg.dev/your-gcp-project-id/consensus-engine/consensus-api:latest"
+frontend_image = "us-central1-docker.pkg.dev/your-gcp-project-id/consensus-engine/consensus-web:latest"
+worker_image   = "us-central1-docker.pkg.dev/your-gcp-project-id/consensus-engine/consensus-worker:latest"
+
+# ==============================================================================
+# CORE CONFIGURATION
+# ==============================================================================
+
+# GCP region for all resources
+# Common choices: us-central1, us-east1, europe-west1, asia-northeast1
+region = "us-central1"
+
+# Environment name (development, staging, production)
+# Controls logging verbosity and debug features
 environment = "production"
 
-# Service names
+# ==============================================================================
+# RESOURCE CREATION FLAGS
+# ==============================================================================
+# Set these to false if you want to use existing resources instead of creating new ones
+
+# Create new Artifact Registry repository (false = use existing repository)
+create_artifact_registry = true
+
+# Create new Cloud SQL instance (false = reference existing instance by name)
+create_cloud_sql = true
+
+# Create new Pub/Sub topic and subscription (false = reference existing resources)
+create_pubsub = true
+
+# Create new Secret Manager secrets (false = reference existing secrets)
+create_secrets = true
+
+# ==============================================================================
+# SERVICE NAMES
+# ==============================================================================
+
 backend_service_name  = "consensus-api"
 frontend_service_name = "consensus-web"
+worker_service_name   = "consensus-worker"
 
-# Container images (update after building and pushing)
-backend_image  = "gcr.io/your-gcp-project-id/consensus-api:latest"
-frontend_image = "gcr.io/your-gcp-project-id/consensus-web:latest"
+# ==============================================================================
+# ARTIFACT REGISTRY CONFIGURATION
+# ==============================================================================
 
-# Database configuration
-db_instance_name       = "consensus-db"
-db_tier                = "db-f1-micro"  # or db-n1-standard-1 for production
+# Repository name in Artifact Registry for Docker images
+artifact_registry_repository = "consensus-engine"
+
+# ==============================================================================
+# CLOUD SQL DATABASE CONFIGURATION
+# ==============================================================================
+
+# Instance name (for both new and existing instances)
+db_instance_name = "consensus-db"
+
+# Database name within the instance
+db_name = "consensus_engine"
+
+# Instance tier (controls CPU and memory)
+# - db-f1-micro: 0.6 GB RAM, shared CPU (lowest cost, development only)
+# - db-g1-small: 1.7 GB RAM, shared CPU (small workloads)
+# - db-n1-standard-1: 3.75 GB RAM, 1 vCPU (production baseline)
+# - db-n1-standard-2: 7.5 GB RAM, 2 vCPUs (higher throughput)
+db_tier = "db-f1-micro"
+
+# Disk size in GB (10-65536)
+db_disk_size = 10
+
+# VPC network for private IP (null = public IP with Cloud Run connector)
+# Example: "projects/your-project-id/global/networks/default"
+db_private_network = null
+
+# Deletion protection (true = prevents accidental deletion)
+# WARNING: Must be set to false before running terraform destroy
 db_deletion_protection = true
 
+# IAM authentication (true = no passwords, uses service account identity)
+# Recommended for production for better security
+db_iam_auth = true
+
+# Database user (only used when db_iam_auth = false)
+db_user = "postgres"
+
+# ==============================================================================
+# PUB/SUB CONFIGURATION
+# ==============================================================================
+
+# Topic name for job queue (for both new and existing topics)
+pubsub_topic_name = "consensus-engine-jobs"
+
+# Subscription name for worker (for both new and existing subscriptions)
+pubsub_subscription_name = "consensus-engine-jobs-sub"
+
+# Acknowledgment deadline in seconds (10-600)
+# How long worker has to process a message before Pub/Sub redelivers it
+pubsub_ack_deadline_seconds = 600
+
+# Maximum delivery attempts before moving to dead letter queue (5-100)
+pubsub_max_delivery_attempts = 5
+
+# ==============================================================================
+# SECRET MANAGER CONFIGURATION
+# ==============================================================================
+
+# Secret name for OpenAI API key
+openai_secret_name = "openai-api-key"
+
+# Create Anthropic API key secret (for future multi-LLM support)
+create_anthropic_secret = false
+anthropic_secret_name   = "anthropic-api-key"
+
+# ==============================================================================
+# LLM MODEL CONFIGURATION
+# ==============================================================================
+
+# Default model for all operations
+# Using gpt-4 as the default. Other options:
+#   - gpt-4-turbo (faster, cost-effective)
+#   - gpt-4o (latest model)
+#   - gpt-5.1 (target model for future use, not yet available)
+openai_model = "gpt-4"
+
+# Default temperature (0.0-1.0, lower = more deterministic)
+temperature = "0.7"
+
+# Model for expansion step (generating detailed proposals from brief ideas)
+expand_model       = "gpt-4"
+expand_temperature = "0.7"
+
+# Model for review step (persona-based evaluation of proposals)
+review_model       = "gpt-4"
+review_temperature = "0.2"  # Lower for more consistent, deterministic reviews
+
+# ==============================================================================
+# CORS CONFIGURATION
+# ==============================================================================
+
+# Allowed CORS headers (comma-separated)
+# For production, specify explicit headers. Use '*' only for development.
+# Required headers: Content-Type, Authorization
+# Optional headers: X-Request-ID, X-Schema-Version, X-Prompt-Set-Version
+cors_allow_headers = "Content-Type,Authorization,X-Request-ID,X-Schema-Version,X-Prompt-Set-Version"
+
+# ==============================================================================
+# FRONTEND SERVICE CONFIGURATION
+# ==============================================================================
+
+# Polling interval for frontend to check job status (milliseconds)
+vite_polling_interval_ms = "5000"
+
 # Scaling configuration
-backend_min_instances  = "1"
-backend_max_instances  = "20"
-frontend_min_instances = "0"
+frontend_min_instances = "0"  # 0 = scale to zero, 1+ = always-on
 frontend_max_instances = "10"
+
+# Resource allocation
+frontend_cpu    = "1000m"  # 1 vCPU
+frontend_memory = "512Mi"  # 512 MB
+
+# Concurrency and timeouts
+frontend_concurrency      = 80   # Max concurrent requests per instance
+frontend_timeout_seconds  = 300  # 5 minutes
+frontend_cpu_throttling   = true # Enable for cost savings (nginx is efficient)
+
+# ==============================================================================
+# BACKEND SERVICE CONFIGURATION
+# ==============================================================================
+
+# Scaling configuration
+backend_min_instances = "1"  # 1+ recommended to avoid cold starts for API
+backend_max_instances = "20"
+
+# Resource allocation
+backend_cpu    = "2000m"  # 2 vCPUs
+backend_memory = "2Gi"    # 2 GB
+
+# Concurrency and timeouts
+backend_concurrency     = 100   # Max concurrent requests per instance
+backend_timeout_seconds = 300   # 5 minutes
+backend_cpu_throttling  = false # Disable for consistent API performance
+
+# ==============================================================================
+# WORKER SERVICE CONFIGURATION
+# ==============================================================================
+
+# Scaling configuration
+worker_min_instances = "1" # 1+ recommended to avoid cold starts for jobs
+worker_max_instances = "3" # Controls max concurrent job processing
+
+# Resource allocation (workers need more resources for LLM calls)
+worker_cpu    = "2000m"  # 2 vCPUs
+worker_memory = "4Gi"    # 4 GB
+
+# Concurrency and timeouts
+worker_concurrency      = 1    # Typically 1 for long-running job processing
+worker_timeout_seconds  = 3600 # 60 minutes (max for Cloud Run)
+worker_cpu_throttling   = false # Disable for consistent job performance
+
+# Worker-specific settings (passed as environment variables)
+worker_max_concurrency       = "10"   # Max concurrent message handlers
+worker_ack_deadline_seconds  = "600"  # Pub/Sub ack deadline
+worker_step_timeout_seconds  = "300"  # Timeout per pipeline step
+worker_job_timeout_seconds   = "1800" # Overall job timeout (30 minutes)
+
+# ==============================================================================
+# EXAMPLE: USING EXISTING RESOURCES
+# ==============================================================================
+# If you already have Cloud SQL, Pub/Sub, or other resources, set creation
+# flags to false and specify the existing resource names:
+
+# Example 1: Use existing Cloud SQL instance
+# create_cloud_sql    = false
+# db_instance_name    = "my-existing-postgres-instance"
+# db_name             = "my_existing_database"
+
+# Example 2: Use existing Pub/Sub resources
+# create_pubsub              = false
+# pubsub_topic_name          = "my-existing-topic"
+# pubsub_subscription_name   = "my-existing-subscription"
+
+# Example 3: Use existing secrets
+# create_secrets      = false
+# openai_secret_name  = "my-existing-openai-secret"
+# 
+# NOTE: When using existing secrets, you must manually grant IAM access:
+#   gcloud secrets add-iam-policy-binding my-existing-openai-secret \
+#     --member="serviceAccount:consensus-api-sa@PROJECT_ID.iam.gserviceaccount.com" \
+#     --role="roles/secretmanager.secretAccessor"
+#   gcloud secrets add-iam-policy-binding my-existing-openai-secret \
+#     --member="serviceAccount:consensus-worker-sa@PROJECT_ID.iam.gserviceaccount.com" \
+#     --role="roles/secretmanager.secretAccessor"
+
+# ==============================================================================
+# COST OPTIMIZATION TIPS
+# ==============================================================================
+# 1. Use scale-to-zero (min_instances = 0) for non-critical services
+# 2. Set appropriate max_instances to prevent runaway costs
+# 3. Enable CPU throttling for services with bursty traffic (frontend)
+# 4. Use smaller instance tiers (db-f1-micro) for development/testing
+# 5. Monitor usage with Cloud Billing reports and set budget alerts
+#
+# See docs/GCP_DEPLOYMENT_ARCHITECTURE.md for detailed cost analysis
+
+# ==============================================================================
+# ZERO-DOWNTIME DEPLOYMENT STRATEGY
+# ==============================================================================
+# When updating image tags or environment variables:
+# 1. Always run `terraform plan` first to review changes
+# 2. Cloud Run creates new revisions automatically
+# 3. Use traffic splitting for gradual rollout:
+#    - Deploy with --tag=canary flag
+#    - Test canary deployment
+#    - Gradually shift traffic (10% -> 50% -> 100%)
+# 4. Keep recent revisions for quick rollback
+#
+# See infra/cloudrun/README.md for detailed rollback procedures
+
+# ==============================================================================
+# SECURITY BEST PRACTICES
+# ==============================================================================
+# 1. Always use IAM authentication for Cloud SQL (db_iam_auth = true)
+# 2. Enable deletion protection for production databases
+# 3. Restrict CORS headers to specific values (never use '*' in production)
+# 4. Use Secret Manager for all sensitive values (API keys, passwords)
+# 5. Enable audit logging for IAM and data access events
+# 6. Use least-privilege IAM roles for all service accounts
+# 7. Enable VPC Service Controls for additional network isolation
+# 8. Regularly rotate service account keys (if using key-based auth)
+# 9. Monitor security anomalies via Cloud Security Command Center
+# 10. Never commit terraform.tfvars or *.tfstate files to version control
